@@ -1,0 +1,4 @@
+  .uniform-input {
+    width: 100%; /* Largeur pleine pour tous les champs */
+    max-width: 300px; /* Limite maximale pour la cohérence */
+  }

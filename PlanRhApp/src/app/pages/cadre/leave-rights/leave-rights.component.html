@@ -1,0 +1,72 @@
+<div class="leave-rights-container">
+  <!-- Header -->
+  <div class="page-header">
+    <h1>SYNTHÈSE DES DROITS</h1>
+    <div class="header-actions">
+      <div class="date-selector">
+        <label>Au</label>
+        <p-calendar
+          [(ngModel)]="referenceDate"
+          (onSelect)="onDateChange()"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          [maxDate]="maxDate"
+        ></p-calendar>
+      </div>
+      <p-button
+        label="Actualiser"
+        icon="pi pi-refresh"
+        (onClick)="onRefresh()"
+        [loading]="loading"
+        [disabled]="loading"
+      ></p-button>
+    </div>
+  </div>
+
+  <!-- Tableau de synthèse -->
+  <div class="summary-section" *ngIf="!loading && leaveRights">
+    <p-card>
+      <table class="rights-table">
+        <thead>
+          <tr>
+            <th class="rights-column">DROITS À REPOS ET CONGÉS</th>
+            <th class="remaining-column">RESTANT À POSER</th>
+            <th class="taken-column">DROITS PRIS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of rightsRows" [class.sub-row]="row.isSubRow">
+            <td class="rights-column" [class.sub-label]="row.isSubRow">
+              {{ row.label }}
+            </td>
+            <td class="remaining-column">
+              {{ row.remaining }}
+            </td>
+            <td class="taken-column">
+              {{ row.taken }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </p-card>
+  </div>
+
+  <!-- Loading state -->
+  <div class="loading-container" *ngIf="loading">
+    <p-progressSpinner></p-progressSpinner>
+    <p>Calcul de la synthèse des droits en cours...</p>
+  </div>
+
+  <!-- No data state -->
+  <div class="no-data-container" *ngIf="!loading && !leaveRights">
+    <div class="no-data-content">
+      <i class="pi pi-info-circle" style="font-size: 3rem; color: #64748b"></i>
+      <h3>Aucune synthèse des droits disponible</h3>
+      <p>Cliquez sur "Actualiser" pour calculer votre synthèse des droits.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Toast pour les messages -->
+<p-toast></p-toast>
+

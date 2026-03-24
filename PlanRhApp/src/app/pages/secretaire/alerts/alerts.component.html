@@ -1,0 +1,400 @@
+<div class="alerts-container">
+  <!-- En-tête avec statistiques -->
+  <div class="alerts-header">
+    <h1>GESTION DES ALERTES</h1>
+    <div class="stats-cards">
+      <div class="stat-card">
+        <div class="stat-number">{{ stats.total }}</div>
+        <div class="stat-label">Total</div>
+      </div>
+      <div class="stat-card new">
+        <div class="stat-number">{{ stats.new }}</div>
+        <div class="stat-label">Nouvelles</div>
+      </div>
+      <div class="stat-card in-progress">
+        <div class="stat-number">{{ stats.inProgress }}</div>
+        <div class="stat-label">En cours</div>
+      </div>
+      <div class="stat-card resolved">
+        <div class="stat-number">{{ stats.resolved }}</div>
+        <div class="stat-label">Résolues</div>
+      </div>
+      <div class="stat-card critical">
+        <div class="stat-number">{{ stats.critical }}</div>
+        <div class="stat-label">Critiques</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barre de filtres -->
+  <div class="filters-section">
+    <div class="search-bar">
+      <i class="pi pi-search"></i>
+      <input
+        type="text"
+        pInputText
+        [(ngModel)]="searchText"
+        (input)="onSearchChange()"
+        placeholder="Rechercher une alerte..."
+        class="search-input"
+      />
+    </div>
+
+    <div class="filter-controls">
+      <p-dropdown
+        [options]="statusOptions"
+        [(ngModel)]="filter.status"
+        (onChange)="onFilterChange()"
+        placeholder="Statut"
+        class="filter-dropdown"
+      >
+      </p-dropdown>
+
+      <p-dropdown
+        [options]="priorityOptions"
+        [(ngModel)]="filter.priority"
+        (onChange)="onFilterChange()"
+        placeholder="Priorité"
+        class="filter-dropdown"
+      >
+      </p-dropdown>
+
+      <p-dropdown
+        [options]="typeOptions"
+        [(ngModel)]="filter.type"
+        (onChange)="onFilterChange()"
+        placeholder="Type"
+        class="filter-dropdown"
+      >
+      </p-dropdown>
+
+      <p-calendar
+        [(ngModel)]="filter.dateRange"
+        (onSelect)="onFilterChange()"
+        selectionMode="range"
+        placeholder="Période"
+        class="filter-calendar"
+      >
+      </p-calendar>
+
+      <button
+        pButton
+        type="button"
+        label="Effacer"
+        icon="pi pi-times"
+        (click)="clearFilters()"
+        class="clear-button"
+      ></button>
+    </div>
+  </div>
+
+  <!-- Tableau des alertes -->
+  <div class="alerts-table-container">
+    <p-table
+      [value]="filteredAlerts"
+      [loading]="loading"
+      [paginator]="true"
+      [rows]="10"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} alertes"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      styleClass="alerts-table"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 3rem">
+            <i class="pi pi-bell"></i>
+          </th>
+          <th pSortableColumn="title">
+            Titre <p-sortIcon field="title"></p-sortIcon>
+          </th>
+          <th pSortableColumn="priority">
+            Priorité <p-sortIcon field="priority"></p-sortIcon>
+          </th>
+          <th pSortableColumn="status">
+            Statut <p-sortIcon field="status"></p-sortIcon>
+          </th>
+          <th pSortableColumn="type">
+            Type <p-sortIcon field="type"></p-sortIcon>
+          </th>
+          <th pSortableColumn="user_name">
+            Utilisateur <p-sortIcon field="user_name"></p-sortIcon>
+          </th>
+          <th pSortableColumn="created_at">
+            Date <p-sortIcon field="created_at"></p-sortIcon>
+          </th>
+          <th style="width: 8rem">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-alert>
+        <tr [class.critical-row]="alert.priority === 'critical'">
+          <td>
+            <i
+              class="pi pi-bell"
+              [class.text-danger]="alert.priority === 'critical'"
+              [class.text-warning]="alert.priority === 'high'"
+              [class.text-info]="alert.priority === 'medium'"
+              [class.text-success]="alert.priority === 'low'"
+            >
+            </i>
+          </td>
+          <td>
+            <div class="alert-title" (click)="viewAlert(alert)">
+              {{ alert.title }}
+            </div>
+            <div class="alert-description">
+              {{ alert.description | slice : 0 : 50
+              }}{{ alert.description.length > 50 ? "..." : "" }}
+            </div>
+          </td>
+          <td>
+            <p-tag
+              [value]="getPriorityLabel(alert.priority)"
+              [severity]="getSeverity(alert.priority)"
+            >
+            </p-tag>
+          </td>
+          <td>
+            <p-tag
+              [value]="getStatusLabel(alert.status)"
+              [severity]="getStatusSeverity(alert.status)"
+            >
+            </p-tag>
+          </td>
+          <td>
+            <span class="alert-type">{{ getTypeLabel(alert.type) }}</span>
+          </td>
+          <td>
+            <div class="user-info">
+              <div class="user-name">{{ alert.user_name || "N/A" }}</div>
+              <div class="user-service">{{ alert.service_name || "" }}</div>
+            </div>
+          </td>
+          <td>
+            <span class="alert-date">{{ formatDate(alert.created_at) }}</span>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-eye"
+                class="p-button-sm p-button-text"
+                (click)="viewAlert(alert)"
+                pTooltip="Voir les détails"
+              ></button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-check"
+                class="p-button-sm p-button-success p-button-text"
+                (click)="takeAction(alert, 'resolve')"
+                pTooltip="Résoudre"
+                [disabled]="alert.status === 'resolved'"
+              ></button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-arrow-up"
+                class="p-button-sm p-button-warning p-button-text"
+                (click)="takeAction(alert, 'escalate')"
+                pTooltip="Escalader"
+                [disabled]="alert.status === 'escalated'"
+              ></button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-times"
+                class="p-button-sm p-button-danger p-button-text"
+                (click)="takeAction(alert, 'dismiss')"
+                pTooltip="Ignorer"
+                [disabled]="alert.status === 'dismissed'"
+              ></button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8" class="text-center">
+            <div class="empty-state">
+              <i
+                class="pi pi-bell-slash"
+                style="font-size: 3rem; color: #ccc"
+              ></i>
+              <h3>Aucune alerte trouvée</h3>
+              <p>Aucune alerte ne correspond aux critères de recherche.</p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- Dialog de détails d'alerte -->
+  <p-dialog
+    header="Détails de l'alerte"
+    [(visible)]="showAlertDialog"
+    [modal]="true"
+    [style]="{ width: '50vw' }"
+    [closable]="true"
+  >
+    <div *ngIf="selectedAlert" class="alert-details">
+      <div class="detail-section">
+        <h4>{{ selectedAlert.title }}</h4>
+        <p class="alert-description-full">{{ selectedAlert.description }}</p>
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail-item">
+          <label>Priorité:</label>
+          <p-tag
+            [value]="getPriorityLabel(selectedAlert.priority)"
+            [severity]="getSeverity(selectedAlert.priority)"
+          >
+          </p-tag>
+        </div>
+
+        <div class="detail-item">
+          <label>Statut:</label>
+          <p-tag
+            [value]="getStatusLabel(selectedAlert.status)"
+            [severity]="getStatusSeverity(selectedAlert.status)"
+          >
+          </p-tag>
+        </div>
+
+        <div class="detail-item">
+          <label>Type:</label>
+          <span>{{ getTypeLabel(selectedAlert.type) }}</span>
+        </div>
+
+        <div class="detail-item">
+          <label>Utilisateur:</label>
+          <span>{{ selectedAlert.user_name || "N/A" }}</span>
+        </div>
+
+        <div class="detail-item">
+          <label>Service:</label>
+          <span>{{ selectedAlert.service_name || "N/A" }}</span>
+        </div>
+
+        <div class="detail-item">
+          <label>Date de création:</label>
+          <span>{{ formatDate(selectedAlert.created_at) }}</span>
+        </div>
+
+        <div class="detail-item" *ngIf="selectedAlert.resolved_at">
+          <label>Date de résolution:</label>
+          <span>{{ formatDate(selectedAlert.resolved_at) }}</span>
+        </div>
+
+        <div class="detail-item" *ngIf="selectedAlert.resolved_by">
+          <label>Résolu par:</label>
+          <span>{{ selectedAlert.resolved_by }}</span>
+        </div>
+
+        <div class="detail-item" *ngIf="selectedAlert.comment">
+          <label>Commentaire:</label>
+          <span>{{ selectedAlert.comment }}</span>
+        </div>
+      </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <button
+        pButton
+        type="button"
+        label="Fermer"
+        icon="pi pi-times"
+        (click)="showAlertDialog = false"
+        class="p-button-text"
+      ></button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Dialog d'action -->
+  <p-dialog
+    [header]="
+      'Action: ' +
+      (actionType === 'resolve'
+        ? 'Résoudre'
+        : actionType === 'escalate'
+        ? 'Escalader'
+        : 'Ignorer')
+    "
+    [(visible)]="showActionDialog"
+    [modal]="true"
+    [style]="{ width: '40vw' }"
+    [closable]="true"
+  >
+    <div class="action-form">
+      <div class="form-group">
+        <label for="actionComment">Commentaire:</label>
+        <textarea
+          id="actionComment"
+          pTextarea
+          [(ngModel)]="actionComment"
+          rows="4"
+          placeholder="Ajoutez un commentaire pour cette action..."
+        >
+        </textarea>
+      </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <button
+        pButton
+        type="button"
+        label="Annuler"
+        icon="pi pi-times"
+        (click)="showActionDialog = false"
+        class="p-button-text"
+      ></button>
+      <button
+        pButton
+        type="button"
+        [label]="
+          actionType === 'resolve'
+            ? 'Résoudre'
+            : actionType === 'escalate'
+            ? 'Escalader'
+            : 'Ignorer'
+        "
+        [icon]="
+          actionType === 'resolve'
+            ? 'pi pi-check'
+            : actionType === 'escalate'
+            ? 'pi pi-arrow-up'
+            : 'pi pi-times'
+        "
+        [class]="
+          actionType === 'resolve'
+            ? 'p-button-success'
+            : actionType === 'escalate'
+            ? 'p-button-warning'
+            : 'p-button-danger'
+        "
+        (click)="confirmAction()"
+      ></button>
+    </ng-template>
+  </p-dialog>
+
+  <p-toast></p-toast>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

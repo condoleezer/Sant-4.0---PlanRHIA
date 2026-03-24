@@ -1,0 +1,152 @@
+/* You can add global styles to this file, and also import other style files */
+@import "primeicons/primeicons.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global styles to prevent horizontal scrolling */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Ensure all containers respect viewport width */
+.container, .container-fluid, [class*="container"] {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Prevent PrimeNG components from causing horizontal scroll */
+.p-component {
+  max-width: 100%;
+}
+
+/* Ensure grids don't overflow */
+.grid, [class*="grid"] {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* ── Planification dropdowns : fond sombre + texte blanc ── */
+app-planification .p-dropdown {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+app-planification .p-dropdown:hover {
+  border-color: #22c55e !important;
+}
+
+app-planification .p-dropdown.p-focus {
+  border-color: #22c55e !important;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2) !important;
+}
+
+app-planification .p-dropdown .p-dropdown-label,
+app-planification .p-dropdown span.p-dropdown-label,
+app-planification .p-dropdown .p-inputtext {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+app-planification .p-dropdown .p-dropdown-trigger {
+  background: transparent !important;
+  color: #ffffff !important;
+}
+
+app-planification .p-dropdown .p-dropdown-trigger .p-icon,
+app-planification .p-dropdown .p-dropdown-trigger svg {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+/* ── Planification filters: dark dropdowns with white text ── */
+.planification-container .filters-section .p-dropdown,
+.planification-container .filters-section .p-select {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+.planification-container .filters-section .p-dropdown .p-dropdown-label,
+.planification-container .filters-section .p-dropdown .p-inputtext,
+.planification-container .filters-section .p-select .p-select-label,
+.planification-container .filters-section .p-select .p-inputtext {
+  color: #ffffff !important;
+}
+
+.planification-container .filters-section .p-dropdown .p-placeholder,
+.planification-container .filters-section .p-select .p-placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.planification-container .filters-section .p-dropdown .p-dropdown-trigger,
+.planification-container .filters-section .p-select .p-select-dropdown {
+  color: #ffffff !important;
+}
+
+.planification-container .filters-section .p-dropdown .p-dropdown-trigger svg,
+.planification-container .filters-section .p-dropdown .p-dropdown-trigger .p-icon,
+.planification-container .filters-section .p-select .p-select-dropdown svg,
+.planification-container .filters-section .p-select .p-select-dropdown .p-icon {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+/* ── Panel déroulant (rendu dans le body, hors composant) ── */
+/* Fond sombre + texte blanc pour les options */
+.p-dropdown-panel,
+.p-select-overlay {
+  background: #1e293b !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+}
+
+.p-dropdown-panel .p-dropdown-items,
+.p-select-overlay .p-select-list {
+  background: #1e293b !important;
+  padding: 4px !important;
+}
+
+.p-dropdown-panel .p-dropdown-item,
+.p-select-overlay .p-select-option {
+  color: #ffffff !important;
+  background: transparent !important;
+  border-radius: 4px !important;
+  padding: 8px 12px !important;
+}
+
+.p-dropdown-panel .p-dropdown-item:hover,
+.p-select-overlay .p-select-option:hover {
+  background: #334155 !important;
+  color: #ffffff !important;
+}
+
+.p-dropdown-panel .p-dropdown-item.p-highlight,
+.p-select-overlay .p-select-option.p-selected,
+.p-select-overlay .p-select-option.p-highlight {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+/* Filtre de recherche dans le panel */
+.p-dropdown-panel .p-dropdown-filter,
+.p-select-overlay .p-select-filter {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border-color: #334155 !important;
+}
+
+.p-dropdown-panel .p-dropdown-filter::placeholder,
+.p-select-overlay .p-select-filter::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}

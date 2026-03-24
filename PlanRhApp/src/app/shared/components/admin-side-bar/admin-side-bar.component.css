@@ -1,0 +1,27 @@
+:host {
+  display: block;
+}
+
+::ng-deep .p-menu {
+  width: 100%;
+  background: none !important;
+  border: none !important;
+}
+
+::ng-deep .p-menuitem {
+  background: none !important;
+}
+
+::ng-deep .p-menuitem-text {
+  color: #3b82f6 !important; /* text-blue-500 */
+  font-weight: 600;
+}
+
+::ng-deep .p-menuitem.p-highlight .p-menuitem-text {
+  color: #1d4ed8 !important; /* text-blue-700 */
+}
+
+::ng-deep .p-menuitem-link {
+  padding-left: 2rem !important; /* Indent dropdown items */
+  transition: color 0.2s;
+}

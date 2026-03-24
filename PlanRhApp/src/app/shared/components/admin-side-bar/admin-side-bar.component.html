@@ -1,0 +1,24 @@
+<div class="flex flex-col h-full w-[15%] fixed top-0 bg-white border-r-2 transition duration-200">
+  <!-- Logo de l'entreprise -->
+  <div class="flex items-center justify-center p-4">
+    <img src="assets/logo/aparjon.png" alt="Logo entreprise" class="h-12 w-auto">
+  </div>
+
+  <!-- Contenu principal du sidebar -->
+  <div class="flex-1 overflow-y-auto py-2 pl-2">
+    @for (item of aItems; track item.title) {
+      @if (item.children) {
+        <app-side-bar-drop [item]="item" />
+      } @else {
+        <app-side-bar-item [item]="item" />
+      }
+    }
+  </div>
+
+  <!-- Section "Others" avec séparateur -->
+  <div class="border-t border-gray-200 py-2 pl-2">
+    @for (item of others; track item.title) {
+      <app-side-bar-item [item]="item" />
+    }
+  </div>
+</div>

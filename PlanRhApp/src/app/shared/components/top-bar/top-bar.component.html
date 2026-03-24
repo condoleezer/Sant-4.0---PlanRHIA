@@ -1,0 +1,175 @@
+<div class="flex flex-row items-center justify-between h-14 px-5 border-b-2 bg-white">
+
+  <!-- Date -->
+  <div class="flex-none">
+    <p class="font-medium text-lg text-black">
+      {{ today | date : "EEEE d MMMM yyyy" | titlecase }}
+    </p>
+  </div>
+
+  <!-- Nom utilisateur centré -->
+  <div class="flex-1 text-center">
+    <p class="font-bold text-black">
+      Type de profil {{ userRole !== null ? userRole : "U" }} :
+      {{ name !== null ? name : "N/A" }}
+    </p>
+  </div>
+
+  <!-- Droite : manager + notif + avatar groupés -->
+  <div class="flex-none flex items-center gap-3">
+    <p class="font-bold text-black">
+      Mon Manager : {{ managerName !== null ? managerName : "N/A" }}
+    </p>
+
+    <div class="flex items-center gap-2">
+      <app-notification-bell
+        [userId]="userId"
+        (notificationClick)="onNotificationClick($event)"
+      ></app-notification-bell>
+
+      <!-- Avatar cliquable -->
+      <button class="profile-avatar-btn" (click)="showProfile()" title="Mon profil">
+        <span class="profile-avatar-initials">{{ userName || 'U' }}</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Profil -->
+<p-dialog
+  header="Mon Profil"
+  [(visible)]="displayProfileModal"
+  [modal]="true"
+  [style]="{ width: '520px' }"
+  [closable]="true"
+  [draggable]="false"
+  (onHide)="cancelEdit()"
+>
+  <div class="profile-modal-content" *ngIf="user">
+
+    <!-- Avatar + bouton crayon -->
+    <div class="profile-header-row">
+      <div class="profile-avatar-large">
+        <span>{{ userName || 'U' }}</span>
+      </div>
+      <button class="profile-edit-btn" (click)="toggleEdit()" [title]="editMode ? 'Annuler' : 'Modifier le profil'">
+        <i [class]="editMode ? 'pi pi-times' : 'pi pi-pencil'"></i>
+      </button>
+    </div>
+
+    <!-- Nom complet + matricule + rôle -->
+    <h2 class="profile-fullname">{{ user.first_name }} {{ user.last_name }}</h2>
+    <span class="profile-matricule">{{ user.matricule || 'N/A' }}</span>
+    <span class="profile-role-badge">{{ getRoleLabel() }}</span>
+
+    <!-- ── MODE LECTURE ── -->
+    <div class="profile-info-grid" *ngIf="!editMode">
+      <div class="profile-info-item">
+        <i class="pi pi-id-card"></i>
+        <div>
+          <span class="profile-info-label">Matricule</span>
+          <span class="profile-info-value">{{ user.matricule || 'N/A' }}</span>
+        </div>
+      </div>
+      <div class="profile-info-item">
+        <i class="pi pi-envelope"></i>
+        <div>
+          <span class="profile-info-label">Email</span>
+          <span class="profile-info-value">{{ user.email || 'N/A' }}</span>
+        </div>
+      </div>
+      <div class="profile-info-item">
+        <i class="pi pi-phone"></i>
+        <div>
+          <span class="profile-info-label">Téléphone</span>
+          <span class="profile-info-value">{{ user.phoneNumber || 'N/A' }}</span>
+        </div>
+      </div>
+      <div class="profile-info-item">
+        <i class="pi pi-building"></i>
+        <div>
+          <span class="profile-info-label">Service</span>
+          <span class="profile-info-value">{{ user.serviceName || user.service || 'N/A' }}</span>
+        </div>
+      </div>
+      <div class="profile-info-item" *ngIf="user.specialityName">
+        <i class="pi pi-star"></i>
+        <div>
+          <span class="profile-info-label">Spécialité</span>
+          <span class="profile-info-value">{{ user.specialityName }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MODE ÉDITION ── -->
+    <div class="profile-edit-form" *ngIf="editMode">
+
+      <div class="edit-field">
+        <label>Matricule</label>
+        <input type="text" [(ngModel)]="editForm.matricule" placeholder="ex: INF123456ABCD" />
+      </div>
+      <div class="edit-field">
+        <label>Prénom</label>
+        <input type="text" [(ngModel)]="editForm.first_name" placeholder="Prénom" />
+      </div>
+      <div class="edit-field">
+        <label>Nom</label>
+        <input type="text" [(ngModel)]="editForm.last_name" placeholder="Nom" />
+      </div>
+      <div class="edit-field">
+        <label>Email</label>
+        <input type="email" [(ngModel)]="editForm.email" placeholder="Email" />
+      </div>
+      <div class="edit-field">
+        <label>Téléphone</label>
+        <input type="tel" [(ngModel)]="editForm.phoneNumber" placeholder="ex: 06 12 34 56 78" />
+      </div>
+
+      <div class="edit-separator">
+        <span>Changer le mot de passe</span>
+      </div>
+
+      <div class="edit-field">
+        <label>Nouveau mot de passe</label>
+        <div class="password-input-wrapper">
+          <input [type]="showNewPassword ? 'text' : 'password'" [(ngModel)]="editForm.new_password" placeholder="Laisser vide pour ne pas changer" />
+          <button type="button" class="toggle-pw-btn" (click)="showNewPassword = !showNewPassword">
+            <i [class]="showNewPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+          </button>
+        </div>
+      </div>
+      <div class="edit-field" *ngIf="editForm.new_password">
+        <label>Confirmer le mot de passe</label>
+        <div class="password-input-wrapper">
+          <input [type]="showConfirmPassword ? 'text' : 'password'" [(ngModel)]="editForm.confirm_password" placeholder="Confirmer le mot de passe" />
+          <button type="button" class="toggle-pw-btn" (click)="showConfirmPassword = !showConfirmPassword">
+            <i [class]="showConfirmPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+          </button>
+        </div>
+        <span class="pw-mismatch" *ngIf="editForm.new_password && editForm.confirm_password && editForm.new_password !== editForm.confirm_password">
+          Les mots de passe ne correspondent pas
+        </span>
+      </div>
+
+      <div class="edit-error" *ngIf="editError">{{ editError }}</div>
+      <div class="edit-success" *ngIf="editSuccess">{{ editSuccess }}</div>
+
+      <div class="edit-actions">
+        <button class="btn-cancel" (click)="cancelEdit()">Annuler</button>
+        <button class="btn-save" (click)="saveProfile()" [disabled]="savingProfile">
+          <i class="pi pi-spin pi-spinner" *ngIf="savingProfile"></i>
+          <i class="pi pi-check" *ngIf="!savingProfile"></i>
+          Enregistrer
+        </button>
+      </div>
+    </div>
+
+    <!-- Déconnexion -->
+    <div class="profile-actions" *ngIf="!editMode">
+      <button class="profile-logout-btn" (click)="logout()">
+        <i class="pi pi-sign-out"></i>
+        Déconnexion
+      </button>
+    </div>
+  </div>
+</p-dialog>

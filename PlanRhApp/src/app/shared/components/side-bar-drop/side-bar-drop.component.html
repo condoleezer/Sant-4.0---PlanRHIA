@@ -1,0 +1,23 @@
+<div class="flex flex-col">
+  <div (click)="toggleDropdown()" 
+       class="font-semibold cursor-pointer flex gap-3 text-sm items-center mb-1 mt-1 pl-4 pr-4 justify-start min-h-12 w-full transition-colors duration-200"
+       [ngClass]="{'text-blue-700': isActive(item.link || ''), 'text-blue-500': !isActive(item.link || '')}">
+    <span [class]="item.icon" style="flex-shrink: 0;"></span>
+    <p class="flex-1 break-words leading-tight">{{ item.title }}</p>
+    <span class="pi pi-chevron-down ml-auto" [ngClass]="{'transform rotate-180': isOpen}" style="flex-shrink: 0;"></span>
+  </div>
+
+  @if (isOpen && item.children) {
+    <div class="ml-6 pl-3 pr-4 pb-2">
+      @for (child of item.children; track child.title) {
+        <a [routerLink]="child.link" 
+           routerLinkActive="text-blue-700"
+           [routerLinkActiveOptions]="{exact: true}"
+           class="font-semibold cursor-pointer flex gap-3 text-sm items-start mt-2 mb-2 justify-start min-h-12 w-full transition-colors duration-200 text-blue-500 hover:text-blue-700 py-2 px-2 rounded">
+          <span [class]="child.icon" style="flex-shrink: 0; margin-top: 0.125rem;"></span>
+          <p class="flex-1 break-words leading-tight">{{ child.title }}</p>
+        </a>
+      }
+    </div>
+  }
+</div>

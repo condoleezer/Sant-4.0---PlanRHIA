@@ -1,0 +1,344 @@
+/* FullCalendar Container */
+:host ::ng-deep .fc {
+  font-family: inherit;
+  color: #333;
+}
+
+/* Calendar Header - Month/Year Navigation */
+:host ::ng-deep .fc-header-toolbar {
+  margin-bottom: 1.5em;
+  padding: 1em;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+:host ::ng-deep .fc-toolbar-title {
+  font-size: 1.75rem !important;
+  font-weight: bold !important;
+  color: #065594 !important;
+  text-transform: capitalize;
+}
+
+:host ::ng-deep .fc-button {
+  background-color: #065594 !important;
+  border-color: #065594 !important;
+  color: white !important;
+  font-weight: 500;
+  padding: 0.5em 1em;
+  border-radius: 6px;
+}
+
+:host ::ng-deep .fc-button:hover {
+  background-color: #054a7a !important;
+  border-color: #054a7a !important;
+}
+
+:host ::ng-deep .fc-button:disabled {
+  background-color: #ccc !important;
+  border-color: #ccc !important;
+  opacity: 0.6;
+}
+
+:host ::ng-deep .fc-button:focus {
+  box-shadow: 0 0 0 3px rgba(6, 85, 148, 0.3);
+}
+
+/* Calendar Table */
+:host ::ng-deep .fc-daygrid {
+  background-color: white;
+  width: 100%;
+}
+
+/* Container principal du calendrier */
+:host ::ng-deep .fc-view-harness {
+  width: 100%;
+  min-width: 100%;
+}
+
+:host ::ng-deep .fc-view-harness-active {
+  width: 100%;
+  min-width: 100%;
+}
+
+/* Day Headers (Mon, Tue, Wed, etc.) */
+:host ::ng-deep .fc-col-header-cell {
+  background-color: #065594 !important;
+  color: white !important;
+  font-weight: 600 !important;
+  padding: 0.75em 0.5em !important;
+  text-align: center;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+:host ::ng-deep .fc-col-header-cell-cushion {
+  color: white !important;
+  text-decoration: none;
+}
+
+/* Day Cells - Containers plus larges */
+:host ::ng-deep .fc-daygrid-day {
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  min-height: 130px !important;
+  min-width: 140px !important;
+  position: relative;
+}
+
+:host ::ng-deep .fc-daygrid-day:hover {
+  background-color: #f9fafb;
+}
+
+/* Table layout pour des colonnes plus larges */
+:host ::ng-deep .fc-daygrid-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+:host ::ng-deep .fc-daygrid-day-frame {
+  min-height: 130px !important;
+  padding: 6px;
+}
+
+/* Today's Date */
+:host ::ng-deep .fc-day-today {
+  background-color: #DDDCFF !important;
+}
+
+/* Day Numbers - Amélioration de la visibilité */
+:host ::ng-deep .fc-daygrid-day-number {
+  color: #1e293b !important;
+  font-weight: 700 !important;
+  font-size: 1.1rem !important;
+  padding: 0.6em 0.5em !important;
+  text-decoration: none;
+  display: block;
+  line-height: 1.2;
+  min-width: 28px;
+  text-align: center;
+}
+
+:host ::ng-deep .fc-day-today .fc-daygrid-day-number {
+  color: #065594 !important;
+  font-weight: bold !important;
+  font-size: 1.25rem !important;
+  background-color: rgba(6, 85, 148, 0.1);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.3em;
+}
+
+/* Other Month Days (if visible) */
+:host ::ng-deep .fc-day-other .fc-daygrid-day-number {
+  color: #9ca3af !important;
+  opacity: 0.6;
+}
+
+/* Day Grid Day Frame - Amélioration de l'espacement */
+:host ::ng-deep .fc-daygrid-day-frame {
+  min-height: 120px !important;
+  padding: 4px;
+}
+
+/* Events - Affichage complet du texte avec wrap */
+:host ::ng-deep .fc-event {
+  /* Couleur définie dynamiquement par le code TypeScript */
+  color: white !important;
+  border-radius: 4px;
+  padding: 6px 10px !important;
+  margin: 4px 2px !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  cursor: pointer;
+  line-height: 1.5 !important;
+  min-height: 28px !important;
+  display: block !important;
+  width: calc(100% - 4px) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  position: relative;
+  word-wrap: break-word !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+:host ::ng-deep .fc-event:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
+/* Tooltip moderne pour afficher le texte complet */
+:host ::ng-deep .fc-event[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #1e293b;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  max-width: 300px;
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+:host ::ng-deep .fc-event[title]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #1e293b;
+  z-index: 1001;
+  margin-bottom: 2px;
+  pointer-events: none;
+}
+
+:host ::ng-deep .fc-event-title {
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 0.9rem !important;
+  line-height: 1.4 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Event Content - Permettre le wrap */
+:host ::ng-deep .fc-event-content {
+  padding: 0 !important;
+  color: white !important;
+  font-weight: 500 !important;
+  width: 100% !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  display: block !important;
+}
+
+:host ::ng-deep .fc-event-content span {
+  color: white !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+  display: block !important;
+  width: 100% !important;
+  word-wrap: break-word !important;
+  white-space: normal !important;
+  overflow: visible !important;
+}
+
+/* Event Time */
+:host ::ng-deep .fc-event-time {
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  margin-right: 4px;
+}
+
+/* Day Grid Day Events - Amélioration de l'espacement */
+:host ::ng-deep .fc-daygrid-day-events {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+/* More Link */
+:host ::ng-deep .fc-more-link {
+  color: #065594 !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  padding: 2px 4px;
+  background-color: rgba(6, 85, 148, 0.1);
+  border-radius: 3px;
+  margin-top: 4px;
+}
+
+/* Scrollbar styling for calendar */
+:host ::ng-deep .fc-scroller {
+  overflow-y: auto;
+}
+
+/* Amélioration de la grille pour des colonnes plus larges */
+:host ::ng-deep .fc-daygrid-body {
+  min-height: 700px;
+}
+
+:host ::ng-deep .fc-daygrid-day-top {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 0.4em 0.6em;
+}
+
+/* Assurer que les colonnes ont une largeur minimale */
+:host ::ng-deep .fc-col-header-cell,
+:host ::ng-deep .fc-daygrid-day {
+  min-width: 140px !important;
+}
+
+/* Améliorer l'espacement vertical pour les événements */
+:host ::ng-deep .fc-daygrid-day-events {
+  margin-top: 6px;
+  margin-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  :host ::ng-deep .fc-toolbar-title {
+    font-size: 1.25rem !important;
+  }
+  
+  :host ::ng-deep .fc-button {
+    padding: 0.4em 0.8em;
+    font-size: 0.875rem;
+  }
+  
+  :host ::ng-deep .fc-col-header-cell {
+    font-size: 0.75rem;
+    padding: 0.5em 0.25em !important;
+  }
+  
+  :host ::ng-deep .fc-daygrid-day {
+    min-height: 100px !important;
+    min-width: auto !important;
+  }
+  
+  :host ::ng-deep .fc-daygrid-day-number {
+    font-size: 1rem !important;
+    padding: 0.4em 0.3em !important;
+  }
+  
+  :host ::ng-deep .fc-event {
+    font-size: 0.8rem !important;
+    padding: 4px 8px !important;
+    min-height: 24px !important;
+  }
+  
+  :host ::ng-deep .fc-event-title {
+    font-size: 0.8rem !important;
+  }
+  
+  :host ::ng-deep .fc-col-header-cell,
+  :host ::ng-deep .fc-daygrid-day {
+    min-width: auto !important;
+  }
+}

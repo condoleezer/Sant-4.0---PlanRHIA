@@ -1,0 +1,110 @@
+<div class="lw-container">
+  <div class="lw-header">
+    <div>
+      <h1 class="lw-title">Gestion des fenêtres de dépôt</h1>
+      <p class="lw-subtitle">Ouvrez et gérez les périodes pendant lesquelles les agents peuvent soumettre des demandes de congés/repos.</p>
+    </div>
+    <button class="btn-primary" (click)="openForm()">
+      <i class="pi pi-plus"></i> Nouvelle fenêtre
+    </button>
+  </div>
+
+  <!-- Liste des fenêtres -->
+  <div class="lw-list" *ngIf="!loading">
+    <div *ngIf="windows.length === 0" class="lw-empty">
+      <i class="pi pi-calendar" style="font-size:2.5rem; color:#94a3b8"></i>
+      <p>Aucune fenêtre de dépôt définie.</p>
+      <button class="btn-primary" (click)="openForm()">Créer la première fenêtre</button>
+    </div>
+
+    <div *ngFor="let win of windows" class="lw-card" [class.lw-card-open]="win.is_open">
+      <div class="lw-card-header">
+        <div class="lw-card-title-row">
+          <span class="lw-card-label">{{ win.label }}</span>
+          <p-tag [value]="getStatusLabel(win)" [severity]="getStatusSeverity(win)"></p-tag>
+        </div>
+        <div class="lw-card-actions">
+          <button class="btn-icon" (click)="openForm(win)" pTooltip="Modifier" tooltipPosition="top">
+            <i class="pi pi-pencil"></i>
+          </button>
+          <button class="btn-icon btn-extend" (click)="extendDeposit(win)" pTooltip="Prolonger de 7 jours" tooltipPosition="top">
+            <i class="pi pi-calendar-plus"></i>
+          </button>
+          <button class="btn-icon" [class.btn-close]="win.is_open" [class.btn-open]="!win.is_open"
+            (click)="toggleOpen(win)" [pTooltip]="win.is_open ? 'Fermer' : 'Rouvrir'" tooltipPosition="top">
+            <i [class]="win.is_open ? 'pi pi-lock' : 'pi pi-lock-open'"></i>
+          </button>
+          <button class="btn-icon btn-delete" (click)="deleteWindow(win)" pTooltip="Supprimer" tooltipPosition="top">
+            <i class="pi pi-trash"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="lw-card-body">
+        <div class="lw-info-row">
+          <div class="lw-info-block">
+            <span class="lw-info-label">Période de dépôt</span>
+            <span class="lw-info-value">{{ formatDate(win.deposit_start) }} → {{ formatDate(win.deposit_end) }}</span>
+          </div>
+        </div>
+        <div class="lw-codes">
+          <span class="lw-info-label">Codes autorisés :</span>
+          <span *ngFor="let code of win.allowed_codes" class="code-badge">{{ code }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="lw-loading">
+    <i class="pi pi-spin pi-spinner" style="font-size:2rem"></i>
+  </div>
+</div>
+
+<!-- Formulaire création/édition -->
+<p-dialog
+  [header]="editingId ? 'Modifier la fenêtre' : 'Nouvelle fenêtre de dépôt'"
+  [(visible)]="showForm"
+  [modal]="true"
+  [style]="{width: '560px'}"
+  [closable]="true"
+>
+  <div class="lw-form">
+    <div class="form-group">
+      <label>Nom de la fenêtre</label>
+      <input type="text" [(ngModel)]="form.label" placeholder="ex: Congés été 2026" class="form-input" />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Début dépôt</label>
+        <p-calendar [(ngModel)]="form.deposit_start" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="jj/mm/aaaa" [style]="{'width':'100%'}" inputStyleClass="cal-input" appendTo="body"></p-calendar>
+      </div>
+      <div class="form-group">
+        <label>Fin dépôt</label>
+        <p-calendar [(ngModel)]="form.deposit_end" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="jj/mm/aaaa" [style]="{'width':'100%'}" inputStyleClass="cal-input" appendTo="body"></p-calendar>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Codes autorisés pendant cette fenêtre</label>
+      <div class="codes-selector">
+        <div *ngFor="let c of availableCodes"
+          class="code-toggle"
+          [class.selected]="isCodeSelected(c.value)"
+          (click)="toggleCode(c.value)">
+          <span class="code-toggle-badge">{{ c.value }}</span>
+          <span class="code-toggle-label">{{ (c.label.split('—')[1] || '') | slice:0 }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button class="btn-secondary" (click)="showForm = false">Annuler</button>
+    <button class="btn-primary" (click)="save()">
+      <i class="pi pi-check"></i> {{ editingId ? 'Mettre à jour' : 'Créer' }}
+    </button>
+  </ng-template>
+</p-dialog>
+
+<p-toast></p-toast>

@@ -1,0 +1,96 @@
+<div class="custom-calendar">
+  <!-- Header avec navigation -->
+  <div class="calendar-header">
+    <button
+      type="button"
+      class="nav-button"
+      (click)="previousMonth()"
+      aria-label="Mois précédent"
+    >
+      ‹
+    </button>
+    <h3 class="month-year">{{ currentMonth }}</h3>
+    <button
+      type="button"
+      class="nav-button"
+      (click)="nextMonth()"
+      aria-label="Mois suivant"
+    >
+      ›
+    </button>
+  </div>
+
+  <!-- Grille du calendrier -->
+  <div class="calendar-grid">
+    <!-- En-tête vide pour la colonne des semaines -->
+    <div class="week-header-empty"></div>
+
+    <!-- En-têtes des jours de la semaine -->
+    <div class="day-header" *ngFor="let day of weekDays">{{ day }}</div>
+
+    <!-- Semaines et jours du calendrier -->
+    <ng-container *ngFor="let week of getWeeks(); let weekIndex = index">
+      <!-- Numéro de semaine -->
+      <div class="week-number-cell">Semaine {{ getWeekNumber(week[0]) }}</div>
+
+      <!-- Jours de la semaine -->
+      <div
+        class="calendar-day"
+        *ngFor="let day of week"
+        [class.selected]="isSelected(day)"
+        [class.today]="isToday(day)"
+        [class.other-month]="!isCurrentMonth(day)"
+        [class.has-events]="hasEvents(day)"
+        [class.has-proposal]="hasProposal(day)"
+        [class.has-pending]="hasPendingRequest(day)"
+        [style.background-color]="hasPendingRequest(day) ? getPendingColor(day) : getEventColor(day)"
+        [title]="getEventTooltip(day)"
+        [attr.aria-label]="day.toLocaleDateString('fr-FR')"
+        (click)="selectDate(day)"
+        style="cursor: pointer;"
+      >
+        <span class="day-number" [class.day-number-on-color]="hasEvents(day) || hasPendingRequest(day)">{{ day.getDate() }}</span>
+
+        <!-- Code d'activité (planning validé) -->
+        <span class="activity-code" *ngIf="hasEvents(day) && !hasPendingRequest(day)">{{ getActivityCode(day) }}</span>
+
+        <!-- Bloc en attente de validation -->
+        <ng-container *ngIf="hasPendingRequest(day)">
+          <span class="activity-code pending-code">{{ getPendingActivityCode(day) }}</span>
+          <span class="pending-badge">En attente</span>
+        </ng-container>
+
+        <!-- Bouton + pour proposer disponibilité -->
+        <button
+          class="proposal-button"
+          *ngIf="canProposeAvailability(day)"
+          (click)="proposeAvailability(day, $event)"
+          title="Proposer ma disponibilité"
+        >
+          +
+        </button>
+
+        <!-- Label "Proposé" -->
+        <div class="proposal-label" *ngIf="hasProposal(day)">Proposé</div>
+      </div>
+    </ng-container>
+  </div>
+
+  <!-- Barre d'actions (optionnelle) -->
+  <div class="calendar-actions" *ngIf="showButtonBar">
+    <button
+      type="button"
+      class="action-button today-button"
+      (click)="selectToday()"
+    >
+      Aujourd'hui
+    </button>
+    <button
+      type="button"
+      class="action-button clear-button"
+      (click)="clearSelection()"
+    >
+      Effacer
+    </button>
+  </div>
+</div>

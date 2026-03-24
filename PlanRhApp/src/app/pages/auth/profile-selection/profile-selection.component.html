@@ -1,0 +1,45 @@
+<form class="flex justify-center items-center min-h-screen bg-primary p-4">
+  <div class="flex flex-col justify-center items-center w-full max-w-md sm:max-w-lg md:max-w-2xl h-auto min-h-[80vh] border border-gray-300 rounded-2xl bg-white">
+    <div class="flex flex-col justify-center items-center w-full max-w-xs sm:max-w-sm md:max-w-md h-auto gap-4 p-4 sm:p-6">
+      <!-- Logo -->
+      <div>
+        <img src="assets/logo/qhse.png" class="w-16 h-10 sm:w-20 sm:h-12" alt="logo">
+      </div>
+
+      <!-- Texte de bienvenue -->
+      <div class="flex flex-col text-center gap-2">
+        <p class="font-light text-xl sm:text-2xl">Bienvenu</p>
+        <p class="text-black font-light text-sm sm:text-base">Choisissez votre profil</p>
+      </div>
+
+      <!-- Sélection des profils -->
+      <div class="w-full flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 mx-2">
+        <div class="w-full sm:w-32 h-25 mx-auto sm:m-3 hover:text-purple-400" [ngClass]="{'text-purple-400': isAdminSelected()}" (click)="toggleAdminSelection()">
+          <div class="flex justify-center w-full sm:w-32 h-20 border border-gray-300 rounded hover:border-purple-400" [ngClass]="{'border-purple-400': isAdminSelected()}">
+            <img src="assets/images/administrateur.png" class="m-1 rounded-2xl w-15 h-15 sm:w-full sm:h-full object-cover" alt="admin">
+          </div>
+          <p class="font-light text-center text-xs sm:text-xs mt-2">Administrateur</p>
+        </div>
+
+        <div class="w-full sm:w-32 h-25 mx-auto sm:m-3 hover:text-purple-400" [ngClass]="{'text-purple-400': isCadreSelected()}" (click)="toggleCadreSelection()">
+          <div class="flex justify-center w-full sm:w-32 h-20 border border-gray-300 rounded hover:border-purple-400" [ngClass]="{'border-purple-400': isCadreSelected()}">
+            <img src="assets/images/cadre.png" class="m-1 rounded-2xl w-15 h-15 sm:w-full sm:h-full object-cover" alt="cadre">
+          </div>
+          <p class="font-light text-center text-xs sm:text-xs mt-2">Cadre de santé</p>
+        </div>
+
+        <div class="w-full sm:w-32 h-25 mx-auto sm:m-3 hover:text-purple-400" [ngClass]="{'text-purple-400': isSecSelected()}" (click)="toggleSecSelection()">
+          <div class="flex justify-center w-full sm:w-32 h-20 border border-gray-300 rounded hover:border-purple-400" [ngClass]="{'border-purple-400': isSecSelected()}">
+            <img src="assets/images/medecin.png" class="m-1 rounded-2xl w-15 h-15 sm:w-full sm:h-full object-cover" alt="med">
+          </div>
+          <p class="font-light text-center text-xs sm:text-xs mt-2">Agent de santé</p>
+        </div>
+      </div>
+
+      <!-- Bouton Continuer -->
+      <button class="w-full max-w-xs sm:max-w-sm font-light bg-button p-2 h-12 text-white rounded mt-5" (click)="continue()" [disabled]="!selectedRole">
+        <p class="text-sm sm:text-base">Continuer</p>
+      </button>
+    </div>
+  </div>
+</form>

@@ -1,0 +1,109 @@
+<div class="dashboard-container p-4 md:p-6">
+  <h1 class="dashboard-title text-2xl md:text-3xl font-bold mb-2">TABLEAU DE BORD</h1>
+  <h6 class="text-1xl md:text-2xl text-center font-light mb-6">Bienvenue dans le portail SAPHIR</h6>
+
+    <!-- Cartes de statistiques -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <p-card header="Utilisateurs" class="shadow-lg">
+        <div class="flex items-center justify-between">
+          <p class="text-5xl font-bold">{{users.length}}</p>
+          <i class="pi pi-users text-4xl opacity-50"></i>
+        </div>
+        <p class="text-sm mt-2">Professionnels de l'hôpital</p>
+      </p-card>
+  
+      <p-card header="Services" class="shadow-lg">
+        <div class="flex items-center justify-between">
+          <p class="text-5xl font-bold">{{services.length}}</p>
+          <i class="pi pi-building text-4xl opacity-50"></i>
+        </div>
+        <p class="text-sm mt-2">Différent services</p>
+      </p-card>
+  
+      <p-card header="Cadre" class="shadow-lg">
+        <div class="flex items-center justify-between">
+          <p class="text-5xl font-bold">{{cadreCount}}</p>
+          <i class="pi pi-users text-4xl opacity-50"></i>
+        </div>
+        <p class="text-sm mt-2">Cadre de services</p>
+      </p-card>
+  
+      <p-card header="Agents" class="shadow-lg">
+        <div class="flex items-center justify-between">
+          <p class="text-5xl font-bold">{{nurseCount}}</p>
+          <i class="pi pi-users text-4xl opacity-50"></i>
+        </div>
+        <p class="text-sm mt-2">Agent des services</p>
+      </p-card>
+    </div>
+
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <p-card header="Code d'absences" class="shadow-md">
+        <div class="flex items-center justify-between">
+          <p class="text-5xl font-bold">{{codes.length}}</p>
+          <i class="pi pi-calendar-times text-4xl opacity-50"></i>
+        </div>
+        <p class="text-sm mt-2">Type d'absence dans l'hôpital</p>
+      </p-card>
+  
+      <p-card header="Pôles" class="shadow-md">
+        <div class="flex items-center justify-between">
+          <p class="text-5xl font-bold">{{poles.length}}</p>
+          <i class="pi pi-sitemap text-4xl opacity-50"></i>
+        </div>
+        <p class="text-sm mt-2">Pôles de l'hôpital</p>
+      </p-card>
+  
+      <p-card header="Specialités" class="shadow-md">
+        <div class="flex items-center justify-between">
+          <p class="text-5xl font-bold">{{specialities.length}}</p>
+          <i class="pi pi-briefcase text-4xl opacity-50"></i>
+        </div>
+        <p class="text-sm mt-2">Specialtés de l'hôpital</p>
+      </p-card>
+  
+      <!--<p-card header="Médecins" class="shadow-md">
+        <div class="flex items-center justify-between">
+          <p class="text-5xl font-bold">{{doctorCount}}</p>
+          <i class="pi pi-users text-4xl opacity-50"></i>
+        </div>
+        <p class="text-sm mt-2">Médecins des services</p>
+      </p-card>-->
+    </div>
+
+  <p-card header="Tous les utilisateurs" class="mb-4 shadow-lg">
+    <p-table 
+      [value]="users" 
+      [paginator]="true" 
+      [rows]="5"
+      [tableStyle]="{ 'min-width': '50rem' }"
+      styleClass="p-datatable-striped"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th *ngFor="let col of cols" [pSortableColumn]="col.field">
+            {{col.header}}
+          </th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-user>
+        <tr class="table-row hover:bg-gray-50">
+          <td class="p-3 border-b">{{ user.first_name }}</td>
+          <td class="p-3 border-b">{{ user.last_name }}</td>
+          <td class="p-3 border-b">{{ user.email }}</td>
+          <td class="p-3 border-b">{{ user.phoneNumber }}</td>
+          <td class="p-3 border-b">{{ user.matricule || 'N/A' }}</td>
+          <td class="p-3 border-b">{{ user.displayRole }}</td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [colSpan]="cols.length" class="text-center py-4 justify-center">
+            Aucune utilisateur
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+</div>

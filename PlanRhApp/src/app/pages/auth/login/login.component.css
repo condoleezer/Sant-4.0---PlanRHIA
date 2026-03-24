@@ -1,0 +1,43 @@
+:host {
+  display: block;
+}
+
+.bg-gray-100 {
+  background-color: #f3f4f6;
+}
+
+.shadow-lg {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.border-gray-300 {
+  border-color: #d1d5db;
+}
+
+.text-blue-800 {
+  color: #1e40af;
+}
+
+.text-blue-600 {
+  color: #2563eb;
+}
+
+.focus\:ring-blue-500:focus {
+  --tw-ring-color: #3b82f6;
+}
+
+.hover\:bg-blue-700:hover {
+  background-color: #1d4ed8;
+}
+
+.hover\:text-blue-800:hover {
+  color: #1e40af;
+}
+
+.transition {
+  transition-property: all;
+}
+
+.duration-200 {
+  transition-duration: 200ms;
+}

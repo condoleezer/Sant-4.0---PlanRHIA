@@ -1,0 +1,265 @@
+<div class="dashboard-container p-4 md:p-6">
+  <p-toast></p-toast>
+  <p class="dashboard-title text-2xl md:text-3xl font-bold mb-6">
+    Gestion des Absences
+  </p>
+
+  <p-tabView (onChange)="onTabChange($event)">
+    <p-tabPanel>
+      <ng-template pTemplate="header">
+        <button class="tab-button bg-blue-500 text-white hover:bg-blue-600">
+          Absences signalées
+        </button>
+      </ng-template>
+      <div class="flex flex-col md:flex-row gap-4 mb-6">
+        <div class="flex-1">
+          <span class="p-input-icon-left w-full">
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="searchTerm1"
+              (input)="applyFilter()"
+              placeholder="Rechercher par nom, remplaçant, dates, heure ou service..."
+              class="w-full border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors h-11"
+            />
+          </span>
+        </div>
+        <div>
+          <p-select
+            [options]="statusOptions"
+            [(ngModel)]="selectedStatus1"
+            (onChange)="applyFilter()"
+            placeholder="Filtrer par statut"
+            class="w-full md:w-56 uniform-input"
+          />
+        </div>
+      </div>
+      <div
+        class="table-container overflow-x-auto"
+        style="border-radius: 0.75rem"
+      >
+        <p-table
+          [value]="filteredAbsences"
+          [paginator]="true"
+          [rows]="rows1"
+          [totalRecords]="totalRecords1"
+          [lazy]="false"
+          (onPage)="onPageChange1($event)"
+          [tableStyle]="{ 'min-width': '50rem' }"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th
+                *ngFor="let col of cols"
+                class="table-header p-3 text-left bg-gray-100 font-medium"
+                style="
+                  background-color: #e5e7eb;
+                  padding: 1rem;
+                  font-weight: 600;
+                  color: #374151;
+                "
+              >
+                {{ col.header }}
+              </th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-absence>
+            <tr class="table-row hover:bg-gray-50">
+              <td class="p-3 border-b">{{ absence.code }}</td>
+              <td class="p-3 border-b">{{ absence.staffName }}</td>
+              <td class="p-3 border-b">{{ absence.startDate }}</td>
+              <td class="p-3 border-b">{{ absence.endDate }}</td>
+              <td class="p-3 border-b">{{ absence.heure }}</td>
+              <td class="p-3 border-b">
+                <ng-container
+                  *ngIf="
+                    absence.replacementName !== 'Non spécifié';
+                    else noReplacement
+                  "
+                >
+                  {{ absence.replacementName }}
+                </ng-container>
+                <ng-template #noReplacement>
+                  <p-badge value="Non spécifié" severity="danger"></p-badge>
+                </ng-template>
+              </td>
+              <td class="p-3 border-b">
+                <p-badge
+                  [value]="absence.status"
+                  [severity]="getBadgeSeverity(absence.status)"
+                  styleClass="p-mr-2"
+                ></p-badge>
+              </td>
+              <td class="p-3 border-b">
+                <div class="flex w-full gap-2 items-center">
+                  <i
+                    class="pi pi-info-circle cursor-pointer text-blue-500 hover:text-blue-700 mr-2"
+                    (click)="viewDetails(absence.id)"
+                    title="Voir les détails"
+                  ></i>
+                  <button
+                    *ngIf="
+                      absence.status === 'Accepté par le remplaçant' ||
+                      absence.status === 'En cours'
+                    "
+                    class="action-square mr-1"
+                    [ngClass]="{
+                      'bg-green-100 text-green-500 hover:bg-green-200 hover:text-green-700':
+                        absence.status === 'Accepté par le remplaçant' ||
+                        absence.status === 'En cours',
+                      'bg-gray-100 text-gray-400 cursor-not-allowed':
+                        absence.status !== 'Accepté par le remplaçant' &&
+                        absence.status !== 'En cours'
+                    }"
+                    title="Valider"
+                    (click)="approveAbsence(absence.id)"
+                  >
+                    <i class="pi pi-check"></i>
+                  </button>
+                  <button
+                    *ngIf="
+                      absence.status === 'Accepté par le remplaçant' ||
+                      absence.status === 'En cours'
+                    "
+                    class="action-square"
+                    [ngClass]="{
+                      'bg-red-100 text-red-500 hover:bg-red-200 hover:text-red-700':
+                        absence.status === 'Accepté par le remplaçant' ||
+                        absence.status === 'En cours',
+                      'bg-gray-100 text-gray-400 cursor-not-allowed':
+                        absence.status !== 'Accepté par le remplaçant' &&
+                        absence.status !== 'En cours'
+                    }"
+                    title="Refuser"
+                    (click)="refuseAbsence(absence.id)"
+                  >
+                    <i class="pi pi-times"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td
+                [colSpan]="cols.length"
+                class="text-center py-4 justify-center"
+              >
+                Aucune absence
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </p-tabPanel>
+
+    <p-tabPanel>
+      <ng-template pTemplate="header">
+        <button class="tab-button bg-blue-500 text-white hover:bg-blue-600">
+          Absences traitées
+        </button>
+      </ng-template>
+      <div class="flex flex-col md:flex-row gap-4 mb-6">
+        <div class="flex-1">
+          <span class="p-input-icon-left w-full">
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="searchTerm2"
+              (input)="applyFilter()"
+              placeholder="Rechercher par nom, remplaçant, dates, heure ou service..."
+              class="w-full border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors h-11"
+            />
+          </span>
+        </div>
+        <div>
+          <p-select
+            [options]="statusOptions"
+            [(ngModel)]="selectedStatus2"
+            (onChange)="applyFilter()"
+            placeholder="Filtrer par statut"
+            class="w-full md:w-56 uniform-input"
+          />
+        </div>
+      </div>
+      <div
+        class="table-container overflow-x-auto"
+        style="border-radius: 0.75rem"
+      >
+        <p-table
+          [value]="filteredAbsences2"
+          [paginator]="true"
+          [rows]="rows2"
+          [totalRecords]="totalRecords2"
+          [lazy]="false"
+          (onPage)="onPageChange2($event)"
+          [tableStyle]="{ 'min-width': '50rem' }"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th
+                *ngFor="let col of cols"
+                class="table-header p-3 text-left bg-gray-100 font-medium"
+                style="
+                  background-color: #e5e7eb;
+                  padding: 1rem;
+                  font-weight: 600;
+                  color: #374151;
+                "
+              >
+                {{ col.header }}
+              </th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-absence>
+            <tr class="table-row hover:bg-gray-50">
+              <td class="p-3 border-b">{{ absence.code }}</td>
+              <td class="p-3 border-b">{{ absence.staffName }}</td>
+              <td class="p-3 border-b">{{ absence.startDate }}</td>
+              <td class="p-3 border-b">{{ absence.endDate }}</td>
+              <td class="p-3 border-b">{{ absence.heure }}</td>
+              <td class="p-3 border-b">
+                <ng-container
+                  *ngIf="
+                    absence.replacementName !== 'Non spécifié';
+                    else noReplacement
+                  "
+                >
+                  {{ absence.replacementName }}
+                </ng-container>
+                <ng-template #noReplacement>
+                  <p-badge value="Non spécifié" severity="danger"></p-badge>
+                </ng-template>
+              </td>
+              <td class="p-3 border-b">
+                <p-badge
+                  [value]="absence.status"
+                  [severity]="getBadgeSeverity(absence.status)"
+                  styleClass="p-mr-2"
+                ></p-badge>
+              </td>
+              <td class="p-3 border-b">
+                <div class="flex w-full gap-2">
+                  <i
+                    class="pi pi-info-circle cursor-pointer text-gray-500 hover:text-gray-700"
+                    (click)="viewDetails(absence.id)"
+                  ></i>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td
+                [colSpan]="cols.length"
+                class="text-center py-4 justify-center"
+              >
+                Aucune absence
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </p-tabPanel>
+  </p-tabView>
+</div>

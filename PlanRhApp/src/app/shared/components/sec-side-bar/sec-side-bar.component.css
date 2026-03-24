@@ -1,0 +1,61 @@
+/* Sidebar principale */
+:host {
+  display: block;
+}
+
+/* Augmenter la largeur de la sidebar de 15% à 18% */
+:host ::ng-deep .flex.flex-col.h-full {
+  width: 18% !important;
+  min-width: 250px;
+}
+
+/* Améliorer l'espacement et éviter les chevauchements */
+:host ::ng-deep .flex-1 {
+  padding: 0.5rem 0;
+}
+
+/* Espacement entre les items */
+:host ::ng-deep app-side-bar-item,
+:host ::ng-deep app-side-bar-drop {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+/* Améliorer le style des items */
+:host ::ng-deep app-side-bar-item .px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.125rem;
+}
+
+/* Améliorer le style du menu déroulant */
+:host ::ng-deep app-side-bar-drop {
+  margin-bottom: 0.5rem;
+}
+
+:host ::ng-deep app-side-bar-drop .flex.flex-col {
+  padding: 0.5rem 0;
+}
+
+/* Section "Others" */
+:host ::ng-deep .border-t {
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+/* Améliorer le texte pour éviter les chevauchements */
+:host ::ng-deep p {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.4;
+  white-space: normal;
+}
+
+/* Logo */
+:host ::ng-deep .flex.items-center.justify-center {
+  padding: 1rem;
+  min-height: 80px;
+}
+

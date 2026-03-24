@@ -1,0 +1,20 @@
+small.text-red-500 {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    display: block;
+  }
+  
+  .p-iftalabel {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .p-inputgroup {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .uniform-input {
+    width: 100%; /* Largeur pleine pour tous les champs */
+    max-width: 300px; /* Limite maximale pour la cohérence */
+  }

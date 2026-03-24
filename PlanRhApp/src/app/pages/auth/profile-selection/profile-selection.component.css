@@ -1,0 +1,11 @@
+.bg-primary {
+    background-color: #f0f4f8; /* Couleur de fond ajustable */
+  }
+  
+  .bg-button {
+    background-color: #6b7280; /* Couleur du bouton ajustable */
+  }
+  
+  .bg-button:hover {
+    background-color: #0d5dce;
+  }

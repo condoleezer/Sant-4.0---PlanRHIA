@@ -1,0 +1,50 @@
+<div class="dashboard-container p-4 md:p-6">
+  <h1 class="dashboard-title text-2xl md:text-3xl font-bold mb-6">Horaires</h1>
+  
+  <div class="table-container overflow-x-auto" style="border-radius: 0.75rem;">
+    <p-table 
+      [value]="users" 
+      [tableStyle]="{ 'min-width': '100%' }"
+      [loading]="loading"
+      responsiveLayout="scroll"
+      class="w-full">
+      <ng-template pTemplate="header">
+        <tr>
+          <th *ngFor="let col of cols" class="p-3 text-left bg-gray-100 font-medium" style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">
+            {{ col.header }}
+          </th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-user>
+        <tr class="hover:bg-gray-50">
+          <td class="p-3 border-b">{{ user.id }}</td>
+          <td class="p-3 border-b">{{ user.first_name }} {{ user.last_name }}</td>
+          <td class="p-3 border-b">{{ user.email }}</td>
+          <td class="p-3 border-b">{{ user.phoneNumber }}</td>
+          <td class="p-3 border-b font-bold text-blue-600">
+            {{ user.totalHours || 'N/A' }}
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [colSpan]="cols.length" class="text-center py-4">
+            {{ loading ? 'Chargement...' : 'Aucun utilisateur trouvé' }}
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <div class="card flex justify-end mt-5">
+    <p-paginator 
+      (onPageChange)="onPageChange($event)" 
+      [first]="first" 
+      [rows]="rows" 
+      [totalRecords]="users.length" 
+      [rowsPerPageOptions]="[10, 20, 30]"
+    ></p-paginator>
+  </div>
+
+  <p-toast></p-toast>
+</div>

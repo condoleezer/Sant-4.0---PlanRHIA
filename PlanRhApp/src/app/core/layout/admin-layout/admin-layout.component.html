@@ -1,0 +1,15 @@
+<!-- TopBarComponent en haut de la page -->
+<div class="flex h-screen">
+  <!-- Sidebar for admin -->
+  <app-admin-side-bar *ngIf="isAdmin"></app-admin-side-bar>
+
+  <div class="flex-1 flex flex-col ml-[15%] bg-white">
+    <!-- Top bar below sidebar -->
+    <app-top-bar *ngIf="isAdmin" class="fixed top-0 left-[15%] right-0 z-10"></app-top-bar>
+
+    <!-- Main content -->
+    <div class="flex-1 p-4 h-fit bg-[#fcfbfb] mt-10">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>

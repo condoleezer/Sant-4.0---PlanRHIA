@@ -1,0 +1,64 @@
+<div class="dashboard-container md:p-6 p-4">
+  <p-toast></p-toast>
+  <p class="dashboard-title text-2xl md:text-3xl font-bold mb-6">GESTIONS DES COMPETENCES</p>
+  <div class="flex justify-end py-5">
+    <p-drawer [(visible)]="specialityVisible" position="right" [header]="isEditMode ? 'Modifier une compétence' : 'Ajouter une compétence'">
+      <form [formGroup]="specialityForm" class="flex flex-col gap-2">
+        <p-iftalabel>
+          <input pInputText id="name" autocomplete="off" formControlName="name" class="uniform-input"/>
+          <label for="name">Nom</label>
+        </p-iftalabel>
+        <p-button (click)="isEditMode ? updateSpeciality() : onSubmitSpeciality()" severity="contrast" class="mt-5">
+          {{ isEditMode ? 'Mettre à jour' : 'Ajouter une compétence' }}
+        </p-button>
+      </form>
+    </p-drawer>
+    <p-button (click)="showAddDialogSpeciality()" severity="contrast">Ajouter une compétence</p-button>
+  </div>
+
+  <div class="flex flex-col md:flex-row gap-4 mb-6">
+    <div class="flex-1">
+      <span class="p-input-icon-left w-full">
+        <input pInputText type="text" [(ngModel)]="searchTermSpeciality" (input)="applyFilter()" placeholder="Rechercher par matricule ou nom..." class="w-full border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors h-11">
+      </span>
+    </div>
+  </div>
+
+  <div class="table-container overflow-x-auto" style="border-radius: 0.75rem;">
+    <p-table [value]="filteredSpeciality" [paginator]="true" [rows]="rows" [totalRecords]="totalRecords" [lazy]="false" (onPage)="onPageChange($event)" [tableStyle]="{ 'min-width': '100%' }" responsiveLayout="scroll" class="w-full">
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Matricule</th>
+          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Nom</th>
+          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-speciality>
+        <tr class="table-row hover:bg-gray-50">
+          <td class="p-3 border-b">{{ speciality.matricule }}</td>
+          <td class="p-3 border-b">{{ speciality.name }}</td>
+          <td class="space-x-3">
+            <i class="pi pi-pencil cursor-pointer text-blue-500 hover:text-blue-700" (click)="showEditDialogSpeciality(speciality)"></i>
+            <i class="pi pi-trash cursor-pointer text-red-500 hover:text-red-700" (click)="confirmDeleteSpeciality(speciality)"></i>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [colSpan]="3" class="text-center py-4">Aucune spécialité</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-dialog header="Confirmation de suppression" [(visible)]="deleteSpecialityDialog" [style]="{width: '450px'}" [modal]="true">
+    <div class="confirmation-content">
+      <i class="pi pi-exclamation-triangle mr-3" style="font-size: 2rem"></i>
+      <span>Êtes-vous sûr de vouloir supprimer cette compétence?</span>
+    </div>
+    <ng-template pTemplate="footer">
+      <p-button icon="pi pi-times" (click)="deleteSpecialityDialog = false" label="Annuler" styleClass="p-button-secondary"></p-button>
+      <p-button icon="pi pi-check" (click)="deleteSpeciality()" label="Supprimer" styleClass="p-button-danger"></p-button>
+    </ng-template>
+  </p-dialog>
+</div>

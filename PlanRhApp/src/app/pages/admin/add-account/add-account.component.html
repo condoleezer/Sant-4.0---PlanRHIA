@@ -1,0 +1,157 @@
+<div class="dashboard-container">
+  <p-toast></p-toast>
+  <p class="dashboard-title">Créer un compte</p>
+  <p-breadcrumb class="max-w-full" [model]="items" />
+
+  <div class="add-account-container">
+    <p class="mb-6 text-gray-600">
+      Entrez les informations du compte que vous voulez créer. L'utilisateur
+      sera automatiquement associé à votre service.
+    </p>
+
+    <!-- Message d'information sur les restrictions -->
+    <div class="info-message">
+      <p>
+        <strong>Note :</strong> En tant que cadre, vous pouvez uniquement créer
+        des comptes pour les rôles "Agent de santé" et "Vacataire" dans votre
+        service.
+      </p>
+    </div>
+
+    <form [formGroup]="adminForm" class="account-form" (ngSubmit)="submit()">
+      <!-- Prénom -->
+      <div class="form-group">
+        <label for="first_name">Prénom<span class="required">*</span></label>
+        <input
+          pInputText
+          id="first_name"
+          formControlName="first_name"
+          placeholder="Entrez le prénom"
+          class="uniform-input"
+          [class.ng-invalid]="isFieldInvalid('first_name')"
+        />
+        <small class="error-message" *ngIf="isFieldInvalid('first_name')">
+          {{ getFieldError("first_name") }}
+        </small>
+      </div>
+
+      <!-- Nom -->
+      <div class="form-group">
+        <label for="last_name">Nom<span class="required">*</span></label>
+        <input
+          pInputText
+          id="last_name"
+          formControlName="last_name"
+          placeholder="Entrez le nom"
+          class="uniform-input"
+          [class.ng-invalid]="isFieldInvalid('last_name')"
+        />
+        <small class="error-message" *ngIf="isFieldInvalid('last_name')">
+          {{ getFieldError("last_name") }}
+        </small>
+      </div>
+
+      <!-- Téléphone -->
+      <div class="form-group">
+        <label for="tel">Téléphone<span class="required">*</span></label>
+        <input
+          pInputText
+          id="tel"
+          formControlName="tel"
+          placeholder="Ex: 0612345678"
+          class="uniform-input"
+          [class.ng-invalid]="isFieldInvalid('tel')"
+        />
+        <small class="error-message" *ngIf="isFieldInvalid('tel')">
+          {{ getFieldError("tel") }}
+        </small>
+        <small class="help-text">Format: 10 chiffres</small>
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">Email<span class="required">*</span></label>
+        <input
+          pInputText
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="exemple@email.com"
+          class="uniform-input"
+          [class.ng-invalid]="isFieldInvalid('email')"
+        />
+        <small class="error-message" *ngIf="isFieldInvalid('email')">
+          {{ getFieldError("email") }}
+        </small>
+      </div>
+
+      <!-- Rôle -->
+      <div class="form-group">
+        <label for="role">Rôle<span class="required">*</span></label>
+        <p-select
+          id="role"
+          formControlName="role"
+          [options]="roles"
+          optionLabel="name"
+          optionValue="id"
+          placeholder="Sélectionnez un rôle"
+          class="uniform-input"
+          [class.ng-invalid]="isFieldInvalid('role')"
+        />
+        <small class="error-message" *ngIf="isFieldInvalid('role')">
+          {{ getFieldError("role") }}
+        </small>
+        <small class="help-text"
+          >Seuls les rôles "Agent de santé" et "Vacataire" sont
+          disponibles</small
+        >
+      </div>
+
+      <!-- Mot de passe -->
+      <div class="form-group">
+        <label for="password"
+          >Mot de passe<span class="required">*</span></label
+        >
+        <p-password
+          id="password"
+          formControlName="password"
+          [toggleMask]="true"
+          placeholder="Minimum 8 caractères"
+          class="uniform-input"
+          [class.ng-invalid]="isFieldInvalid('password')"
+        />
+        <small class="error-message" *ngIf="isFieldInvalid('password')">
+          {{ getFieldError("password") }}
+        </small>
+        <small class="help-text">Minimum 8 caractères</small>
+      </div>
+
+      <!-- Confirmation mot de passe -->
+      <div class="form-group">
+        <label for="re_password"
+          >Confirmer le mot de passe<span class="required">*</span></label
+        >
+        <p-password
+          id="re_password"
+          formControlName="re_password"
+          [toggleMask]="true"
+          placeholder="Répétez le mot de passe"
+          class="uniform-input"
+          [class.ng-invalid]="isFieldInvalid('re_password')"
+        />
+        <small class="error-message" *ngIf="isFieldInvalid('re_password')">
+          {{ getFieldError("re_password") }}
+        </small>
+      </div>
+
+      <!-- Bouton de soumission -->
+      <p-button
+        type="submit"
+        label="Créer le compte"
+        severity="contrast"
+        [disabled]="loading || adminForm.invalid"
+        [loading]="loading"
+      />
+    </form>
+  </div>
+</div>

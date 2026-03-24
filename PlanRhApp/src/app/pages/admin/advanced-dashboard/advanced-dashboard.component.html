@@ -1,0 +1,295 @@
+<div class="advanced-dashboard">
+  <!-- En-tête avec filtres -->
+  <div class="dashboard-header">
+    <h1>TABLEAU DE BORD AVANCÉ</h1>
+    <div class="dashboard-filters">
+      <p-dropdown
+        [options]="periodOptions"
+        [(ngModel)]="selectedPeriod"
+        (onChange)="onFilterChange()"
+        placeholder="Période"
+        class="filter-dropdown"
+      >
+      </p-dropdown>
+
+      <p-dropdown
+        [options]="serviceOptions"
+        [(ngModel)]="selectedService"
+        (onChange)="onFilterChange()"
+        placeholder="Service"
+        class="filter-dropdown"
+      >
+      </p-dropdown>
+
+      <p-calendar
+        [(ngModel)]="dateRange"
+        (onSelect)="onFilterChange()"
+        selectionMode="range"
+        placeholder="Période personnalisée"
+        class="filter-calendar"
+      >
+      </p-calendar>
+    </div>
+  </div>
+
+  <!-- Statistiques générales -->
+  <div class="stats-grid" *ngIf="!loading">
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="pi pi-bell"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number">{{ stats.totalAlerts }}</div>
+        <div class="stat-label">Alertes</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="pi pi-exclamation-triangle"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number">{{ stats.totalAnomalies }}</div>
+        <div class="stat-label">Anomalies</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="pi pi-calendar"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number">{{ stats.totalEvents }}</div>
+        <div class="stat-label">Événements</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="pi pi-users"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number">{{ stats.activeUsers }}</div>
+        <div class="stat-label">Utilisateurs actifs</div>
+      </div>
+    </div>
+
+    <div class="stat-card critical">
+      <div class="stat-icon">
+        <i class="pi pi-times-circle"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number">{{ stats.criticalIssues }}</div>
+        <div class="stat-label">Problèmes critiques</div>
+      </div>
+    </div>
+
+    <div class="stat-card success">
+      <div class="stat-icon">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number">{{ stats.resolvedIssues }}</div>
+        <div class="stat-label">Problèmes résolus</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skeleton pour le chargement -->
+  <div class="stats-grid" *ngIf="loading">
+    <div class="stat-card" *ngFor="let i of [1, 2, 3, 4, 5, 6]">
+      <p-skeleton height="60px"></p-skeleton>
+    </div>
+  </div>
+
+  <!-- Taux de résolution -->
+  <div class="resolution-rate" *ngIf="!loading">
+    <h3>Taux de résolution des problèmes</h3>
+    <div class="progress-container">
+      <p-progressBar
+        [value]="getResolutionRate()"
+        [showValue]="true"
+        styleClass="resolution-progress"
+      >
+      </p-progressBar>
+      <span class="progress-label"
+        >{{ getResolutionRate() }}% des problèmes résolus</span
+      >
+    </div>
+  </div>
+
+  <!-- Graphiques -->
+  <div class="charts-grid" *ngIf="!loading">
+    <div class="chart-card">
+      <h3>Alertes par statut</h3>
+      <div class="chart-container">
+        <p-chart
+          type="doughnut"
+          [data]="alertsChartData"
+          [options]="chartOptions"
+        ></p-chart>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Anomalies par sévérité</h3>
+      <div class="chart-container">
+        <p-chart
+          type="bar"
+          [data]="anomaliesChartData"
+          [options]="chartOptions"
+        ></p-chart>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Événements par type</h3>
+      <div class="chart-container">
+        <p-chart
+          type="pie"
+          [data]="eventsChartData"
+          [options]="chartOptions"
+        ></p-chart>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Répartition par service</h3>
+      <div class="chart-container">
+        <p-chart
+          type="doughnut"
+          [data]="serviceDistributionData"
+          [options]="chartOptions"
+        ></p-chart>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skeleton pour les graphiques -->
+  <div class="charts-grid" *ngIf="loading">
+    <div class="chart-card" *ngFor="let i of [1, 2, 3, 4]">
+      <p-skeleton height="300px"></p-skeleton>
+    </div>
+  </div>
+
+  <!-- Tableaux de données -->
+  <div class="tables-grid" *ngIf="!loading">
+    <!-- Top services -->
+    <div class="table-card">
+      <h3>Top 5 des services</h3>
+      <p-table [value]="topServices" styleClass="compact-table">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Service</th>
+            <th>Utilisateurs</th>
+            <th>Pourcentage</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-service>
+          <tr>
+            <td>{{ service.serviceId }}</td>
+            <td>{{ service.count }}</td>
+            <td>
+              <div class="percentage-bar">
+                <div
+                  class="percentage-fill"
+                  [style.width.%]="(service.count / stats.activeUsers) * 100"
+                ></div>
+                <span class="percentage-text">
+                  {{ round((service.count / stats.activeUsers) * 100) }}%
+                </span>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <!-- Alertes récentes -->
+    <div class="table-card">
+      <h3>Alertes récentes</h3>
+      <p-table [value]="recentAlerts" styleClass="compact-table">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Titre</th>
+            <th>Priorité</th>
+            <th>Statut</th>
+            <th>Date</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-alert>
+          <tr>
+            <td>
+              <div class="alert-title">{{ alert.title }}</div>
+              <div class="alert-description">
+                {{ alert.description | slice : 0 : 30 }}...
+              </div>
+            </td>
+            <td>
+              <p-tag
+                [value]="alert.priority"
+                [severity]="getPriority(alert.priority)"
+              >
+              </p-tag>
+            </td>
+            <td>
+              <p-tag
+                [value]="getStatusLabel(alert.status)"
+                [severity]="alert.status === 'resolved' ? 'success' : 'info'"
+              >
+              </p-tag>
+            </td>
+            <td>{{ formatDate(alert.created_at) }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <!-- Anomalies récentes -->
+    <div class="table-card">
+      <h3>Anomalies récentes</h3>
+      <p-table [value]="recentAnomalies" styleClass="compact-table">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Titre</th>
+            <th>Sévérité</th>
+            <th>Statut</th>
+            <th>Date</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-anomaly>
+          <tr>
+            <td>
+              <div class="anomaly-title">{{ anomaly.title }}</div>
+              <div class="anomaly-description">
+                {{ anomaly.description | slice : 0 : 30 }}...
+              </div>
+            </td>
+            <td>
+              <p-tag
+                [value]="getSeverityLabel(anomaly.severity)"
+                [severity]="getSeverity(anomaly.severity)"
+              >
+              </p-tag>
+            </td>
+            <td>
+              <p-tag
+                [value]="getStatusLabel(anomaly.status)"
+                [severity]="anomaly.status === 'resolved' ? 'success' : 'info'"
+              >
+              </p-tag>
+            </td>
+            <td>{{ formatDate(anomaly.detected_at) }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <!-- Skeleton pour les tableaux -->
+  <div class="tables-grid" *ngIf="loading">
+    <div class="table-card" *ngFor="let i of [1, 2, 3]">
+      <p-skeleton height="250px"></p-skeleton>
+    </div>
+  </div>
+</div>

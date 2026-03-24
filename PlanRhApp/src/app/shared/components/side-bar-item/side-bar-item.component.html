@@ -1,0 +1,16 @@
+<!--<a [href]="item.link" [ngClass]="{'text-white bg-button':isSelected(),'bg-white':!isSelected()}" class="font-semibold cursor-pointer hover:bg-button hover:text-white flex gap-3 text-sm items-center rounded-r-xl mb-3 mt-3 justify-start h-10 w-4/5 transition-colors duration-200">
+  <div [ngClass]="{'bg-white':isSelected()}" class="h-3 w-1 rounded-r-md"></div>
+  <span [class]="item.icon"></span>
+  <p class="hidden sm:block">{{ item.title }}</p>
+</a>-->
+<div class="px-4 py-2">
+  <a 
+    [routerLink]="item.link" 
+    routerLinkActive="text-blue-700"
+    [routerLinkActiveOptions]="{exact: item.link === '/cadre' || item.link === '/sec' ? false : true}"
+    class="font-semibold cursor-pointer flex gap-3 text-sm items-start justify-start min-h-12 w-full transition-colors duration-200 py-2 text-blue-500 hover:text-blue-700">
+    <span [class]="item.icon" style="flex-shrink: 0; margin-top: 0.125rem;"></span>
+    <p class="flex-1 break-words leading-tight">{{ item.title }}</p>
+  </a>
+</div>
+

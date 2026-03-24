@@ -1,0 +1,32 @@
+services:
+  # Backend API
+  - type: web
+    name: planrhia-backend
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./PlanRHAPI/Dockerfile
+    dockerContext: ./PlanRHAPI
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PORT
+        value: "3001"
+      - key: ENV
+        value: production
+      - key: PYTHONPATH
+        value: /app
+
+  # Frontend Angular
+  - type: web
+    name: planrhia-frontend
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./PlanRhApp/Dockerfile
+    dockerContext: ./PlanRhApp
+```
+
+---

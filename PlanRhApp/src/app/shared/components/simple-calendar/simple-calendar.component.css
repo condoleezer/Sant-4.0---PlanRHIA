@@ -1,0 +1,192 @@
+/* Calendrier simple pour les pages d'accueil */
+.simple-calendar {
+  width: 100%;
+  max-width: 100%;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Header avec navigation */
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: #065594;
+  color: white !important;
+}
+
+.nav-button {
+  background: transparent;
+  border: none;
+  color: white !important;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  font-weight: bold;
+}
+
+.nav-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.month-year {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+  flex: 1;
+  color: white !important;
+}
+
+/* Grille du calendrier */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: #e5e7eb;
+}
+
+/* En-têtes des jours */
+.day-header {
+  background: #f8fafc;
+  padding: 10px 5px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #374151 !important;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+/* Jours du calendrier */
+.calendar-day {
+  background: white;
+  padding: 8px 4px;
+  text-align: center;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  color: #1e293b !important;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.calendar-day:hover {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+  transform: scale(1.05);
+}
+
+.calendar-day.today {
+  font-weight: bold;
+  background: #dbeafe !important;
+  color: #065594 !important;
+  border: 2px solid #065594;
+  box-shadow: 0 2px 4px rgba(6, 85, 148, 0.2);
+}
+
+.calendar-day.other-month {
+  color: #9ca3af !important;
+  background: #f9fafb;
+  opacity: 0.6;
+}
+
+.calendar-day.other-month:hover {
+  background: #f3f4f6;
+  opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .calendar-header {
+    padding: 12px 15px;
+  }
+  
+  .month-year {
+    font-size: 1rem;
+    color: white !important;
+  }
+  
+  .nav-button {
+    font-size: 1.3rem;
+    padding: 4px 8px;
+    color: white !important;
+  }
+  
+  .day-header {
+    padding: 8px 3px;
+    font-size: 0.8rem;
+    color: #374151 !important;
+  }
+  
+  .calendar-day {
+    min-height: 35px;
+    padding: 6px 3px;
+    font-size: 0.85rem;
+    color: #1e293b !important;
+  }
+
+  .calendar-day.today {
+    color: #065594 !important;
+  }
+
+  .calendar-day.other-month {
+    color: #9ca3af !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .calendar-header {
+    padding: 10px 12px;
+  }
+  
+  .month-year {
+    font-size: 0.9rem;
+    color: white !important;
+  }
+  
+  .nav-button {
+    font-size: 1.2rem;
+    color: white !important;
+  }
+  
+  .day-header {
+    padding: 6px 2px;
+    font-size: 0.75rem;
+    color: #374151 !important;
+  }
+  
+  .calendar-day {
+    min-height: 30px;
+    padding: 4px 2px;
+    font-size: 0.8rem;
+    color: #1e293b !important;
+  }
+
+  .calendar-day.today {
+    color: #065594 !important;
+  }
+
+  .calendar-day.other-month {
+    color: #9ca3af !important;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+

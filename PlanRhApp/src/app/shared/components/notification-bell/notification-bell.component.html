@@ -1,0 +1,157 @@
+<div class="notification-bell-container">
+  <!-- Bouton de notification avec badge -->
+  <button
+    pButton
+    type="button"
+    icon="pi pi-bell"
+    class="notification-button"
+    (click)="notificationPanel.toggle($event)"
+    pTooltip="Notifications"
+    tooltipPosition="bottom"
+  >
+    <!-- Badge pour les notifications non lues -->
+    <p-badge
+      *ngIf="stats.unread > 0"
+      [value]="stats.unread > 99 ? '99+' : stats.unread.toString()"
+      [severity]="stats.critical > 0 ? 'danger' : 'warn'"
+      class="notification-badge"
+    >
+    </p-badge>
+  </button>
+
+  <!-- Panel des notifications -->
+  <p-overlayPanel
+    #notificationPanel
+    [style]="{ width: '400px', maxHeight: '500px' }"
+    [showCloseIcon]="true"
+    [dismissable]="true"
+  >
+    <div class="notification-panel">
+      <!-- En-tête -->
+      <div class="notification-header">
+        <h3>Notifications</h3>
+        <div class="notification-actions">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-check"
+            class="p-button-sm p-button-text"
+            (click)="markAllAsRead()"
+            [disabled]="stats.unread === 0"
+            pTooltip="Marquer tout comme lu"
+          ></button>
+        </div>
+      </div>
+
+      <!-- Statistiques rapides -->
+      <div class="notification-stats" *ngIf="stats.total > 0">
+        <div class="stat-item">
+          <span class="stat-label">Total:</span>
+          <span class="stat-value">{{ stats.total }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Non lues:</span>
+          <span class="stat-value unread">{{ stats.unread }}</span>
+        </div>
+        <div class="stat-item" *ngIf="stats.critical > 0">
+          <span class="stat-label">Critiques:</span>
+          <span class="stat-value critical">{{ stats.critical }}</span>
+        </div>
+      </div>
+
+      <!-- Liste des notifications -->
+      <div class="notification-list">
+        <p-scrollPanel [style]="{ height: '300px' }">
+          <div *ngIf="notifications.length === 0" class="empty-notifications">
+            <i class="pi pi-bell-slash"></i>
+            <p>Aucune notification</p>
+          </div>
+
+          <div
+            *ngFor="
+              let notification of notifications;
+              trackBy: trackByNotificationId
+            "
+            class="notification-item"
+            [class.unread]="!notification.read"
+            [class.critical]="notification.priority === 'critical'"
+            (click)="onNotificationClick(notification)"
+          >
+            <div class="notification-content">
+              <div class="notification-icon">
+                <i
+                  [class]="getNotificationIcon(notification.type)"
+                  [class.text-danger]="notification.priority === 'critical'"
+                  [class.text-warning]="notification.priority === 'high'"
+                  [class.text-info]="notification.priority === 'medium'"
+                  [class.text-success]="notification.priority === 'low'"
+                >
+                </i>
+              </div>
+
+              <div class="notification-details">
+                <div class="notification-title">
+                  {{ notification.title }}
+                  <p-tag
+                    *ngIf="notification.priority === 'critical'"
+                    value="Critique"
+                    severity="danger"
+                    class="priority-tag"
+                  >
+                  </p-tag>
+                </div>
+
+                <div class="notification-message">
+                  {{ notification.message }}
+                </div>
+
+                <div class="notification-meta">
+                  <span class="notification-category">
+                    {{ getCategoryLabel(notification.category) }}
+                  </span>
+                  <span class="notification-time">
+                    {{ formatDate(notification.created_at) }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="notification-actions">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-times"
+                  class="p-button-sm p-button-text p-button-danger"
+                  (click)="deleteNotification(notification, $event)"
+                  pTooltip="Supprimer"
+                ></button>
+              </div>
+            </div>
+
+            <!-- Indicateur de lecture -->
+            <div class="unread-indicator" *ngIf="!notification.read"></div>
+          </div>
+        </p-scrollPanel>
+      </div>
+
+      <!-- Actions de simulation (pour les tests) -->
+      <div class="simulation-actions" *ngIf="false">
+        <button
+          pButton
+          type="button"
+          label="Simuler notification"
+          icon="pi pi-plus"
+          class="p-button-sm"
+          (click)="simulateNotification()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          label="Simuler critique"
+          icon="pi pi-exclamation-triangle"
+          class="p-button-sm p-button-danger"
+          (click)="simulateCriticalNotification()"
+        ></button>
+      </div>
+    </div>
+  </p-overlayPanel>
+</div>

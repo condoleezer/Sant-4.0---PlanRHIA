@@ -1,0 +1,94 @@
+<form
+  class="flex justify-center items-center min-h-screen bg-gray-100"
+  [formGroup]="loginForm"
+  (ngSubmit)="connect()"
+>
+  <div
+    class="flex flex-col justify-center items-center w-full max-w-md sm:max-w-lg md:max-w-xl h-auto min-h-[80vh] border border-gray-300 rounded-2xl bg-white shadow-lg"
+  >
+    <div
+      class="flex flex-col justify-center items-center w-full max-w-xs sm:max-w-sm md:max-w-md h-auto gap-4 p-3"
+    >
+      <!-- Logo avec taille ajustée -->
+      <div class="w-full flex justify-center">
+        <img
+          src="assets/logo/aparjon.png"
+          class="w-[100px] h-[100px] object-contain"
+          alt="Centre Hospitalier Arpajon Logo"
+        />
+      </div>
+
+      <!-- Divider avec image de profil au centre -->
+      <div class="relative w-full py-1">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-gray-300"></div>
+        </div>
+        <div class="relative flex justify-center">
+          <span class="bg-white px-4">
+            <img 
+              src="assets/images/profile-icon.png" 
+              class="w-16 h-16 rounded-full border-2 border-white shadow-md"
+              alt="Profile"
+            />
+          </span>
+        </div>
+      </div>
+
+      <!-- Texte de connexion -->
+      <div class="flex flex-col text-center gap-2">
+        <p class="font-bold text-2xl sm:text-3xl text-blue-800">Connexion</p>
+      </div>
+
+      <!-- Champs de formulaire -->
+      <div class="w-full mb-4">
+        <div class="grid w-full gap-3">
+          <label for="matricule" class="text-sm text-gray-700">Matricule</label>
+          <input
+            id="matricule"
+            class="w-full border border-gray-300 p-2 rounded-md font-extralight text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+            formControlName="matricule"
+            pInputText
+            placeholder="Votre matricule"
+            type="text"
+            autocomplete="username"
+          />
+          <label for="password" class="text-sm text-gray-700">Mot de passe</label>
+          <input
+            id="password"
+            class="w-full border border-gray-300 p-2 rounded-md font-extralight text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+            formControlName="password"
+            pInputText
+            placeholder="********"
+            type="password"
+            autocomplete="current-password"
+          />
+          <div class="flex items-center gap-2 mt-2">
+            <p-checkbox
+              formControlName="rememberMe"
+              binary="true"
+              inputId="rememberMe"
+            ></p-checkbox>
+            <label for="rememberMe" class="text-sm text-blue-600 cursor-pointer">Se souvenir de moi</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bouton de connexion -->
+      <button
+        class="w-full max-w-xs sm:max-w-sm font-light bg-blue-600 hover:bg-blue-700 p-2 h-12 text-white rounded-md transition duration-200"
+        type="submit"
+        [disabled]="loginForm.invalid"
+      >
+        <p class="text-sm sm:text-base">Se connecter</p>
+      </button>
+
+      <!-- Lien mot de passe oublié -->
+      <button
+        class="text-sm text-blue-600 hover:text-blue-800 underline"
+        (click)="forgot()"
+      >
+       Besoin d’aide pour vous connecter ?
+      </button>
+    </div>
+  </div>
+</form>

@@ -1,0 +1,12 @@
+.uniform-input {
+  width: 100%; /* Largeur pleine pour tous les champs */
+  max-width: 300px; /* Limite maximale pour la cohérence */
+}
+/* Style pour les boutons des onglets */
+.tab-button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  border: none;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}

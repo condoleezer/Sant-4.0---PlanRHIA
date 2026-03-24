@@ -1,0 +1,97 @@
+<div class="dashboard-container md:p-6 p-4">
+  <p-toast></p-toast>
+  <p class="dashboard-title text-2xl md:text-3xl font-bold mb-6">GESTIONS DES CODES D'ABSENCES</p>
+  <div class="flex justify-end py-5">
+    <p-drawer [(visible)]="codeVisible" position="right" [header]="isEditMode ? 'Modifier un code absence' : 'Ajouter un code absence'">
+      <form [formGroup]="codeForm" class="flex flex-col gap-2">
+        <p-iftalabel>
+          <input pInputText id="name" autocomplete="off" formControlName="name" class="uniform-input"/>
+          <label for="name">Nom</label>
+        </p-iftalabel>
+        <div class="h-5"></div>
+        <p-iftalabel>
+          <input pInputText id="name_abrege" autocomplete="off" formControlName="name_abrege" class="uniform-input"/>
+          <label for="name">Nom Abrégé</label>
+        </p-iftalabel>
+        <div class="h-5"></div>
+        <p-iftalabel>
+          <input pInputText id="regroupement" autocomplete="off" formControlName="regroupement" class="uniform-input"/>
+          <label for="name">Regroupement</label>
+        </p-iftalabel>
+        <div class="h-5"></div>
+        <p-iftalabel>
+          <p-datePicker [style]="{ width: '100%' }" [inputStyle]="{ width: '100%' }" formControlName="begin_date" dateFormat="dd/mm/yy" [showIcon]="true" class="uniform-input w-full" placeholder="Sélectionnez une date"></p-datePicker>
+          <label for="name">Date de début</label>
+        </p-iftalabel>
+        <div class="h-5"></div>
+        <p-iftalabel>
+          <p-datePicker [style]="{ width: '100%' }" [inputStyle]="{ width: '100%' }" formControlName="end_date" dateFormat="dd/mm/yy" [showIcon]="true" class="uniform-input w-full" placeholder="Sélectionnez une date"></p-datePicker>
+          <label for="name">Date de fin</label>
+        </p-iftalabel>
+        <div class="h-5"></div>
+        <p-iftalabel>
+          <textarea pInputText id="indicator" autocomplete="off" formControlName="indicator" class="uniform-input"></textarea>
+          <label for="name">Indicateur</label>
+        </p-iftalabel>
+        <p-button (click)="isEditMode ? updateCodes() : onSubmitCode()" severity="contrast" class="mt-5">
+          {{ isEditMode ? 'Mettre à jour' : 'Ajouter un code absence' }}
+        </p-button>
+      </form>
+    </p-drawer>
+    <div class="flex gap-2">
+      <p-button (click)="syncCodesFromPlannings()" severity="secondary" icon="pi pi-sync" label="Synchroniser depuis plannings"></p-button>
+      <p-button (click)="showAddDialogCode()" severity="contrast">Ajouter un code d'absence</p-button>
+    </div>
+  </div>
+
+  <div class="flex flex-col md:flex-row gap-4 mb-6">
+    <div class="flex-1">
+      <span class="p-input-icon-left w-full">
+        <input pInputText type="text" [(ngModel)]="searchTermCode" (input)="applyFilter()" placeholder="Rechercher par nom, nom abrégé, regroupement..." class="w-full border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors h-11">
+      </span>
+    </div>
+  </div>
+
+  <div class="table-container overflow-x-auto" style="border-radius: 0.75rem;">
+    <p-table [value]="filteredCode" [paginator]="true" [rows]="rows" [totalRecords]="totalRecords" [lazy]="false" (onPage)="onPageChange($event)" [tableStyle]="{ 'min-width': '100%' }" responsiveLayout="scroll" class="w-full">
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Nom abrégé</th>
+          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Nom</th>
+          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Regroupement</th>
+          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Date de début</th>
+          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Date de fin</th>
+          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-code>
+        <tr class="table-row hover:bg-gray-50">
+          <td class="p-3 border-b">{{ code.name_abrege }}</td>
+          <td class="p-3 border-b">{{ code.name }}</td>
+          <td class="p-3 border-b">{{ code.regroupement }}</td>
+          <td class="p-3 border-b">{{ formatDate(code.begin_date) }}</td>
+          <td class="p-3 border-b">{{ formatDate(code.end_date) }}</td>
+          <td class="space-x-3">
+            <i class="pi pi-pencil cursor-pointer text-blue-500 hover:text-blue-700" (click)="showEditDialogCode(code)"></i>
+            <i class="pi pi-trash cursor-pointer text-red-500 hover:text-red-700" (click)="confirmDeleteCode(code)"></i>
+          </td>
+        </tr>
+      </ng-template><ng-template pTemplate="emptymessage">
+        <tr>
+          <td [colSpan]="6" class="text-center py-4">Aucun code d'absence</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-dialog header="Confirmation de suppression" [(visible)]="deleteCodeDialog" [style]="{width: '450px'}" [modal]="true">
+    <div class="confirmation-content">
+      <i class="pi pi-exclamation-triangle mr-3" style="font-size: 2rem"></i>
+      <span>Êtes-vous sûr de vouloir supprimer ce code?</span>
+    </div>
+    <ng-template pTemplate="footer">
+      <p-button icon="pi pi-times" (click)="deleteCodeDialog = false" label="Annuler" styleClass="p-button-secondary"></p-button>
+      <p-button icon="pi pi-check" (click)="deleteCode()" label="Supprimer" styleClass="p-button-danger"></p-button>
+    </ng-template>
+  </p-dialog>
+</div>

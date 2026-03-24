@@ -1,0 +1,467 @@
+<div class="dashboard-container p-4 md:p-6">
+  <p-toast></p-toast>
+  
+  <!-- Header avec bouton retour -->
+  <div class="page-header mb-6">
+    <button class="back-button" (click)="goBack()">
+      <i class="pi pi-arrow-left"></i>
+      <span>Retour</span>
+    </button>
+    <h1 class="page-title">Traitement d'absence</h1>
+  </div>
+
+  <!-- Carte principale -->
+  <div class="main-card">
+    <!-- Section informations -->
+    <div class="info-section">
+      <div class="info-grid">
+        <!-- Colonne gauche - Informations demandeur -->
+        <div class="info-column">
+          <h3 class="info-column-title">
+            <i class="pi pi-user"></i>
+            Informations du demandeur
+          </h3>
+          <div class="info-item">
+            <span class="info-label">Nom complet</span>
+            <span class="info-value">{{ staff ? staff.first_name + ' ' + staff.last_name : 'Inconnu' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Service</span>
+            <span class="info-value">{{ service ? service.name : 'Non attribué' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Date de l'absence</span>
+            <span class="info-value highlight">{{ absence ? formatDate(absence.start_date) : 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Plage horaire</span>
+            <span class="info-value">{{ getTimeRange() }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Motif</span>
+            <span class="info-value">{{ absence?.reason || 'Non spécifié' }}</span>
+          </div>
+        </div>
+
+        <!-- Colonne droite - Informations absence -->
+        <div class="info-column">
+          <h3 class="info-column-title">
+            <i class="pi pi-calendar"></i>
+            Détails de l'absence
+          </h3>
+          <div class="info-item">
+            <span class="info-label">Remplaçant actuel</span>
+            <span class="info-value">{{ replacement ? replacement.first_name + ' ' + replacement.last_name : 'Aucun' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Durée</span>
+            <span class="info-value">{{ getAbsenceDuration() }} heure(s)</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Statut</span>
+            <p-badge
+              [value]="absence?.status || 'Non spécifié'"
+              [severity]="getBadgeSeverity(absence?.status || 'Non spécifié')"
+              class="status-badge"
+            ></p-badge>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section sélection remplaçant -->
+    <div class="replacement-section">
+      <h3 class="section-title">
+        <i class="pi pi-users"></i>
+        Assigner un remplaçant
+      </h3>
+      <div class="replacement-selector">
+        <label class="selector-label">Choisir un remplaçant</label>
+        <p-select
+          [options]="users"
+          [(ngModel)]="selectedUser"
+          (onChange)="onUserSelected($event)"
+          optionLabel="name"
+          placeholder="Sélectionner un remplaçant"
+          class="replacement-select"
+        >
+          <ng-template pTemplate="item" let-user>
+            <div [class]="user.isBlocked ? 'unavailable-option' : 'available-option'">
+              <i *ngIf="user.isBlocked" class="pi pi-times-circle" style="color: #e53e3e; margin-right: 6px;"></i>
+              <i *ngIf="!user.isBlocked" class="pi pi-check-circle" style="color: #38a169; margin-right: 6px;"></i>
+              {{ user.name }}
+            </div>
+          </ng-template>
+        </p-select>
+      </div>
+    </div>
+
+    <!-- Section actions -->
+    <div class="actions-section">
+      <button
+        class="action-button secondary"
+        (click)="checkAvailability()"
+        [disabled]="loadingSuggestions"
+      >
+        <i class="pi pi-search"></i>
+        Vérifier disponibilité
+      </button>
+      <div class="primary-actions">
+        <p-button
+          label="Appliquer"
+          icon="pi pi-check"
+          severity="info"
+          [style]="{'background-color': '#065594', 'border-color': '#065594'}"
+          (click)="approveAbsence()"
+          class="action-btn-primary"
+        />
+        <p-button
+          label="Refuser"
+          icon="pi pi-times"
+          severity="danger"
+          (click)="refuseAbsence()"
+          class="action-btn-danger"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading spinner pour suggestions IA -->
+  <div class="ai-loading-section" *ngIf="loadingSuggestions">
+    <p-progressSpinner></p-progressSpinner>
+    <p>Analyse en cours par le système expert...</p>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- CAS 1 : Agent BLOQUÉ sélectionné                                 -->
+  <!-- ================================================================ -->
+  <div class="ai-suggestions-section" *ngIf="selectedUserBlocked && !loadingSuggestions">
+    <div class="suggestions-list">
+      <div class="suggestion-card blocked-user-card">
+
+        <!-- En-tête rouge -->
+        <div class="suggestion-header blocked-header">
+          <span class="blocked-icon">
+            <i class="pi pi-times-circle"></i>
+          </span>
+          <span class="suggestion-name">{{ selectedUserBlocked.name }}</span>
+          <span class="blocked-badge">Non disponible</span>
+        </div>
+
+        <!-- Raison du blocage -->
+        <div class="blocked-body">
+          <div class="blocked-reason-block">
+            <h5><i class="pi pi-ban text-red-500"></i> Raison du blocage :</h5>
+            <p>{{ selectedUserBlocked.reason }}</p>
+          </div>
+
+          <!-- Règle de la charte -->
+          <div class="blocked-rule-block">
+            <h5><i class="pi pi-book text-red-400"></i> Règle de la Charte :</h5>
+            <p>{{ getRuleExplanation(selectedUserBlocked.rule) }}</p>
+            <span class="rule-badge" [ngClass]="getRuleSeverityClass(selectedUserBlocked.rule)">
+              {{ getRuleLabel(selectedUserBlocked.rule) }}
+            </span>
+          </div>
+
+          <!-- Meilleure alternative si disponible -->
+          <div class="best-alternative-block" *ngIf="selectedUserBlocked.topSuggestion">
+            <h5><i class="pi pi-star text-green-500"></i> Meilleure alternative disponible :</h5>
+            <div class="alternative-row">
+              <span class="alternative-name">{{ selectedUserBlocked.topSuggestion.name }}</span>
+              <span class="alternative-score">Score : {{ selectedUserBlocked.topSuggestion.score }}/100</span>
+              <p-button
+                label="Sélectionner cette alternative"
+                icon="pi pi-check"
+                size="small"
+                severity="success"
+                (onClick)="selectAISuggestion(selectedUserBlocked.topSuggestion)"
+              />
+            </div>
+          </div>
+
+          <p class="blocked-notice">
+            <i class="pi pi-info-circle"></i>
+            Cet agent ne peut pas être assigné en raison de conflits avec les règles légales de la charte de travail.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- CAS 2 & 3 : Agent DISPONIBLE sélectionné (avec ou sans avertissement) -->
+  <!-- ================================================================ -->
+  <div class="ai-suggestions-section" *ngIf="selectedUserEvaluation && !loadingSuggestions">
+    <div class="suggestions-list">
+      <div class="suggestion-card selected-user-card">
+
+        <div class="suggestion-header">
+          <span class="suggestion-rank">#{{ selectedUserRank }}</span>
+          <span class="suggestion-name">{{ selectedUserEvaluation.name }}</span>
+          <span class="suggestion-score">Score : {{ selectedUserEvaluation.score | number:'1.1-1' }}/100</span>
+        </div>
+
+        <!-- Avertissement si pas le #1 (CAS 2) -->
+        <div class="not-optimal-warning" *ngIf="selectedUserIsNotOptimal">
+          <i class="pi pi-exclamation-triangle"></i>
+          <span>
+            Cet agent est classé <strong>#{{ selectedUserIsNotOptimal.rank }}/{{ selectedUserIsNotOptimal.total }}</strong>.
+            La meilleure suggestion de l'IA est
+            <strong>{{ selectedUserIsNotOptimal.topSuggestion?.name }}</strong>
+            (Score : {{ selectedUserIsNotOptimal.topSuggestion?.score }}/100).
+          </span>
+          <p-button
+            label="Voir la meilleure suggestion"
+            icon="pi pi-star"
+            size="small"
+            [outlined]="true"
+            (onClick)="selectAISuggestion(selectedUserIsNotOptimal.topSuggestion)"
+          />
+        </div>
+
+        <!-- Badge "Meilleure suggestion" si CAS 3 -->
+        <div class="optimal-badge" *ngIf="!selectedUserIsNotOptimal">
+          <i class="pi pi-star-fill text-yellow-500"></i>
+          <span>Meilleure suggestion de l'IA</span>
+        </div>
+
+        <!-- Points forts et points d'attention -->
+        <div class="suggestion-reasons">
+          <div class="reasons-positive">
+            <h5><i class="pi pi-check-circle text-green-500"></i> Points forts :</h5>
+            <ul>
+              <li *ngFor="let reason of selectedUserEvaluation.reasons">{{ reason }}</li>
+            </ul>
+          </div>
+          <div *ngIf="selectedUserEvaluation.warnings && selectedUserEvaluation.warnings.length > 0" class="reasons-warnings">
+            <h5><i class="pi pi-exclamation-triangle text-orange-500"></i> Points d'attention :</h5>
+            <ul class="suggestion-warnings">
+              <li *ngFor="let warning of selectedUserEvaluation.warnings">{{ warning }}</li>
+            </ul>
+          </div>
+        </div>
+
+        <p-button
+          label="Sélectionner cet agent"
+          icon="pi pi-check"
+          size="small"
+          (onClick)="selectUserEvaluation()"
+          [outlined]="true"
+        />
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- Suggestions IA générales (quand aucun agent spécifique sélectionné) -->
+  <!-- ================================================================ -->
+  <div class="ai-suggestions-section" *ngIf="hasAISuggestions && !loadingSuggestions && !selectedUserEvaluation && !selectedUserBlocked">
+    <h3 class="section-title">
+      <i class="pi pi-sparkles"></i>
+      Suggestions IA / Système Expert
+    </h3>
+    
+    <div class="suggestions-list">
+      <div 
+        *ngFor="let suggestion of aiSuggestions; let i = index" 
+        class="suggestion-card"
+        [class.top-suggestion]="i === 0"
+      >
+        <div class="suggestion-header">
+          <span class="suggestion-rank">#{{ i + 1 }}</span>
+          <span class="suggestion-name">{{ suggestion.name }}</span>
+          <span class="suggestion-score">Score: {{ suggestion.score | number:'1.1-1' }}</span>
+        </div>
+        <div class="suggestion-reasons">
+          <div class="reasons-positive">
+            <h5><i class="pi pi-check-circle text-green-500"></i> Points forts:</h5>
+            <ul>
+              <li *ngFor="let reason of suggestion.reasons">{{ reason }}</li>
+            </ul>
+          </div>
+          <div *ngIf="suggestion.warnings && suggestion.warnings.length > 0" class="reasons-warnings">
+            <h5><i class="pi pi-exclamation-triangle text-orange-500"></i> Points d'attention:</h5>
+            <ul class="suggestion-warnings">
+              <li *ngFor="let warning of suggestion.warnings">{{ warning }}</li>
+            </ul>
+          </div>
+        </div>
+        <p-button
+          label="Sélectionner"
+          icon="pi pi-check"
+          size="small"
+          (onClick)="selectAISuggestion(suggestion)"
+          [outlined]="true"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Section alternatives si aucune disponibilité -->
+  <div class="replacement-section alternative-section" *ngIf="noAvailabilityFound && !loadingSuggestions">
+    <h3 class="section-title">
+      <i class="pi pi-exclamation-triangle"></i>
+      Aucune disponibilité directe trouvée
+    </h3>
+    <div class="alternative-actions">
+      <p-button
+        label="Rechercher un intérimaire"
+        icon="pi pi-user-plus"
+        severity="warn"
+        (onClick)="requestInterim()"
+        class="alternative-btn"
+      />
+      <p-button
+        label="Rechercher via Hublo"
+        icon="pi pi-globe"
+        severity="info"
+        (onClick)="requestHublo()"
+        class="alternative-btn"
+      />
+    </div>
+  </div>
+
+  <!-- Chatbot IA - réservé aux questions libres uniquement -->
+  <div class="ai-chatbot-section" [class.expanded]="showChatbot">
+    <div class="chatbot-header" (click)="showChatbot = !showChatbot">
+      <i class="pi pi-comments"></i>
+      <span>Discuter avec l'IA</span>
+      <i class="pi" [class.pi-chevron-up]="showChatbot" [class.pi-chevron-down]="!showChatbot"></i>
+    </div>
+    
+    <div class="chatbot-content" *ngIf="showChatbot">
+      <div class="chat-messages">
+        <div 
+          *ngFor="let msg of chatMessages" 
+          class="chat-message"
+          [class.user-message]="msg.role === 'user'"
+          [class.assistant-message]="msg.role === 'assistant'"
+        >
+          <div class="message-content">{{ msg.content }}</div>
+          <div class="message-time">{{ msg.timestamp | date:'HH:mm' }}</div>
+        </div>
+      </div>
+      
+      <!-- Questions suggérées -->
+      <div class="quick-questions" *ngIf="chatMessages.length === 0">
+        <div class="quick-questions-title">Questions fréquentes :</div>
+        <div class="quick-questions-grid">
+          <button 
+            *ngFor="let question of quickQuestions" 
+            class="quick-question-btn"
+            (click)="askQuickQuestion(question)"
+          >
+            <i class="pi pi-question-circle"></i>
+            {{ question }}
+          </button>
+        </div>
+      </div>
+      
+      <div class="chat-input-container">
+        <input
+          type="text"
+          [(ngModel)]="chatInput"
+          (keyup.enter)="sendChatMessage()"
+          placeholder="Posez une question à l'IA..."
+          class="chat-input"
+        />
+        <p-button
+          icon="pi pi-send"
+          (onClick)="sendChatMessage()"
+          [disabled]="!chatInput.trim()"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Dialog Hublo avec iframe direct -->
+  <p-dialog
+    header="Interface Hublo"
+    [(visible)]="showHubloDialog"
+    [modal]="true"
+    [style]="{ width: '90vw', height: '90vh' }"
+    [closable]="true"
+    [draggable]="false"
+    [resizable]="true"
+    [styleClass]="'hublo-dialog'"
+  >
+    <div class="hublo-iframe-container">
+      <iframe
+        [src]="hubloUrl"
+        frameborder="0"
+        style="width: 100%; height: 80vh; border: none;"
+        allowfullscreen
+      ></iframe>
+    </div>
+  </p-dialog>
+
+  <p-dialog
+    header="Demande d'intérimaire"
+    [(visible)]="showInterimDialog"
+    [modal]="true"
+    [style]="{ width: '700px' }"
+    [closable]="true"
+    [draggable]="false"
+  >
+    <div class="interim-mail-form">
+      <div class="form-field">
+        <label>Agence</label>
+        <input pInputText [(ngModel)]="interimAgency" (ngModelChange)="buildInterimEmail()" />
+      </div>
+      <div class="form-field">
+        <label>Adresse de l'agence</label>
+        <textarea pInputTextarea rows="2" [(ngModel)]="interimAgencyAddress" (ngModelChange)="buildInterimEmail()"></textarea>
+      </div>
+      <div class="form-field">
+        <label>Téléphone agence</label>
+        <input pInputText [(ngModel)]="interimAgencyPhone" (ngModelChange)="buildInterimEmail()" />
+      </div>
+      <div class="form-field">
+        <label>Email agence</label>
+        <input pInputText [(ngModel)]="interimEmail" (ngModelChange)="buildInterimEmail()" />
+      </div>
+      <div class="form-field">
+        <label>Nom de l'intérimaire</label>
+        <input pInputText [(ngModel)]="interimName" (ngModelChange)="buildInterimEmail()" />
+      </div>
+      <div class="form-field">
+        <label>Qualification</label>
+        <input pInputText [(ngModel)]="interimQualification" (ngModelChange)="buildInterimEmail()" />
+      </div>
+      <div class="form-field">
+        <label>Date de diplôme</label>
+        <input pInputText [(ngModel)]="interimDiplomaDate" (ngModelChange)="buildInterimEmail()" placeholder="ex: 07/2021" />
+      </div>
+      <div class="form-field">
+        <label>Dates et horaires</label>
+        <input pInputText [(ngModel)]="interimSchedule" (ngModelChange)="buildInterimEmail()" placeholder="ex: 12/01/2026 de 13:45 à 21:15" />
+      </div>
+      <div class="form-field">
+        <label>Besoin</label>
+        <textarea pInputTextarea rows="3" [(ngModel)]="interimNeed" (ngModelChange)="buildInterimEmail()" placeholder="Besoin d'intérimaire pour ..."></textarea>
+      </div>
+      <div class="form-field">
+        <label>Prévisualisation du mail</label>
+        <textarea pInputTextarea rows="14" [value]="interimMailBody" readonly></textarea>
+      </div>
+      <div class="dialog-actions">
+        <p-button
+          label="Ouvrir le client mail"
+          icon="pi pi-send"
+          (onClick)="openInterimMail()"
+          [disabled]="!interimEmail || !interimNeed"
+        />
+        <p-button
+          label="Fermer"
+          icon="pi pi-times"
+          severity="secondary"
+          (onClick)="showInterimDialog = false"
+          [outlined]="true"
+        />
+      </div>
+    </div>
+  </p-dialog>
+</div>

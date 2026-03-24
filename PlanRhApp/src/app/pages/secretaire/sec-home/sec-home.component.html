@@ -1,0 +1,148 @@
+<div class="saphir-portal-container">
+  <!-- Header Section -->
+  <div class="portal-header">
+    <h1 class="portal-title">Accueil</h1>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="portal-content">
+    <!-- Left Column -->
+    <div class="left-column">
+      <!-- MA GESTION DES TEMPS Section -->
+      <div class="section-container">
+        <h2 class="section-title">MA GESTION DES TEMPS</h2>
+        <p class="section-subtitle">Bienvenue dans le portail SAPHIR</p>
+
+        <!-- Alerts Section - Improved -->
+        <div class="alerts-section">
+          <div class="alerts-header">
+            <span class="alerts-title">Alertes</span>
+            <span class="alerts-count" *ngIf="unresolvedAlertsCount > 0">{{ unresolvedAlertsCount }}</span>
+          </div>
+          
+          <!-- Multiple Alerts Display -->
+          <div class="alerts-list">
+            <div *ngIf="activeAlerts.length === 0" class="no-alerts">
+              <p>Aucune alerte en cours</p>
+            </div>
+            
+            <div *ngFor="let alert of activeAlerts" 
+                 class="alert-item" 
+                 [class.critical]="alert.priority === 'critical'"
+                 [class.high]="alert.priority === 'high'"
+                 [class.medium]="alert.priority === 'medium'">
+              <div class="alert-icon">
+                <i [class]="getAlertIcon(alert.type)"></i>
+              </div>
+              <div class="alert-content">
+                <div class="alert-title">{{ alert.title }}</div>
+                <div class="alert-description">{{ alert.description }}</div>
+                <div class="alert-meta">
+                  <span class="alert-type">{{ getAlertTypeLabel(alert.type) }}</span>
+                  <span class="alert-date">{{ formatDatePublic(alert.created_at) }}</span>
+                </div>
+              </div>
+              <div class="alert-actions">
+                <button pButton type="button" icon="pi pi-eye" class="p-button-sm p-button-text" 
+                        (click)="viewAlertDetails(alert)" pTooltip="Voir les détails"></button>
+                <button pButton type="button" icon="pi pi-check" class="p-button-sm p-button-success p-button-text" 
+                        (click)="resolveAlert(alert)" pTooltip="Résoudre"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GESTION PERSONNELLE Section -->
+      <div class="section-container">
+        <h2 class="section-title">GESTION PERSONNELLE</h2>
+
+        <!-- Note: Surveillance SAPHIR supprimée car elle ne faisait que simuler des données -->
+
+        <!-- Anomalies and Events Cards -->
+        <div class="personal-management-cards">
+          <div class="management-card anomalies-card">
+            <div class="card-number">{{ anomaliesCount }}</div>
+            <div class="card-text">anomalie(s) à résoudre</div>
+            <div class="card-details">
+              <div class="detail-item">• Erreurs: {{ errorsCount }}</div>
+              <div class="detail-item">
+                • Absences non justifiées: {{ unjustifiedAbsencesCount }}
+              </div>
+              <div class="detail-item">
+                • Dépassements horaires: {{ overtimeCount }}
+              </div>
+            </div>
+          </div>
+
+          <div class="management-card events-card">
+            <div class="card-number">{{ pendingEventsCount }}</div>
+            <div class="card-text">évènement(s) en attente</div>
+            <div class="card-details">
+              <div class="detail-item">
+                • Demandes équipe: {{ teamRequestsCount }}
+              </div>
+              <div class="detail-item">
+                • Autres: {{ pendingEventsCount - teamRequestsCount }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="right-column">
+      <!-- Mon calendrier Section -->
+      <div class="section-container">
+        <h2 class="section-title">Mon calendrier</h2>
+        <p class="calendar-date">au {{ currentDate }}</p>
+
+        <!-- Nearest HR Event -->
+        <div class="nearest-hr-event" *ngIf="nearestHREvent">
+          <div class="hr-event-title">Prochain événement RH:</div>
+          <div class="hr-event-details">
+            {{ nearestHREvent.title }} -
+            {{ formatEventDate(nearestHREvent.due_date) }}
+          </div>
+        </div>
+
+        <!-- Calendar placeholder -->
+        <div class="calendar-placeholder">
+          <app-simple-calendar></app-simple-calendar>
+        </div>
+      </div>
+
+      <!-- A venir Section -->
+      <div class="section-container">
+        <h2 class="section-title">À venir</h2>
+
+        <!-- Upcoming Events List -->
+        <div class="upcoming-events">
+          <div
+            *ngFor="let event of filteredUpcomingEvents"
+            class="upcoming-event"
+          >
+            <div class="event-code">
+              {{ event.metadata?.code_temps || "Code temps" }}
+            </div>
+            <div class="event-title">{{ event.title }}</div>
+            <div class="event-date" *ngIf="event.due_date">
+              {{ formatEventDate(event.due_date) }}
+            </div>
+          </div>
+
+          <!-- Default upcoming event if none exist -->
+          <div *ngIf="filteredUpcomingEvents.length === 0" class="upcoming-event">
+            <div class="event-code">Code temps du congé annuel</div>
+            <div class="event-title">Congé Annuel</div>
+            <div class="event-date">23/04/2025</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notifications -->
+  <p-toast></p-toast>
+</div>

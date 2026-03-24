@@ -1,0 +1,783 @@
+<div class="planification-container">
+
+  <!-- Header -->
+  <div class="planification-header">
+    <h1>SIMULATION DE PLANNING</h1>
+
+    <!-- Filtres temporels -->
+    <div class="filters-section">
+      <div class="filter-group">
+        <label>Année</label>
+        <p-dropdown
+          [(ngModel)]="filters.annee"
+          [options]="annees"
+          (onChange)="onFilterChange('annee')"
+          placeholder="Sélectionner l'année"
+          [showClear]="false"
+        >
+        </p-dropdown>
+      </div>
+
+      <div class="filter-group">
+        <label>Mois</label>
+        <p-dropdown
+          [(ngModel)]="filters.mois"
+          [options]="mois"
+          (onChange)="onFilterChange('mois')"
+          placeholder="Sélectionner le mois"
+          [showClear]="false"
+        >
+        </p-dropdown>
+      </div>
+
+      <!-- Filtre par rôle -->
+      <div class="filter-group">
+        <label>Rôle</label>
+        <p-dropdown
+          [(ngModel)]="filters.role"
+          [options]="roles"
+          optionLabel="label"
+          optionValue="value"
+          (onChange)="onFilterChange('role')"
+          placeholder="Tous les rôles"
+          [showClear]="true"
+        >
+        </p-dropdown>
+      </div>
+
+      <!-- 🔥 MODIFIÉ: Filtre par spécialité -->
+      <div class="filter-group">
+        <label>Spécialité</label>
+        <p-dropdown
+          [(ngModel)]="selectedSpecialityId"
+          [options]="specialities"
+          optionLabel="label"
+          optionValue="value"
+          (onChange)="onFilterChange('speciality')"
+          placeholder="Toutes les spécialités"
+          [showClear]="true"
+        >
+        </p-dropdown>
+      </div>
+    </div>
+
+    <!-- 🔥 NOUVEAU: Affichage du service -->
+    <div class="service-info">
+      <i class="pi pi-building"></i>
+      <span>{{ currentServiceName || 'Chargement...' }}</span>
+    </div>
+
+    <!-- Boutons d'action -->
+    <div class="action-buttons">
+
+      <p-button label="Gérer les Activités" icon="pi pi-cog"
+        (onClick)="openActiviteModal()" styleClass="btn-activities"></p-button>
+
+      <div class="plan-menu-wrapper">
+        <p-button label="Élaborer" icon="pi pi-sitemap" iconPos="left"
+          (onClick)="showPlanMenu = !showPlanMenu"
+          [class.active]="showPlanMenu" styleClass="btn-elaborate"></p-button>
+        <div class="plan-dropdown" *ngIf="showPlanMenu">
+          <button class="plan-option" (click)="openReferences()">
+            <i class="pi pi-file"></i>
+            <div class="plan-option-text">
+              <span class="plan-option-label">Références</span>
+              <span class="plan-option-desc">Cycle vierge</span>
+            </div>
+          </button>
+          <button class="plan-option" (click)="openSimulation()">
+            <i class="pi pi-calculator"></i>
+            <div class="plan-option-text">
+              <span class="plan-option-label">Simulation</span>
+              <span class="plan-option-desc">Service réduit</span>
+            </div>
+          </button>
+          <button class="plan-option" (click)="openDeclarer()">
+            <i class="pi pi-pencil"></i>
+            <div class="plan-option-text">
+              <span class="plan-option-label">Déclarer</span>
+              <span class="plan-option-desc">Modifier le planning</span>
+            </div>
+          </button>
+          <button class="plan-option" (click)="openPlanificateur()">
+            <i class="pi pi-calendar"></i>
+            <div class="plan-option-text">
+              <span class="plan-option-label">Planificateur</span>
+              <span class="plan-option-desc">Planning existant</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <p-button label="Semaine Type" icon="pi pi-table"
+        (onClick)="openImportWeeklyNeedsModal()" styleClass="btn-weekly"></p-button>
+
+      <p-button label="Importer Planning" icon="pi pi-file-excel"
+        (onClick)="fileInput.click()" styleClass="btn-import"></p-button>
+
+      <p-button icon="pi pi-question-circle"
+        (onClick)="showExcelFormatHelpModal = true"
+        styleClass="btn-help"
+        pTooltip="Format d'import" tooltipPosition="top"></p-button>
+
+      <input #fileInput type="file" accept=".xlsx,.xls"
+        (change)="onFileSelected($event)" style="display:none"/>
+
+      <p-button label="Exporter" icon="pi pi-download"
+        (onClick)="exportToExcel()" styleClass="btn-export"
+        [disabled]="loading || agents.length === 0 || planningCells.length === 0"></p-button>
+
+      <p-button label="Imprimer" icon="pi pi-print"
+        (onClick)="imprimerPlanning()" styleClass="btn-print"
+        [disabled]="loading || agents.length === 0"></p-button>
+
+    </div>
+  </div>
+
+  <!-- Navigation des semaines -->
+  <div class="week-navigation" *ngIf="!loading && agents.length > 0">
+    <button 
+      class="nav-button prev-button" 
+      (click)="previousWeeks()" 
+      [disabled]="!canGoPrevious()"
+      title="Semaine précédente">
+      ‹ Semaine précédente
+    </button>
+    
+    <div class="current-period">
+      <span *ngIf="planningWeeks.length > 0">
+        Semaine {{ planningWeeks[0].semaine }} - {{ filters.annee }}
+      </span>
+    </div>
+    
+    <button 
+      class="nav-button next-button" 
+      (click)="nextWeeks()" 
+      [disabled]="!canGoNext()"
+      title="Semaine suivante">
+      Semaine suivante ›
+    </button>
+  </div>
+
+  <!-- Tableau de planification -->
+  <div class="planning-table-container" *ngIf="!loading && agents.length > 0">
+    <table class="planning-table">
+      <!-- En-têtes -->
+      <thead>
+        <!-- 🔥 MODIFIÉ: Une seule ligne avec les dates complètes -->
+        <tr class="date-headers">
+          <th rowspan="2" class="agent-header">Nom</th>
+          <th rowspan="2" class="agent-header">Prénom</th>
+          <th rowspan="2" class="contract-header">Contrat hebdo</th>
+          <th *ngFor="let day of getAllDays()" class="date-header">
+            {{ getFullDateLabel(day) }}
+          </th>
+        </tr>
+
+        <!-- En-têtes des jours de la semaine -->
+        <tr class="day-headers">
+          <th *ngFor="let day of getAllDays()" class="day-header">
+            {{ getDayName(day) }}
+          </th>
+        </tr>
+      </thead>
+
+      <!-- Corps du tableau -->
+      <tbody>
+        <tr *ngFor="let agent of agents" class="agent-row">
+          <td class="agent-cell">{{ agent.nom }}</td>
+          <td class="agent-cell">{{ agent.prenom }}</td>
+          <td class="contract-cell">
+            {{ formatContractHours(agent.contrat_hebdo) }}
+          </td>
+
+          <!-- Cellules de planning -->
+          <td
+            *ngFor="let day of getAllDays()"
+            class="planning-cell"
+            [class.proposed]="getCellStatus(agent.id, day) === 'proposé' && !isCellPlanningRequest(agent.id, day)"
+            [class.planning-request]="isCellPlanningRequest(agent.id, day)"
+            [class.validated]="getCellStatus(agent.id, day) === 'validé'"
+            [class.refused]="getCellStatus(agent.id, day) === 'refusé'"
+            [class.editable]="editMode"
+            [class.empty]="getCellStatus(agent.id, day) === 'vide'"
+            [class.pending-highlight]="isCellHighlighted(agent.id, day)"
+            [style.background-color]="getCellCode(agent.id, day) ? getActivityColor(getCellCode(agent.id, day)) : null"
+            (click)="onCellClick(agent.id, day)"
+            [title]="getCellTooltip(agent.id, day)"
+          >
+            <!-- Contenu de la cellule -->
+            <div class="cell-content">
+              <span class="activity-code">{{
+                getCellCode(agent.id, day)
+              }}</span>
+
+              <!-- Boutons d'action pour les propositions -->
+              <div
+                *ngIf="getCellStatus(agent.id, day) === 'proposé'"
+                class="cell-actions"
+              >
+                <button
+                  class="action-btn validate-btn"
+                  (click)="validerProposition(agent.id, day, $event)"
+                  title="Valider cette proposition"
+                >
+                  <i class="pi pi-check"></i>
+                </button>
+                <button
+                  class="action-btn refuse-btn"
+                  (click)="refuserProposition(agent.id, day, $event)"
+                  title="Refuser cette proposition"
+                >
+                  <i class="pi pi-times"></i>
+                </button>
+              </div>
+
+              <!-- Indicateur de mode édition -->
+              <div
+                *ngIf="editMode && getCellStatus(agent.id, day) === 'vide'"
+                class="edit-indicator"
+              >
+                <i class="pi pi-pencil"></i>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+
+    </table>
+  </div>
+
+  <!-- Section Besoins / Écarts séparée -->
+  <div class="ecarts-section" *ngIf="!loading && weeklyNeedsData.length > 0 && agents.length > 0">
+    <h3 class="ecarts-title">
+      <i class="pi pi-chart-bar"></i> Suivi des effectifs par créneau
+    </h3>
+    <div class="ecarts-table-wrapper">
+      <table class="ecarts-table">
+        <thead>
+          <tr>
+            <th class="ecarts-shift-header">Créneau</th>
+            <th *ngFor="let day of getAllDays()" class="ecarts-day-header"
+                [class.weekend-col]="getDayName(day) === 'Sam' || getDayName(day) === 'Dim'">
+              <div class="ecarts-day-name">{{ getDayName(day) }}</div>
+              <div class="ecarts-day-num">{{ getFullDateLabel(day) }}</div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let shift of ['J02', 'J1', 'JB']">
+            <tr class="ecarts-shift-row">
+              <td class="ecarts-shift-label">
+                <span class="shift-badge" [class]="'shift-' + shift">{{ shift }}</span>
+              </td>
+              <td *ngFor="let day of getAllDays()" class="ecarts-day-cell"
+                  [class.weekend-col]="getDayName(day) === 'Sam' || getDayName(day) === 'Dim'">
+                <div class="ecarts-cell-content"
+                     [class.cell-deficit]="getEcartForDay(day, $any(shift)) < 0"
+                     [class.cell-ok]="getEcartForDay(day, $any(shift)) === 0 && getNeedForDay(day, $any(shift)) > 0"
+                     [class.cell-surplus]="getEcartForDay(day, $any(shift)) > 0"
+                     [class.cell-zero]="getNeedForDay(day, $any(shift)) === 0">
+                  <span class="cell-present">{{ getCountForDay(day, $any(shift)) }}</span>
+                  <span class="cell-sep">/</span>
+                  <span class="cell-need">{{ getNeedForDay(day, $any(shift)) }}</span>
+                  <span class="cell-ecart" *ngIf="getNeedForDay(day, $any(shift)) > 0">
+                    {{ getEcartForDay(day, $any(shift)) > 0 ? '+' : '' }}{{ getEcartForDay(day, $any(shift)) }}
+                  </span>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Message si aucun agent -->
+  <div class="no-data-container" *ngIf="!loading && agents.length === 0">
+    <div class="no-data-content">
+      <i class="pi pi-users" style="font-size: 3rem; color: #64748b"></i>
+      <h3>Aucun agent trouvé</h3>
+      <p>
+        Il n'y a actuellement aucun agent dans votre service pour cette période.
+      </p>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div class="loading-container" *ngIf="loading">
+    <p-progressSpinner></p-progressSpinner>
+  </div>
+
+  <!-- Légende -->
+  <div class="legend">
+    <h3 style="margin-bottom: 12px;">Légende</h3>
+    
+    <!-- Codes Jour -->
+    <div style="margin-bottom: 16px;">
+      <h4 style="font-weight: 600; margin-bottom: 8px;">Codes Jour</h4>
+      <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 20px; height: 20px; background-color: #3b82f6; border-radius: 4px;"></div>
+          <span><strong>J02:</strong> 6:45-18:45</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 20px; height: 20px; background-color: #10b981; border-radius: 4px;"></div>
+          <span><strong>J1:</strong> 7:15-19:45</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 20px; height: 20px; background-color: #f59e0b; border-radius: 4px;"></div>
+          <span><strong>JB:</strong> 8:00-20:00</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Codes Matin -->
+    <div style="margin-bottom: 16px;">
+      <h4 style="font-weight: 600; margin-bottom: 8px;">Codes Matin</h4>
+      <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 20px; height: 20px; background-color: #fbbf24; border-radius: 4px;"></div>
+          <span><strong>M06:</strong> 6:00-13:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 20px; height: 20px; background-color: #f97316; border-radius: 4px;"></div>
+          <span><strong>M13:</strong> 13:00-20:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 20px; height: 20px; background-color: #fb923c; border-radius: 4px;"></div>
+          <span><strong>M15:</strong> 15:00-22:30</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Codes Soir/Nuit -->
+    <div style="margin-bottom: 16px;">
+      <h4 style="font-weight: 600; margin-bottom: 8px;">Codes Soir/Nuit</h4>
+      <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 20px; height: 20px; background-color: #8b5cf6; border-radius: 4px;"></div>
+          <span><strong>S07:</strong> 7:00-19:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 20px; height: 20px; background-color: #6366f1; border-radius: 4px;"></div>
+          <span><strong>Nsr:</strong> Nuit</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 20px; height: 20px; background-color: #818cf8; border-radius: 4px;"></div>
+          <span><strong>Nsr3:</strong> Nuit 3</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 20px; height: 20px; background-color: #4f46e5; border-radius: 4px;"></div>
+          <span><strong>Nld:</strong> Nuit LD</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Repos et Congés -->
+    <div style="margin-bottom: 16px;">
+      <h4 style="font-weight: 600; margin-bottom: 8px;">Repos & Congés</h4>
+      <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 20px; height: 20px; background-color: #6b7280; border-radius: 4px;"></div>
+          <span><strong>RH:</strong> Repos</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 20px; height: 20px; background-color: #9ca3af; border-radius: 4px;"></div>
+          <span><strong>RJF:</strong> Repos férié</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 20px; height: 20px; background-color: #10b981; border-radius: 4px;"></div>
+          <span><strong>CA:</strong> Congé</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 20px; height: 20px; background-color: #14b8a6; border-radius: 4px;"></div>
+          <span><strong>RTT:</strong> RTT</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Heures et Formations -->
+    <div style="margin-bottom: 16px;">
+      <h4 style="font-weight: 600; margin-bottom: 8px;">Heures & Formations</h4>
+      <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 20px; height: 20px; background-color: #06b6d4; border-radius: 4px;"></div>
+          <span><strong>HS-1:</strong> Heures sup</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 20px; height: 20px; background-color: #ef4444; border-radius: 4px;"></div>
+          <span><strong>H-:</strong> Heures -</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 20px; height: 20px; background-color: #ec4899; border-radius: 4px;"></div>
+          <span><strong>FCJ:</strong> Formation</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 20px; height: 20px; background-color: #a855f7; border-radius: 4px;"></div>
+          <span><strong>TP:</strong> Temps partiel</span>
+        </div>
+      </div>
+    </div>
+    
+    <p style="margin-top: 16px; font-style: italic; color: #64748b;">
+      <strong>Remarque :</strong> D'autres codes peuvent être utilisés : CA (Congé Annuel), J' (Jour), EX (Exceptionnel), CSF (Congé Sans Solde), F (Formation), etc.
+    </p>
+  </div>
+</div>
+
+<!-- Modal d'édition manuelle -->
+<p-dialog
+  header="Saisie manuelle"
+  [(visible)]="showEditModal"
+  [modal]="true"
+  [style]="{ width: '400px' }"
+  [closable]="true"
+>
+  <div class="edit-form">
+    <div class="form-group">
+      <label>Agent :</label>
+      <p>{{ getSelectedAgentName() }}</p>
+    </div>
+
+    <div class="form-group">
+      <label>Date :</label>
+      <p>{{ selectedDate | date : "dd/MM/yyyy" }}</p>
+    </div>
+
+    <div class="form-group">
+      <label>Code d'activité :</label>
+      <p-dropdown
+        [(ngModel)]="selectedActivityCode"
+        [options]="activityCodes"
+        placeholder="Sélectionner un code ou supprimer"
+        [showClear]="true"
+        scrollHeight="200px"
+        [filter]="true"
+        filterPlaceholder="Rechercher un code..."
+      >
+      </p-dropdown>
+      <small class="help-text">Laissez vide ou sélectionnez "--- Supprimer ---" pour supprimer le code d'activité</small>
+    </div>
+
+    <div class="edit-actions">
+      <p-button label="Valider" (onClick)="saveManualEdit()" icon="pi pi-check">
+      </p-button>
+      <p-button
+        label="Annuler"
+        (onClick)="cancelManualEdit()"
+        [outlined]="true"
+        icon="pi pi-times"
+      >
+      </p-button>
+    </div>
+  </div>
+</p-dialog>
+
+<!-- Toast pour les messages -->
+<p-toast></p-toast>
+
+<!-- MODAL DE GESTION DES ACTIVITÉS -->
+<p-dialog header="Gestion des Codes d'Activité" [(visible)]="showActiviteModal" [modal]="true" [style]="{width: '50vw'}">
+    <div class="p-fluid grid">
+        <!-- Formulaire d'ajout/modification -->
+        <div class="field col-12">
+            <label for="code">Code (ex: REU)</label>
+            <input id="code" type="text" pInputText [(ngModel)]="activiteEnEdition.code">
+        </div>
+        <div class="field col-12">
+            <label for="libelle">Libellé (ex: Réunion)</label>
+            <input id="libelle" type="text" pInputText [(ngModel)]="activiteEnEdition.libelle">
+        </div>
+        <div class="field col-6">
+            <label for="heureDebut">Heure de début</label>
+            <p-calendar [(ngModel)]="activiteEnEdition.heureDebut" [timeOnly]="true" inputId="heureDebut" hourFormat="24"></p-calendar>
+        </div>
+        <div class="field col-6">
+            <label for="heureFin">Heure de fin</label>
+            <p-calendar [(ngModel)]="activiteEnEdition.heureFin" [timeOnly]="true" inputId="heureFin" hourFormat="24"></p-calendar>
+        </div>
+        <div class="col-12 mt-4">
+            <p-button 
+              [label]="activiteEnEdition._id ? 'Mettre à jour' : 'Ajouter'" 
+              icon="pi pi-check" 
+              (onClick)="saveActivite()"
+              [loading]="savingActivity">
+            </p-button>
+            <p-button 
+              label="Annuler" 
+              icon="pi pi-times" 
+              styleClass="p-button-secondary" 
+              (onClick)="resetActiviteForm()" 
+              class="ml-2">
+            </p-button>
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <!-- Liste des activités -->
+    <h3>Activités Personnalisées</h3>
+    <p-table [value]="activitesPersonnalisees" [tableStyle]="{ 'min-width': '50rem' }" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+            <tr>
+                <th>Code</th>
+                <th>Libellé</th>
+                <th>Plage Horaire</th>
+                <th style="width: 8rem">Actions</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-activite>
+            <tr>
+                <td>{{ activite.code }}</td>
+                <td>{{ activite.libelle }}</td>
+                <td>{{ activite.heureDebut }} - {{ activite.heureFin }}</td>
+                <td>
+                    <p-button icon="pi pi-pencil" styleClass="p-button-rounded p-button-info" (onClick)="editActivite(activite)" class="mr-2"></p-button>
+                    <p-button icon="pi pi-trash" styleClass="p-button-rounded p-button-danger" (onClick)="deleteActivite(activite)"></p-button>
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="4">Aucune activité personnalisée définie.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+</p-dialog>
+
+<!-- MODAL IMPORT SEMAINE TYPE -->
+<p-dialog header="Importer/Modifier Semaine Type" [(visible)]="showImportWeeklyNeedsModal" [modal]="true" [style]="{width: '60vw'}">
+    <div class="p-fluid">
+        <p *ngIf="!weeklyNeedsLoaded" class="p-text-center">
+            <i class="pi pi-spin pi-spinner"></i> Chargement...
+        </p>
+        <div *ngIf="weeklyNeedsLoaded">
+            <p-table [value]="weeklyNeedsData" [tableStyle]="{ 'min-width': '50rem' }">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Jour</th>
+                        <th>J02</th>
+                        <th>J1</th>
+                        <th>JB</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-need let-rowIndex="rowIndex">
+                    <tr>
+                        <td>{{ getDayNameFromIndex(need.day_of_week) }}</td>
+                        <td>
+                            <input type="number" pInputText [(ngModel)]="need.needs.J02" min="0" style="width: 80px">
+                        </td>
+                        <td>
+                            <input type="number" pInputText [(ngModel)]="need.needs.J1" min="0" style="width: 80px">
+                        </td>
+                        <td>
+                            <input type="number" pInputText [(ngModel)]="need.needs.JB" min="0" style="width: 80px">
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+            <div class="p-mt-4">
+                <p-button label="Sauvegarder" icon="pi pi-check" (onClick)="saveWeeklyNeeds()" [loading]="savingWeeklyNeeds"></p-button>
+                <p-button label="Annuler" icon="pi pi-times" styleClass="p-button-secondary" (onClick)="showImportWeeklyNeedsModal = false" class="p-ml-2"></p-button>
+            </div>
+        </div>
+    </div>
+</p-dialog>
+
+<p-confirmDialog header="Confirmation" icon="pi pi-exclamation-triangle"></p-confirmDialog>
+
+<!-- 🔥 NOUVEAU: MODAL D'AIDE POUR LE FORMAT EXCEL -->
+<p-dialog 
+  header="Format Excel pour l'import de planning" 
+  [(visible)]="showExcelFormatHelpModal" 
+  [modal]="true" 
+  [style]="{width: '720px'}"
+  [closable]="true"
+>
+  <div class="excel-help-content">
+
+    <!-- Aperçu du format -->
+    <div class="format-section">
+      <h4>Structure du fichier attendu</h4>
+      <div class="format-preview-wrapper">
+        <table class="format-preview-table">
+          <thead>
+            <tr class="row-meta">
+              <th class="col-meta"></th>
+              <th class="col-meta"></th>
+              <th class="col-nom">Nom</th>
+              <th class="col-prenom">Prénom</th>
+              <th class="col-mat">Matricule</th>
+              <th class="col-plan">Plan</th>
+              <th colspan="2" class="col-month">mars 2026</th>
+              <th colspan="2" class="col-month">mars 2026</th>
+              <th colspan="2" class="col-month">mars 2026</th>
+            </tr>
+            <tr class="row-sem">
+              <th class="col-meta"></th>
+              <th class="col-meta"></th>
+              <th class="col-nom"></th>
+              <th class="col-prenom"></th>
+              <th class="col-mat"></th>
+              <th class="col-plan"></th>
+              <th colspan="2">Sem.9</th>
+              <th colspan="2">Sem.9</th>
+              <th colspan="2">Sem.9</th>
+            </tr>
+            <tr class="row-day">
+              <th class="col-meta"></th>
+              <th class="col-meta"></th>
+              <th class="col-nom"></th>
+              <th class="col-prenom"></th>
+              <th class="col-mat"></th>
+              <th class="col-plan"></th>
+              <th class="col-day">dim.<br>1</th><th class="col-empty"></th>
+              <th class="col-day">lun.<br>2</th><th class="col-empty"></th>
+              <th class="col-day">mar.<br>3</th><th class="col-empty"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="row-empty"><td colspan="12"></td></tr>
+            <tr class="row-agent">
+              <td class="col-meta"></td>
+              <td class="col-meta"></td>
+              <td class="col-nom">DUPONT</td>
+              <td class="col-prenom">Marie</td>
+              <td class="col-mat">91000001</td>
+              <td class="col-plan">PPL</td>
+              <td class="col-code"></td><td class="col-empty"></td>
+              <td class="col-code"></td><td class="col-empty"></td>
+              <td class="col-code"></td><td class="col-empty"></td>
+            </tr>
+            <tr class="row-agent">
+              <td class="col-meta"></td>
+              <td class="col-meta"></td>
+              <td class="col-nom">MARTIN</td>
+              <td class="col-prenom">Jean</td>
+              <td class="col-mat">91000002</td>
+              <td class="col-plan">PPL</td>
+              <td class="col-code"></td><td class="col-empty"></td>
+              <td class="col-code"></td><td class="col-empty"></td>
+              <td class="col-code"></td><td class="col-empty"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="format-note">Les colonnes de codes sont en colonnes paires à partir de la 7e colonne. Les colonnes impaires intercalées sont vides (cellules fusionnées dans Excel).</p>
+    </div>
+
+    <!-- Codes acceptés -->
+    <div class="format-section">
+      <h4>Codes d'activité acceptés</h4>
+      <div class="activity-codes-grid">
+        <div><strong>J02, J1, JB</strong> — Journées</div>
+        <div><strong>M06, M13, M15</strong> — Matins</div>
+        <div><strong>S07, Nsr, Nsr3, Nld</strong> — Soirs/Nuits</div>
+        <div><strong>RH, RJF</strong> — Repos</div>
+        <div><strong>CA, RTT</strong> — Congés</div>
+        <div><strong>HS-1, H-, FCJ, TP</strong> — Autres</div>
+      </div>
+      <p style="margin-top:8px; font-style:italic; color:#64748b; font-size:0.85rem;">Le tiret <strong>-</strong> est ignoré à l'import.</p>
+    </div>
+
+    <!-- Avertissement -->
+    <div class="format-section warning-section">
+      <h4>Points importants</h4>
+      <ul>
+        <li>Les dates du fichier doivent correspondre à la <strong>semaine affichée</strong> — naviguez vers la bonne semaine avant d'importer</li>
+        <li>Le <strong>NOM</strong> (colonne 3) et le <strong>Prénom</strong> (colonne 4) doivent correspondre exactement aux agents dans le système</li>
+        <li>L'import ne modifie que les cellules dont la date est visible — le reste est ignoré</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button 
+      label="Télécharger le modèle vide"
+      icon="pi pi-download"
+      (onClick)="downloadExcelTemplate()"
+    ></p-button>
+    <p-button 
+      label="Fermer" 
+      icon="pi pi-times" 
+      (onClick)="showExcelFormatHelpModal = false"
+      styleClass="p-button-secondary"
+      [outlined]="true"
+    ></p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- MODAL SIMULATION SERVICE RÉDUIT -->
+<p-dialog 
+  header="Simulation — Service réduit" 
+  [(visible)]="showSimulationModal" 
+  [modal]="true" 
+  [style]="{width: '55vw'}"
+  [closable]="true"
+>
+  <div class="sim-modal-content">
+
+    <p class="sim-intro">
+      Sélectionnez les agents à inclure dans la simulation. Un planning sera généré uniquement pour eux en fonction des besoins de la semaine type. Les agents non sélectionnés auront des cases vides.
+    </p>
+
+    <!-- Barre sélection rapide -->
+    <div class="sim-select-bar">
+      <span class="sim-count">
+        {{ selectedAgentsForSim.size }} / {{ agents.length }} agent(s) sélectionné(s)
+      </span>
+      <div class="sim-select-actions">
+        <button class="sim-link-btn" (click)="selectAllAgents()">Tout sélectionner</button>
+        <span>·</span>
+        <button class="sim-link-btn" (click)="deselectAllAgents()">Tout désélectionner</button>
+      </div>
+    </div>
+
+    <!-- Liste agents avec checkboxes -->
+    <div class="sim-agents-list">
+      <div 
+        *ngFor="let agent of agents" 
+        class="sim-agent-row"
+        [class.sim-agent-selected]="selectedAgentsForSim.has(agent.id)"
+        (click)="toggleAgentForSim(agent.id)"
+      >
+        <div class="sim-checkbox">
+          <i class="pi" [class.pi-check-square]="selectedAgentsForSim.has(agent.id)" [class.pi-stop]="!selectedAgentsForSim.has(agent.id)"></i>
+        </div>
+        <div class="sim-agent-info">
+          <span class="sim-agent-name">{{ agent.nom }} {{ agent.prenom }}</span>
+          <span class="sim-agent-contrat">
+            {{ getAgentSpecialityLabel(agent) }} · {{ formatContractHours(agent.contrat_hebdo) }}h/sem
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Résumé besoins semaine -->
+    <div class="sim-needs-summary" *ngIf="weeklyNeedsData.length > 0">
+      <span class="sim-needs-label">Besoins semaine type :</span>
+      <span class="sim-needs-badge" *ngFor="let need of weeklyNeedsData.slice(0,1)">
+        J02: {{ need.needs.J02 }} · J1: {{ need.needs.J1 }} · JB: {{ need.needs.JB }}
+      </span>
+    </div>
+
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Lancer la simulation"
+      icon="pi pi-play"
+      (onClick)="lancerSimulationServiceReduit()"
+      [disabled]="selectedAgentsForSim.size === 0"
+    ></p-button>
+    <p-button
+      label="Annuler"
+      icon="pi pi-times"
+      [outlined]="true"
+      styleClass="p-button-secondary"
+      (onClick)="showSimulationModal = false"
+    ></p-button>
+  </ng-template>
+</p-dialog>

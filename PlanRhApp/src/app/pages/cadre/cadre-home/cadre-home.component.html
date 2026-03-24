@@ -1,0 +1,214 @@
+<div class="saphir-portal-container">
+  <!-- Header Section -->
+  <div class="portal-header">
+    <h1 class="portal-title">Accueil</h1>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="portal-content">
+    <!-- Left Column -->
+    <div class="left-column">
+      <!-- MA GESTION DES TEMPS Section -->
+      <div class="section-container">
+        <h2 class="section-title">MA GESTION DES TEMPS</h2>
+        <p class="section-subtitle">Bienvenue dans le portail SAPHIR</p>
+
+        <!-- Alerts Section - Improved -->
+        <div class="alerts-section">
+          <div class="alerts-header">
+            <span class="alerts-title">Alertes et notifications</span>
+            <span class="alerts-count" *ngIf="unresolvedAlertsCount + pendingPlanningRequests.length > 0">
+              {{ unresolvedAlertsCount + pendingPlanningRequests.length }}
+            </span>
+          </div>
+
+          <!-- Demandes de modification de planning en attente -->
+          <div *ngIf="pendingPlanningRequests.length > 0" class="planning-requests-section">
+            <div class="planning-requests-title">
+              <i class="pi pi-clock"></i>
+              Demandes de modification de planning ({{ pendingPlanningRequests.length }})
+            </div>
+            <div *ngFor="let req of pendingPlanningRequests" class="planning-request-item">
+              <div class="planning-request-info">
+                <span class="req-agent">{{ req.user_name }}</span>
+                <span class="req-date">{{ req.date }}</span>
+                <span class="req-code">→ <strong>{{ req.activity_code }}</strong></span>
+                <span class="req-comment" *ngIf="req.commentaire">« {{ req.commentaire }} »</span>
+              </div>
+              <div class="planning-request-actions">
+                <button class="req-btn req-validate" (click)="validatePlanningRequest(req)"
+                  [disabled]="validatingRequestId === req._id" title="Valider">
+                  <i class="pi pi-check"></i> Valider
+                </button>
+                <button class="req-btn req-refuse" (click)="refusePlanningRequest(req)"
+                  [disabled]="validatingRequestId === req._id" title="Refuser">
+                  <i class="pi pi-times"></i> Refuser
+                </button>
+                <button class="req-btn req-view" (click)="goToPlanningRequest(req)" title="Voir dans le planning">
+                  <i class="pi pi-eye"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Multiple Alerts Display -->
+          <div class="alerts-list">
+            <div *ngIf="activeAlerts.length === 0 && pendingPlanningRequests.length === 0" class="no-alerts">
+              <p>Aucune alerte en cours</p>
+            </div>
+            
+            <div *ngFor="let alert of activeAlerts" 
+                 class="alert-item" 
+                 [class.critical]="alert.priority === 'critical'"
+                 [class.high]="alert.priority === 'high'"
+                 [class.medium]="alert.priority === 'medium'">
+              <div class="alert-icon">
+                <i [class]="getAlertIcon(alert.type)"></i>
+              </div>
+              <div class="alert-content">
+                <div class="alert-title">{{ alert.title }}</div>
+                <div class="alert-description">{{ alert.description }}</div>
+                <div class="alert-meta">
+                  <span class="alert-type">{{ getAlertTypeLabel(alert.type) }}</span>
+                  <span class="alert-date">{{ formatDatePublic(alert.created_at) }}</span>
+                </div>
+              </div>
+              <div class="alert-actions">
+                <button pButton type="button" icon="pi pi-eye" class="p-button-sm p-button-text" 
+                        (click)="viewAlertDetails(alert)" pTooltip="Voir les détails"></button>
+                <button pButton type="button" icon="pi pi-check" class="p-button-sm p-button-success p-button-text" 
+                        (click)="resolveAlert(alert)" pTooltip="Résoudre"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ABSENCES DEMAIN Section -->
+      <div class="section-container" *ngIf="tomorrowAbsences.length > 0">
+        <h2 class="section-title">Absences prévues demain</h2>
+        
+        <div class="tomorrow-absences-table">
+          <div class="table-header">
+            <div class="col-staff">Agent</div>
+            <div class="col-type">Type d'absence</div>
+            <div class="col-replacement">Remplaçant</div>
+            <div class="col-status">Statut</div>
+            <div class="col-actions">Actions</div>
+          </div>
+          
+          <div *ngFor="let absence of tomorrowAbsences" class="table-row">
+            <div class="col-staff">
+              <div class="staff-name">{{ absence.staffName }}</div>
+            </div>
+            <div class="col-type">
+              <span class="absence-type">{{ absence.absenceType || 'Non spécifié' }}</span>
+            </div>
+            <div class="col-replacement">
+              <span class="replacement-name" *ngIf="absence.replacementName">{{ absence.replacementName }}</span>
+              <span class="no-replacement" *ngIf="!absence.replacementName">À assigner</span>
+            </div>
+            <div class="col-status">
+              <p-tag [value]="absence.status" [severity]="getBadgeSeverity(absence.status)"></p-tag>
+            </div>
+            <div class="col-actions">
+              <button pButton type="button" icon="pi pi-eye" class="p-button-sm p-button-text" 
+                      (click)="viewDetails(absence.id)" pTooltip="Voir les détails"></button>
+              <button pButton type="button" icon="pi pi-pencil" class="p-button-sm p-button-text" 
+                      (click)="editAbsence(absence.id)" pTooltip="Modifier"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GESTION PERSONNELLE Section -->
+      <div class="section-container">
+        <h2 class="section-title">GESTION PERSONNELLE</h2>
+
+        <!-- Anomalies and Events Cards -->
+        <div class="personal-management-cards">
+          <div class="management-card anomalies-card">
+            <div class="card-number">{{ anomaliesCount }}</div>
+            <div class="card-text">anomalie(s) à résoudre</div>
+            <div class="card-details">
+              <div class="detail-item">• Erreurs: {{ errorsCount }}</div>
+              <div class="detail-item">
+                • Absences non justifiées: {{ unjustifiedAbsencesCount }}
+              </div>
+              <div class="detail-item">
+                • Dépassements horaires: {{ overtimeCount }}
+              </div>
+            </div>
+          </div>
+
+          <div class="management-card events-card">
+            <div class="card-number">{{ pendingEventsCount }}</div>
+            <div class="card-text">évènement(s) en attente</div>
+            <div class="card-details">
+              <div class="detail-item">
+                • Demandes équipe: {{ teamRequestsCount }}
+              </div>
+              <div class="detail-item">
+                • Autres: {{ pendingEventsCount - teamRequestsCount }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="right-column">
+      <!-- Mon calendrier Section -->
+      <div class="section-container">
+        <h2 class="section-title">Mon calendrier</h2>
+        <p class="calendar-date">au {{ currentDate }}</p>
+
+        <!-- Nearest HR Event -->
+        <div class="nearest-hr-event" *ngIf="nearestHREvent">
+          <div class="hr-event-title">Prochain événement RH:</div>
+          <div class="hr-event-details">
+            {{ nearestHREvent.title }} -
+            {{ formatEventDate(nearestHREvent.due_date) }}
+          </div>
+        </div>
+
+        <!-- Calendar placeholder -->
+        <div class="calendar-placeholder">
+          <app-simple-calendar></app-simple-calendar>
+        </div>
+      </div>
+
+      <!-- A venir Section -->
+      <div class="section-container">
+        <h2 class="section-title">À venir</h2>
+
+        <!-- Upcoming Events List -->
+        <div class="upcoming-events">
+          <div
+            *ngFor="let event of filteredUpcomingEvents"
+            class="upcoming-event"
+          >
+            <div class="event-code">
+              {{ event.metadata?.code_temps || "Code temps" }}
+            </div>
+            <div class="event-title">{{ event.title }}</div>
+            <div class="event-date" *ngIf="event.due_date">
+              {{ formatEventDate(event.due_date) }}
+            </div>
+          </div>
+
+          <!-- Default upcoming event if none exist -->
+          <div *ngIf="filteredUpcomingEvents.length === 0" class="upcoming-event">
+            <div class="event-code">Code temps du congé annuel</div>
+            <div class="event-title">Congé Annuel</div>
+            <div class="event-date">23/04/2025</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notifications -->
+  <p-toast></p-toast>
+</div>

@@ -1,0 +1,92 @@
+<div class="dashboard-container p-4 md:p-6">
+  <p-toast></p-toast>
+  <h1 class="dashboard-title text-2xl md:text-3xl font-bold mb-6" style="color: #1f2937;">Calendrier des plannings</h1>
+  
+  <!-- Légende des codes de service -->
+  <div class="legend-container bg-white rounded-2xl p-4 mb-4 shadow-sm">
+    <h3 class="text-lg font-semibold mb-3 text-gray-800">Légende des Codes</h3>
+    <div class="legend-grid grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+      <!-- Codes jour -->
+      <div class="legend-item flex items-center gap-2">
+        <span class="color-box w-4 h-4 rounded" style="background: #3b82f6"></span>
+        <span class="text-sm text-gray-700"><strong>J02:</strong> 6:45-18:45</span>
+      </div>
+      <div class="legend-item flex items-center gap-2">
+        <span class="color-box w-4 h-4 rounded" style="background: #10b981"></span>
+        <span class="text-sm text-gray-700"><strong>J1:</strong> 7:15-19:45</span>
+      </div>
+      <div class="legend-item flex items-center gap-2">
+        <span class="color-box w-4 h-4 rounded" style="background: #f59e0b"></span>
+        <span class="text-sm text-gray-700"><strong>JB:</strong> 8:00-20:00</span>
+      </div>
+      <!-- Codes matin -->
+      <div class="legend-item flex items-center gap-2">
+        <span class="color-box w-4 h-4 rounded" style="background: #fbbf24"></span>
+        <span class="text-sm text-gray-700"><strong>M06:</strong> 6:00-13:30</span>
+      </div>
+      <div class="legend-item flex items-center gap-2">
+        <span class="color-box w-4 h-4 rounded" style="background: #f97316"></span>
+        <span class="text-sm text-gray-700"><strong>M13:</strong> 13:00-20:30</span>
+      </div>
+      <div class="legend-item flex items-center gap-2">
+        <span class="color-box w-4 h-4 rounded" style="background: #fb923c"></span>
+        <span class="text-sm text-gray-700"><strong>M15:</strong> 15:00-22:30</span>
+      </div>
+      <!-- Codes soir/nuit -->
+      <div class="legend-item flex items-center gap-2">
+        <span class="color-box w-4 h-4 rounded" style="background: #8b5cf6"></span>
+        <span class="text-sm text-gray-700"><strong>S07:</strong> 7:00-19:30</span>
+      </div>
+      <div class="legend-item flex items-center gap-2">
+        <span class="color-box w-4 h-4 rounded" style="background: #6366f1"></span>
+        <span class="text-sm text-gray-700"><strong>Nsr:</strong> Nuit</span>
+      </div>
+      <div class="legend-item flex items-center gap-2">
+        <span class="color-box w-4 h-4 rounded" style="background: #818cf8"></span>
+        <span class="text-sm text-gray-700"><strong>Nsr3:</strong> Nuit 3</span>
+      </div>
+      <div class="legend-item flex items-center gap-2">
+        <span class="color-box w-4 h-4 rounded" style="background: #4f46e5"></span>
+        <span class="text-sm text-gray-700"><strong>Nld:</strong> Nuit LD</span>
+      </div>
+      <!-- Repos et congés -->
+      <div class="legend-item flex items-center gap-2">
+        <span class="color-box w-4 h-4 rounded" style="background: #6b7280"></span>
+        <span class="text-sm text-gray-700"><strong>RH:</strong> Repos</span>
+      </div>
+      <div class="legend-item flex items-center gap-2">
+        <span class="color-box w-4 h-4 rounded" style="background: #9ca3af"></span>
+        <span class="text-sm text-gray-700"><strong>RJF:</strong> Repos férié</span>
+      </div>
+      <div class="legend-item flex items-center gap-2">
+        <span class="color-box w-4 h-4 rounded" style="background: #10b981"></span>
+        <span class="text-sm text-gray-700"><strong>CA:</strong> Congé</span>
+      </div>
+      <div class="legend-item flex items-center gap-2">
+        <span class="color-box w-4 h-4 rounded" style="background: #14b8a6"></span>
+        <span class="text-sm text-gray-700"><strong>RTT:</strong> RTT</span>
+      </div>
+      <!-- Heures et formations -->
+      <div class="legend-item flex items-center gap-2">
+        <span class="color-box w-4 h-4 rounded" style="background: #06b6d4"></span>
+        <span class="text-sm text-gray-700"><strong>HS-1:</strong> Heures sup</span>
+      </div>
+      <div class="legend-item flex items-center gap-2">
+        <span class="color-box w-4 h-4 rounded" style="background: #ef4444"></span>
+        <span class="text-sm text-gray-700"><strong>H-:</strong> Heures -</span>
+      </div>
+      <div class="legend-item flex items-center gap-2">
+        <span class="color-box w-4 h-4 rounded" style="background: #ec4899"></span>
+        <span class="text-sm text-gray-700"><strong>FCJ:</strong> Formation</span>
+      </div>
+      <div class="legend-item flex items-center gap-2">
+        <span class="color-box w-4 h-4 rounded" style="background: #a855f7"></span>
+        <span class="text-sm text-gray-700"><strong>TP:</strong> Temps partiel</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="bg-white rounded-3xl p-4 md:p-10">
+    <full-calendar [options]="calendarOptions"></full-calendar>
+  </div>
+</div>

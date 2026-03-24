@@ -1,0 +1,80 @@
+<div class="time-accounts-container">
+  <!-- Header -->
+  <div class="page-header">
+    <h1>MES COMPTES DE TEMPS</h1>
+    <div class="header-actions">
+      <div class="date-selector">
+        <label>Au</label>
+        <p-calendar
+          [(ngModel)]="referenceDate"
+          (onSelect)="onDateChange()"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          [maxDate]="maxDate"
+        ></p-calendar>
+      </div>
+      <p-button
+        label="Actualiser"
+        icon="pi pi-refresh"
+        (onClick)="onRefresh()"
+        [loading]="loading"
+        [disabled]="loading"
+      ></p-button>
+    </div>
+  </div>
+
+  <!-- Compteurs -->
+  <div class="counters-section" *ngIf="!loading && timeAccount">
+    <div class="counters-grid">
+      <div class="counter-card chs">
+        <div class="counter-label">CHS</div>
+        <div class="counter-value">{{ formatDays(timeAccount.chs_days) }}</div>
+        <div class="counter-description">Compte Heures Supplémentaires</div>
+      </div>
+
+      <div class="counter-card cfr">
+        <div class="counter-label">CFR</div>
+        <div class="counter-value">{{ formatDays(timeAccount.cfr_days) }}</div>
+        <div class="counter-description">Compte Fériés/Récupérations</div>
+      </div>
+
+      <div class="counter-card ca">
+        <div class="counter-label">CA</div>
+        <div class="counter-value">{{ formatDays(timeAccount.ca_days) }}</div>
+        <div class="counter-description">Congés Annuels</div>
+      </div>
+
+      <div class="counter-card rtt">
+        <div class="counter-label">RTT</div>
+        <div class="counter-value">{{ formatDays(timeAccount.rtt_days) }}</div>
+        <div class="counter-description">Réduction du Temps de Travail</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div class="loading-container" *ngIf="loading">
+    <p-progressSpinner></p-progressSpinner>
+    <p>Calcul des comptes de temps en cours...</p>
+  </div>
+
+  <!-- No data state -->
+  <div class="no-data-container" *ngIf="!loading && !timeAccount">
+    <div class="no-data-content">
+      <i class="pi pi-info-circle" style="font-size: 3rem; color: #64748b"></i>
+      <h3>Aucun compte de temps disponible</h3>
+      <p>Cliquez sur "Actualiser" pour calculer vos comptes de temps.</p>
+    </div>
+  </div>
+
+  <!-- Remarque -->
+  <div class="remark-section" *ngIf="!loading && timeAccount">
+    <p class="remark-text">
+      <strong>Remarque :</strong> On peut rajouter une jauge de temps pour chaque type de congés
+    </p>
+  </div>
+</div>
+
+<!-- Toast pour les messages -->
+<p-toast></p-toast>
+

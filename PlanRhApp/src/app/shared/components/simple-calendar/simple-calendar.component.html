@@ -1,0 +1,83 @@
+<div class="simple-calendar">
+  <!-- Header avec navigation -->
+  <div class="calendar-header">
+    <button
+      type="button"
+      class="nav-button"
+      (click)="previousMonth()"
+      aria-label="Mois précédent"
+    >
+      ‹
+    </button>
+    <h3 class="month-year">{{ currentMonth }}</h3>
+    <button
+      type="button"
+      class="nav-button"
+      (click)="nextMonth()"
+      aria-label="Mois suivant"
+    >
+      ›
+    </button>
+  </div>
+
+  <!-- Grille du calendrier -->
+  <div class="calendar-grid">
+    <!-- En-têtes des jours de la semaine -->
+    <div class="day-header" *ngFor="let day of weekDays">{{ day }}</div>
+
+    <!-- Jours du calendrier -->
+    <div
+      class="calendar-day"
+      *ngFor="let day of calendarDays"
+      [class.today]="isToday(day)"
+      [class.other-month]="!isCurrentMonth(day)"
+    >
+      {{ day.getDate() }}
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

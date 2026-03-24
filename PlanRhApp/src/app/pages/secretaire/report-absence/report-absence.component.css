@@ -1,0 +1,40 @@
+/* Style pour les boutons des onglets */
+.tab-button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  border: none;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+/* Conteneur du formulaire */
+.form-container {
+  max-width: 800px; /* Un peu plus large pour accommoder 2 colonnes */
+  margin: 0 auto;
+}
+
+/* Groupe de champs */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Label */
+.form-label {
+  font-weight: 500;
+  color: #374151; /* Gris foncé */
+}
+
+/* Bouton en bas à droite */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Styles appliqués globalement 
+.p-tabview {
+    /* Style du conteneur principal 
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}*/

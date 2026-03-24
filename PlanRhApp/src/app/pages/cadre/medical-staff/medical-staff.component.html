@@ -1,0 +1,295 @@
+<div class="dashboard-container p-4 md:p-6">
+  <p-toast></p-toast>
+  <p class="dashboard-title text-2xl md:text-3xl font-bold mb-6">Personnel</p>
+
+  <!-- Bouton Ajouter un compte -->
+  <div class="flex justify-end py-5">
+    <p-button (click)="navigateToAddAccount()" severity="contrast">Ajouter un compte</p-button>
+  </div>
+
+  <!-- Search and Filter -->
+  <div class="flex flex-col md:flex-row gap-4 mb-6">
+    <div class="flex-1">
+      <span class="p-input-icon-left w-full">
+        <input pInputText type="text" [(ngModel)]="searchTerm" 
+               (input)="applyFilter()" 
+               placeholder="Rechercher par nom, prénom, téléphone, email, rôle, service ou spécialité..."
+               class="w-full border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors h-11">
+      </span>
+    </div>
+    <div>
+      <p-select [options]="roleOptions" [(ngModel)]="selectedRole" (onChange)="applyFilter()"
+                placeholder="Filtrer par rôle" class="w-full md:w-56 uniform-input"/>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-container overflow-x-auto" style="border-radius: 0.75rem;">
+    <p-table [value]="filteredUsers" [paginator]="true" [rows]="rows" [totalRecords]="totalRecords" 
+             [lazy]="false" (onPage)="onPageChange($event)" [tableStyle]="{ 'min-width': '50rem' }">
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Nom</th>
+          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Prénom</th>
+          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Téléphone</th>
+          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Service</th>
+          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Spécialité</th>
+          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Jour de travail</th>
+          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Contrat</th>
+          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-user>
+        <tr class="table-row hover:bg-gray-50">
+          <td class="p-3 border-b">{{ user.first_name }}</td>
+          <td class="p-3 border-b">{{ user.last_name }}</td>
+          <td class="p-3 border-b">{{ user.phoneNumber }}</td>
+          <td class="p-3 border-b">{{ user.serviceName }}</td>
+          <td class="p-3 border-b">{{ user.specialityName }}</td>
+          <td class="p-3 border-b">
+            <span *ngFor="let day of getUserWorkDays(user)" class="inline-block w-6 h-6 text-center mx-1 rounded-full" [ngClass]="{'bg-blue-500 text-white': day.isWorking, 'bg-gray-300': !day.isWorking}">
+              {{ day.day }}
+            </span>
+          </td>
+          <td class="space-x-3">
+            <p-button label="Voir" severity="secondary" (click)="viewDetails(user)"></p-button>
+          </td>
+          <td class="space-x-3">
+            <i class="pi pi-pencil cursor-pointer text-blue-500 hover:text-blue-700" (click)="editUser(user)"></i>
+            <i class="pi pi-trash cursor-pointer text-red-500 hover:text-red-700" (click)="confirmDelete(user)"></i>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- Tiroir pour modifier -->
+  <p-drawer [visible]="drawerVisible()" (visibleChange)="drawerVisible.set($event)" position="right" header="Modifier ce compte">
+    <div class="flex flex-col gap-2" [formGroup]="userForm">
+      <p-iftalabel>
+        <input pInputText id="first_name" formControlName="first_name" autocomplete="off" class="uniform-input"/>
+        <label for="first_name">Nom *</label>
+        <small *ngIf="userForm.get('first_name')?.touched && userForm.get('first_name')?.invalid" class="text-red-500">
+          Le nom est requis (min. 3 caractères).
+        </small>
+      </p-iftalabel>
+      <div class="h-2"></div>
+
+      <p-iftalabel>
+        <input pInputText id="last_name" formControlName="last_name" autocomplete="off" class="uniform-input"/>
+        <label for="last_name">Prénom *</label>
+        <small *ngIf="userForm.get('last_name')?.touched && userForm.get('last_name')?.invalid" class="text-red-500">
+          Le prénom est requis (min. 3 caractères).
+        </small>
+      </p-iftalabel>
+      <div class="h-2"></div>
+
+      <p-iftalabel>
+        <input pInputText id="tel" formControlName="tel" autocomplete="off" class="uniform-input"/>
+        <label for="tel">Numéro *</label>
+        <small *ngIf="userForm.get('tel')?.touched && userForm.get('tel')?.invalid" class="text-red-500">
+          Numéro invalide (10 chiffres requis).
+        </small>
+      </p-iftalabel>
+      <div class="h-2"></div>
+
+      <p-iftalabel>
+        <input pInputText id="email" formControlName="email" autocomplete="off" class="uniform-input"/>
+        <label for="email">Email *</label>
+        <small *ngIf="userForm.get('email')?.touched && userForm.get('email')?.invalid" class="text-red-500">
+          Email invalide ou requis.
+        </small>
+      </p-iftalabel>
+      <div class="h-2"></div>
+
+      <p-iftalabel>
+        <p-select [options]="roles" id="role" optionLabel="name" placeholder="Sélectionner un rôle" class="w-full md:w-56" formControlName="role" class="uniform-input"/>
+        <label for="role">Rôle *</label>
+        <small *ngIf="userForm.get('role')?.touched && userForm.get('role')?.invalid" class="text-red-500">
+          Le rôle est requis.
+        </small>
+      </p-iftalabel>
+      <div class="h-2"></div>
+
+      <p-iftalabel>
+        <p-select [options]="services" id="service" optionLabel="name" optionValue="id" placeholder="Sélectionner un service" class="w-full md:w-56" formControlName="service" class="uniform-input"/>
+        <label for="service">Service</label>
+      </p-iftalabel>
+      <div class="h-2"></div>
+
+      <p-button label="Mettre à jour" severity="contrast" (click)="onSubmit()" [disabled]="loading() || userForm.invalid" />
+    </div>
+  </p-drawer>
+
+  <!-- Tiroir pour voir les détails -->
+  <p-drawer [visible]="detailsDrawerVisible()" (visibleChange)="detailsDrawerVisible.set($event)" position="right" header="Détails du profil">
+    <div class="flex flex-col gap-4" *ngIf="selectedUserForDetails">
+      <div>
+        <label class="font-medium">ID :</label>
+        <p>{{ selectedUserForDetails.id || selectedUserForDetails._id }}</p>
+      </div>
+      <div>
+        <label class="font-medium">Nom :</label>
+        <p>{{ selectedUserForDetails.first_name }}</p>
+      </div>
+      <div>
+        <label class="font-medium">Prénom :</label>
+        <p>{{ selectedUserForDetails.last_name }}</p>
+      </div>
+      <div>
+        <label class="font-medium">Email :</label>
+        <p>{{ selectedUserForDetails.email }}</p>
+      </div>
+      <div>
+        <label class="font-medium">Téléphone :</label>
+        <p>{{ selectedUserForDetails.phoneNumber }}</p>
+      </div>
+      <div>
+        <label class="font-medium">Rôle :</label>
+        <p>{{ getDisplayRole(selectedUserForDetails.role) }}</p>
+      </div>
+      <div>
+        <label class="font-medium">Service :</label>
+        <p>{{ selectedUserForDetails.serviceName || 'Non attribué' }}</p>
+      </div>
+      <div>
+        <label class="font-medium">Spécialité :</label>
+        <p>{{ selectedUserForDetails.specialityName || 'Non attribué' }}</p>
+      </div>
+      <div *ngIf="selectedContrat">
+        <h3 class="font-bold mt-4 mb-4">Détails du contrat :</h3>
+        <div>
+          <label class="font-medium mt-3 mb-4">Type de contrat :</label>
+          <p>{{ selectedContrat.contrat_type }}</p>
+        </div>
+        <div class="h-2"></div>
+        <div>
+          <label class="font-medium mt-3 mb-4">Période de travail :</label>
+          <p>{{ selectedContrat.working_period }}</p>
+        </div>
+        <div class="h-2"></div>
+        <div>
+          <label class="font-medium mt-3 mb-4">Heure de début :</label>
+          <p>{{ selectedContrat.start_time }}</p>
+        </div>
+        <div class="h-2"></div>
+        <div>
+          <label class="font-medium mt-3 mb-4">Heures de contrat/semaine :</label>
+          <p>{{ selectedContrat.contrat_hour_week }}</p>
+        </div>
+        <div class="h-2"></div>
+        <div>
+          <label class="font-medium mt-3 mb-4">Heures de contrat/jour :</label>
+          <p>{{ selectedContrat.contrat_hour_day }}</p>
+        </div>
+        <div class="h-2"></div>
+        <div>
+          <label class="font-medium mt-3 mb-4">Jours de travail :</label>
+          <div *ngFor="let workDay of selectedContrat.work_days">
+            <p>{{ workDay.day }}: {{ workDay.start_time }} - {{ workDay.end_time }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <p-button [label]="selectedContrat ? 'Modifier un contrat' : 'Ajouter un contrat'" severity="contrast" (click)="openContratDialog()" />
+        <p-button label="Fermer" severity="secondary" (click)="closeDetailsDrawer()" />
+      </div>
+    </div>
+  </p-drawer>
+
+  <!-- Dialog pour ajouter/modifier un contrat -->
+  <p-dialog [header]="isContratEditMode ? 'Modifier le contrat' : 'Ajouter un contrat'" [visible]="contratDialogVisible()" (visibleChange)="contratDialogVisible.set($event)" [modal]="true" [style]="{ width: '40rem' }" [draggable]="false">
+    <div class="flex flex-col gap-2" [formGroup]="contratForm">
+      <p-iftalabel>
+        <p-select [options]="contratTypes" id="contrat_type" placeholder="Sélectionner un type de contrat" class="w-full md:w-56" formControlName="contrat_type" class="uniform-input"/>
+        <label for="contrat_type">Type de contrat *</label>
+        <small *ngIf="contratForm.get('contrat_type')?.touched && contratForm.get('contrat_type')?.invalid" class="text-red-500">
+          Le type de contrat est requis.
+        </small>
+      </p-iftalabel>
+      <div class="h-2"></div>
+
+      <p-iftalabel>
+        <p-select [options]="working_period" id="working_period" placeholder="Sélectionner la période de travail" class="w-full md:w-56" formControlName="working_period" class="uniform-input"/>
+        <label for="working_period">Période de travail *</label>
+        <small *ngIf="contratForm.get('working_period')?.touched && contratForm.get('working_period')?.invalid" class="text-red-500">
+          La période de travail est requise.
+        </small>
+      </p-iftalabel>
+      <div class="h-2"></div>
+
+      <p-iftalabel>
+        <p-datePicker formControlName="start_time" [timeOnly]="true" [hourFormat]="'24'" placeholder="HH:MM" class="w-full md:w-56"/>
+        <label for="start_time">Heure de début *</label>
+        <small *ngIf="contratForm.get('start_time')?.touched && contratForm.get('start_time')?.invalid" class="text-red-500">
+          L'heure de début est requise.
+        </small>
+      </p-iftalabel>
+      <div class="h-2"></div>
+
+      <p-iftalabel>
+        <input pInputText id="contrat_hour_week" formControlName="contrat_hour_week" autocomplete="off" class="uniform-input"/>
+        <label for="contrat_hour_week">Heures de contrat/semaine *</label>
+        <small *ngIf="contratForm.get('contrat_hour_week')?.touched && contratForm.get('contrat_hour_week')?.invalid" class="text-red-500">
+          Les heures doivent être un nombre valide.
+        </small>
+      </p-iftalabel>
+      <div class="h-2"></div>
+
+      <p-iftalabel>
+        <input pInputText id="contrat_hour_day" formControlName="contrat_hour_day" autocomplete="off" class="uniform-input"/>
+        <label for="contrat_hour_day">Heures de contrat/jour *</label>
+        <small *ngIf="contratForm.get('contrat_hour_day')?.touched && contratForm.get('contrat_hour_day')?.invalid" class="text-red-500">
+          Les heures doivent être un nombre valide.
+        </small>
+      </p-iftalabel>
+      <div class="h-2"></div>
+
+      <div>
+        <label class="font-medium">Jours de travail *</label>
+        <small *ngIf="contratForm.get('work_days')?.errors?.['duplicateDays']" class="text-red-500 block mb-2">
+          Les jours de travail doivent être uniques.
+        </small>
+        <div formArrayName="work_days">
+        <div *ngIf="workDaysArray.controls.length > 0; else noWorkDays">
+          <div *ngFor="let workDay of workDaysArray.controls; let i=index; trackBy: trackByFn" class="flex flex-col gap-2 border p-2 rounded mb-2">
+            <div [formGroupName]="i" class="flex items-center gap-2" *ngIf="workDaysArray.at(i)">
+              <p-select [options]="getAvailableDaysForIndex(i)" formControlName="day" placeholder="Sélectionner un jour" class="w-full md:w-32" [ngClass]="{'p-invalid': contratForm.get('work_days')?.errors?.['duplicateDays']}" />
+              <p-datePicker formControlName="start_time" [timeOnly]="true" [hourFormat]="'24'" placeholder="HH:MM" class="w-24"/>
+              <span>-</span>
+              <p-datePicker formControlName="end_time" [timeOnly]="true" [hourFormat]="'24'" placeholder="HH:MM" class="w-24"/>
+              <button type="button" class="p-button p-button-danger p-button-sm" (click)="removeWorkDay(i)">
+                <i class="pi pi-trash"></i>
+              </button>
+            </div>
+            <small *ngIf="workDaysArray.at(i).get('day')?.touched && workDaysArray.at(i).get('day')?.invalid" class="text-red-500">
+              Jour requis.
+            </small>
+            <small *ngIf="workDaysArray.at(i).get('start_time')?.touched && workDaysArray.at(i).get('start_time')?.invalid" class="text-red-500">
+              Heure de début requise.
+            </small>
+            <small *ngIf="workDaysArray.at(i).get('end_time')?.touched && workDaysArray.at(i).get('end_time')?.invalid" class="text-red-500">
+              Heure de fin requise.
+            </small>
+            <small *ngIf="workDaysArray.at(i).errors?.['invalidTimeRange']" class="text-red-500">
+              L'heure de fin doit être après l'heure de début.
+            </small>
+          </div>
+        </div>
+        <ng-template #noWorkDays>
+          <p class="text-gray-500">Aucun jour de travail ajouté.</p>
+        </ng-template>
+        <p-button label="Ajouter un jour" severity="secondary" (click)="addWorkDay()" [disabled]="workDaysArray.length >= availableDays.length" />
+        </div>
+      </div>
+      <div class="h-2"></div>
+
+      <div class="flex justify-end gap-2">
+        <p-button label="Annuler" severity="secondary" (click)="closeContratDialog()" />
+        <p-button [label]="isContratEditMode ? 'Mettre à jour' : 'Ajouter'" severity="contrast" (click)="submitContrat()" [disabled]="loading() || contratForm.invalid " />
+      </div>
+    </div>
+  </p-dialog>
+
+  <p-confirmDialog></p-confirmDialog>
+</div>

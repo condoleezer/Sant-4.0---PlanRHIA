@@ -1,0 +1,376 @@
+<div class="dashboard-container p-4 md:p-6">
+  <p-toast></p-toast>
+  <h1 class="dashboard-title text-2xl md:text-3xl font-bold mb-6">
+    Signaler une absence
+  </h1>
+
+  <p-tabView>
+    <!-- Onglet "Demander un remplacement" -->
+    <p-tabPanel>
+      <ng-template pTemplate="header">
+        <button class="tab-button bg-blue-500 text-white hover:bg-blue-600">
+          Demander un remplacement
+        </button>
+      </ng-template>
+      <div class="form-container p-4" [formGroup]="replacementForm">
+        <h3 class="mb-6 text-lg font-semibold col-span-2">
+          Demander un remplacement à un collègue
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Colonne de gauche -->
+          <div class="space-y-4">
+            <div class="form-group">
+              <label class="form-label">Code d'absence :</label>
+              <p-select
+                [options]="codeAbsence"
+                formControlName="absenceCodeId"
+                filter="true"
+                optionLabel="name"
+                optionValue="id"
+                placeholder="Sélectionner un code"
+                class="w-full"
+              ></p-select>
+              <small
+                *ngIf="
+                  replacementForm.get('absenceCodeId')?.touched &&
+                  replacementForm.get('absenceCodeId')?.invalid
+                "
+                class="text-red-500"
+              >
+                Code d'absence requis.
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Date :</label>
+              <p-datePicker
+                formControlName="date"
+                [style]="{ width: '100%' }"
+                [inputStyle]="{ width: '100%' }"
+                [minDate]="today"
+                dateFormat="dd/mm/yy"
+                [showIcon]="true"
+                class="w-full"
+                placeholder="Sélectionnez une date"
+              ></p-datePicker>
+              <small
+                *ngIf="
+                  replacementForm.get('date')?.touched &&
+                  replacementForm.get('date')?.invalid
+                "
+                class="text-red-500"
+              >
+                Date requise.
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Motif :</label>
+              <textarea
+                pInputText
+                formControlName="reason"
+                class="w-full"
+                placeholder="Entrez le motif"
+                rows="3"
+              ></textarea>
+              <small
+                *ngIf="
+                  replacementForm.get('reason')?.touched &&
+                  replacementForm.get('reason')?.invalid
+                "
+                class="text-red-500"
+              >
+                Motif requis.
+              </small>
+            </div>
+          </div>
+
+          <!-- Colonne de droite -->
+          <div class="space-y-4">
+            <div class="form-group">
+              <label class="form-label">Remplaçant :</label>
+              <p-select
+                [options]="nurses"
+                formControlName="replacementId"
+                filter="true"
+                optionLabel="displayName"
+                optionValue="_id"
+                placeholder="Sélectionner un remplaçant"
+                class="w-full"
+              ></p-select>
+              <small
+                *ngIf="
+                  replacementForm.get('replacementId')?.touched &&
+                  replacementForm.get('replacementId')?.invalid
+                "
+                class="text-red-500"
+              >
+                Remplaçant requis.
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Heure de début :</label>
+              <p-datePicker
+                formControlName="startHour"
+                [style]="{ width: '100%' }"
+                [inputStyle]="{ width: '100%' }"
+                [timeOnly]="true"
+                [hourFormat]="'24'"
+                placeholder="HH:MM"
+                class="w-full"
+              ></p-datePicker>
+              <small
+                *ngIf="
+                  replacementForm.get('startHour')?.touched &&
+                  replacementForm.get('startHour')?.invalid
+                "
+                class="text-red-500"
+              >
+                Heure de début requise.
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Heure de fin :</label>
+              <p-datePicker
+                formControlName="endHour"
+                [style]="{ width: '100%' }"
+                [inputStyle]="{ width: '100%' }"
+                [timeOnly]="true"
+                [hourFormat]="'24'"
+                placeholder="HH:MM"
+                class="w-full"
+              ></p-datePicker>
+              <small
+                *ngIf="
+                  replacementForm.get('endHour')?.touched &&
+                  replacementForm.get('endHour')?.invalid
+                "
+                class="text-red-500"
+              >
+                Heure de fin requise.
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Commentaire :</label>
+              <textarea
+                pInputText
+                formControlName="comment"
+                class="w-full"
+                placeholder="Entrez un commentaire"
+                rows="3"
+              ></textarea>
+              <small
+                *ngIf="
+                  replacementForm.get('comment')?.touched &&
+                  replacementForm.get('comment')?.invalid
+                "
+                class="text-red-500"
+              >
+                Commentaire requis.
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 col-span-2">
+          <small
+            *ngIf="replacementForm.errors?.['invalidTimeRange']"
+            class="text-red-500"
+          >
+            L'heure de fin doit être postérieure à l'heure de début.
+          </small>
+          <small
+            *ngIf="replacementForm.errors?.['min72Hours']"
+            class="text-red-500"
+          >
+            La demande d'absence doit être soumise au moins 72 heures à
+            l'avance.
+          </small>
+        </div>
+
+        <div class="form-actions mt-6">
+          <p-button
+            label="Soumettre ma demande"
+            styleClass="p-button-primary bg-blue-500 hover:bg-blue-600"
+            (click)="submitReplacement()"
+            [disabled]="isLoading || !serviceId || replacementForm.errors?.['invalidTimeRange'] || replacementForm.errors?.['min72Hours']"
+          ></p-button>
+        </div>
+      </div>
+    </p-tabPanel>
+
+    <!-- Onglet "Demande d'absence à l'encadrement" -->
+    <p-tabPanel>
+      <ng-template pTemplate="header">
+        <button class="tab-button bg-blue-500 text-white hover:bg-blue-600">
+          Demande d'absence à l'encadrement
+        </button>
+      </ng-template>
+      <div class="form-container p-4" [formGroup]="reportForm">
+        <h3 class="mb-6 text-lg font-semibold col-span-2">
+          Signaler mon absence à l'hôpital
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Colonne de gauche -->
+          <div class="space-y-4">
+            <div class="form-group">
+              <label class="form-label">Code d'absence :</label>
+              <p-select
+                [options]="codeAbsence"
+                formControlName="absenceCodeId"
+                filter="true"
+                optionLabel="name"
+                optionValue="id"
+                placeholder="Sélectionner un code"
+                class="w-full"
+              ></p-select>
+              <small
+                *ngIf="
+                  reportForm.get('absenceCodeId')?.touched &&
+                  reportForm.get('absenceCodeId')?.invalid
+                "
+                class="text-red-500"
+              >
+                Code d'absence requis.
+              </small>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date :</label>
+              <p-datePicker
+                formControlName="date"
+                [style]="{ width: '100%' }"
+                [inputStyle]="{ width: '100%' }"
+                [minDate]="today"
+                dateFormat="dd/mm/yy"
+                [showIcon]="true"
+                class="w-full"
+                placeholder="Sélectionnez une date"
+              ></p-datePicker>
+              <small
+                *ngIf="
+                  reportForm.get('date')?.touched &&
+                  reportForm.get('date')?.invalid
+                "
+                class="text-red-500"
+              >
+                Date requise.
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Motif :</label>
+              <textarea
+                pInputText
+                formControlName="reason"
+                class="w-full"
+                placeholder="Entrez le motif"
+                rows="3"
+              ></textarea>
+              <small
+                *ngIf="
+                  reportForm.get('reason')?.touched &&
+                  reportForm.get('reason')?.invalid
+                "
+                class="text-red-500"
+              >
+                Motif requis.
+              </small>
+            </div>
+          </div>
+
+          <!-- Colonne de droite -->
+          <div class="space-y-4">
+            <div class="form-group">
+              <label class="form-label">Heure de début :</label>
+              <p-datePicker
+                formControlName="startHour"
+                [style]="{ width: '100%' }"
+                [inputStyle]="{ width: '100%' }"
+                [timeOnly]="true"
+                [hourFormat]="'24'"
+                placeholder="HH:MM"
+                class="w-full"
+              ></p-datePicker>
+              <small
+                *ngIf="
+                  reportForm.get('startHour')?.touched &&
+                  reportForm.get('startHour')?.invalid
+                "
+                class="text-red-500"
+              >
+                Heure de début requise.
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Heure de fin :</label>
+              <p-datePicker
+                formControlName="endHour"
+                [style]="{ width: '100%' }"
+                [inputStyle]="{ width: '100%' }"
+                [timeOnly]="true"
+                [hourFormat]="'24'"
+                placeholder="HH:MM"
+                class="w-full"
+              ></p-datePicker>
+              <small
+                *ngIf="
+                  reportForm.get('endHour')?.touched &&
+                  reportForm.get('endHour')?.invalid
+                "
+                class="text-red-500"
+              >
+                Heure de fin requise.
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Commentaire :</label>
+              <textarea
+                pInputText
+                formControlName="comment"
+                class="w-full"
+                placeholder="Entrez un commentaire"
+                rows="3"
+              ></textarea>
+              <small
+                *ngIf="
+                  reportForm.get('comment')?.touched &&
+                  reportForm.get('comment')?.invalid
+                "
+                class="text-red-500"
+              >
+                Commentaire requis.
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 col-span-2">
+          <small
+            *ngIf="reportForm.errors?.['invalidTimeRange']"
+            class="text-red-500"
+          >
+            L'heure de fin doit être postérieure à l'heure de début.
+          </small>
+          <small *ngIf="reportForm.errors?.['min72Hours']" class="text-red-500">
+            La demande d'absence doit être soumise au moins 72 heures à
+            l'avance.
+          </small>
+        </div>
+
+        <div class="form-actions mt-6">
+          <p-button
+            label="Soumettre ma demande"
+            styleClass="p-button-primary bg-blue-500 hover:bg-blue-600"
+            (click)="submitReport()"
+            [disabled]="isLoading || !serviceId || reportForm.errors?.['invalidTimeRange'] || reportForm.errors?.['min72Hours']"
+          ></p-button>
+        </div>
+      </div>
+    </p-tabPanel>
+  </p-tabView>
+</div>

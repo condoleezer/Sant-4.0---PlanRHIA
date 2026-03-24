@@ -1,0 +1,21 @@
+<div class="flex-1 p-8">
+  <p class="text-3xl font-bold">Créer un service</p>
+  <p-breadcrumb class="max-w-full" [model]="items" />
+  <p class="py-6">Entrez les informations du service que vous voulez créer</p>
+  <form [formGroup]="adminForm" class="flex flex-col w-1/2 gap-6">
+    <div class="flex flex-col gap-2">
+      <label for="name">Nom</label>
+      <input pInputText id="name" aria-describedby="email-help" formControlName="name" />
+    </div>
+    <div class="flex flex-col gap-2">
+      <label for="head">Responsable</label>
+      <p-select id="head" formControlName="head" [options]="users" optionLabel="name" placeholder="Choisir le responsable" class="w-full" />
+    </div>
+    <div class="flex flex-col gap-2">
+      <p-multiselect [options]="users" formControlName="members" [(ngModel)]="selectedUsers" optionLabel="name" placeholder="Choisir les membres" [maxSelectedLabels]="3" styleClass="w-full md:w-80">
+
+      </p-multiselect>
+    </div>
+    <p-button (onClick)="submit()" label="Valider" severity="contrast" [style]="{'width':'100%'}"/>
+  </form>
+</div>

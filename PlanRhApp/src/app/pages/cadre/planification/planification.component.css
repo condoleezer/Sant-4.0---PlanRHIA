@@ -1,0 +1,1617 @@
+/* planification.component.css */
+.planification-container {
+  padding: 20px;
+  background: white;
+  min-height: 100vh;
+  color: #374151;
+}
+
+/* Assurer la visibilité de tous les textes */
+.planification-container * {
+  color: inherit;
+}
+
+.planification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e2e8f0;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.planification-header h1 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 2rem;
+  font-weight: bold;
+  flex: 1;
+  min-width: 300px;
+}
+
+.filters-section {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 120px;
+}
+
+.filter-group label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+/* 🔥 NOUVEAU: Affichage du service */
+.service-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  margin-bottom: 15px;
+}
+
+.service-info i {
+  font-size: 1.2rem;
+  color: white;
+}
+
+.service-info span {
+  color: white;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.action-buttons .p-button {
+  min-width: 120px;
+}
+
+.action-buttons .p-button.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+/* Menu Plan */
+.plan-menu-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.plan-btn {
+  min-width: 100px;
+}
+
+.plan-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 1000;
+  min-width: 220px;
+  overflow: hidden;
+}
+
+.plan-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+  color: #374151;
+}
+
+.plan-option:hover {
+  background: #f1f5f9;
+}
+
+.plan-option i {
+  font-size: 1.1rem;
+  color: #3b82f6;
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.plan-option-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.plan-option-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #1e293b;
+}
+
+.plan-option-desc {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.simulation-options,
+.publish-options {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Navigation des semaines */
+.week-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.nav-button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-button:hover:not(:disabled) {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.nav-button:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.current-period {
+  font-weight: 600;
+  color: #374151 !important;
+  font-size: 1.1rem;
+  text-align: center;
+  flex: 1;
+}
+
+.current-period span {
+  color: #374151 !important;
+}
+
+.planning-table-container {
+  overflow-x: visible;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.planning-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.week-header {
+  background: #3b82f6;
+  color: white !important;
+  text-align: center;
+  font-weight: bold;
+  padding: 10px;
+  border: 1px solid #2563eb;
+}
+
+.day-header {
+  background: #f8fafc;
+  color: #374151 !important;
+  text-align: center;
+  font-weight: 600;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.9rem;
+}
+
+.date-header {
+  background: #f1f5f9;
+  color: #64748b !important;
+  text-align: center;
+  font-size: 0.8rem;
+  padding: 5px;
+  border: 1px solid #e2e8f0;
+}
+
+.agent-header {
+  background: #f8fafc;
+  color: #374151 !important;
+  font-weight: bold;
+  padding: 15px;
+  text-align: left;
+  border: 1px solid #e2e8f0;
+  width: 15%;
+}
+
+.contract-header {
+  background: #f8fafc;
+  color: #374151 !important;
+  font-weight: bold;
+  padding: 15px;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+  width: 12%;
+}
+
+.agent-cell {
+  background: #f8fafc;
+  padding: 12px 15px;
+  border: 1px solid #e2e8f0;
+  font-weight: 500;
+  white-space: nowrap;
+  color: #374151 !important;
+}
+
+.contract-cell {
+  background: #f8fafc;
+  padding: 12px 15px;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+  font-weight: 500;
+  font-family: 'Courier New', monospace;
+  color: #374151 !important;
+}
+
+.planning-cell {
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+  width: 10.4%;
+  height: 50px;
+  position: relative;
+  vertical-align: middle;
+  color: #1e293b !important;
+}
+
+.planning-cell.proposed {
+  background-color: #dbeafe; /* Bleu clair pour propositions */
+  border-color: #93c5fd;
+}
+
+/* Demande de modification agent : garde la couleur du code, bordure orange pointillée */
+.planning-cell.planning-request {
+  border: 2px dashed #f59e0b !important;
+  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.3);
+}
+
+.planning-cell.validated {
+  background-color: #dcfce7; /* Vert clair pour validé */
+  border-color: #86efac;
+}
+
+.planning-cell.refused {
+  background-color: #fee2e2; /* Rouge clair pour refusé */
+  border-color: #fca5a5;
+}
+
+.planning-cell.editable {
+  cursor: pointer;
+}
+
+.planning-cell.editable:hover {
+  background-color: #f0f9ff;
+  border-color: #3b82f6;
+}
+
+/* Amélioration des cellules vides */
+.planning-cell.empty {
+  background-color: #f8fafc;
+  border-style: dashed;
+  border-color: #cbd5e1;
+}
+
+.planning-cell.empty:hover {
+  background-color: #f0f9ff;
+  border-color: #3b82f6;
+  border-style: solid;
+}
+
+.cell-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 5px;
+  position: relative;
+}
+
+.activity-code {
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: white !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.cell-actions {
+  display: flex;
+  gap: 5px;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+}
+
+.action-btn {
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  transform: scale(1.1);
+}
+
+.validate-btn {
+  background: #10b981;
+  color: white;
+}
+
+.validate-btn:hover {
+  background: #059669;
+}
+
+.refuse-btn {
+  background: #ef4444;
+  color: white;
+}
+
+.refuse-btn:hover {
+  background: #dc2626;
+}
+
+/* Indicateur d'édition */
+.edit-indicator {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  color: #64748b;
+  font-size: 0.7rem;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #64748b;
+}
+
+.loading-container p {
+  margin-top: 15px;
+  font-size: 1.1rem;
+}
+
+.loading-progress {
+  width: 300px;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  margin-top: 20px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+.loading-tip {
+  margin-top: 20px;
+  font-size: 0.9rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* Container pour aucun agent */
+.no-data-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.no-data-content h3 {
+  margin: 20px 0 10px 0;
+  color: #374151;
+  font-size: 1.5rem;
+}
+
+.no-data-content p {
+  color: #64748b;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.legend {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 4px solid #3b82f6;
+}
+
+.legend p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #374151;
+}
+
+.form-group p {
+  margin: 0;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  color: #64748b;
+}
+
+.form-group .help-text {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+/* Responsive design */
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .planification-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .planification-header h1 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .filters-section {
+    justify-content: center;
+  }
+  
+  .service-info {
+    justify-content: center;
+  }
+  
+  .action-buttons {
+    justify-content: center;
+  }
+  
+  .planning-table {
+    font-size: 0.8rem;
+  }
+  
+  .planning-cell {
+    padding: 4px;
+    min-height: 35px;
+  }
+  
+  .activity-code {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .planning-table {
+    font-size: 0.7rem;
+  }
+  
+  .planning-cell {
+    padding: 2px;
+    min-height: 30px;
+  }
+  
+  .agent-header,
+  .contract-header {
+    padding: 8px;
+  }
+  
+  .week-navigation {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .nav-button {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .planification-container {
+    padding: 10px;
+  }
+  
+  .planification-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .filters-section {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .service-info {
+    font-size: 0.9rem;
+    padding: 10px 16px;
+  }
+  
+  .service-info i {
+    font-size: 1rem;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .action-buttons .p-button {
+    width: 100%;
+  }
+  
+  .simulation-options,
+  .publish-options {
+    flex-direction: column;
+  }
+  
+  .week-navigation {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+  
+  .nav-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .current-period {
+    order: -1;
+    margin-bottom: 10px;
+  }
+  
+  .planning-table {
+    font-size: 0.8rem;
+  }
+  
+  .planning-cell {
+    min-width: 50px;
+    height: 40px;
+  }
+  
+  .activity-code {
+    font-size: 0.8rem;
+  }
+}
+
+/* Animation pour les cellules */
+.planning-cell {
+  transition: all 0.3s ease;
+}
+
+.planning-cell:hover {
+  transform: scale(1.02);
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Animation pour les propositions de disponibilité uniquement */
+.planning-cell.proposed:not(.planning-request) {
+  animation: pulse-proposed 2s infinite;
+}
+
+@keyframes pulse-proposed {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+/* Styles pour les états de chargement */
+.p-progressspinner {
+  width: 50px;
+  height: 50px;
+}
+
+/* Amélioration de l'accessibilité */
+.action-btn:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.planning-cell.editable:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Amélioration des tooltips */
+.planning-cell[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* Styles pour les messages de statut */
+.cell-content::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+/* Assurer la visibilité du texte dans les cellules de planning */
+.cell-content {
+  color: #1e293b !important;
+}
+
+.cell-content span {
+  color: #1e293b !important;
+}
+
+/* Styles pour les boutons PrimeNG */
+.p-button-label {
+  color: inherit !important;
+  font-weight: 500;
+}
+
+.p-button {
+  color: inherit;
+}
+
+/* Styles pour les dropdowns PrimeNG — fond sombre + texte blanc */
+.p-dropdown-label,
+.p-dropdown .p-dropdown-label,
+.p-dropdown .p-inputtext,
+.p-dropdown span.p-dropdown-label,
+.filters-section .p-dropdown-label,
+.filters-section .p-dropdown .p-inputtext,
+.filters-section span.p-dropdown-label,
+/* PrimeNG v17+ / p-select */
+.p-select-label,
+.p-select .p-select-label,
+.filters-section .p-select-label {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+/* Fond sombre sur le dropdown lui-même */
+.p-dropdown,
+.filters-section .p-dropdown,
+.p-select,
+.filters-section .p-select {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+.p-dropdown:hover,
+.filters-section .p-dropdown:hover,
+.p-select:hover,
+.filters-section .p-select:hover {
+  border-color: #22c55e !important;
+}
+
+.p-dropdown.p-focus,
+.filters-section .p-dropdown.p-focus,
+.p-select.p-focus,
+.filters-section .p-select.p-focus {
+  border-color: #22c55e !important;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2) !important;
+}
+
+/* Icône flèche */
+.p-dropdown .p-dropdown-trigger,
+.filters-section .p-dropdown .p-dropdown-trigger,
+.p-select .p-select-dropdown,
+.filters-section .p-select .p-select-dropdown {
+  color: #ffffff !important;
+  background: transparent !important;
+}
+
+.p-dropdown .p-dropdown-trigger .p-dropdown-trigger-icon,
+.p-dropdown .p-dropdown-trigger svg,
+.p-dropdown .p-dropdown-trigger .p-icon,
+.p-select .p-select-dropdown svg,
+.p-select .p-select-dropdown .p-icon {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+/* Placeholder text blanc */
+.p-dropdown .p-placeholder,
+.p-select .p-placeholder,
+.filters-section .p-dropdown .p-placeholder,
+.filters-section .p-select .p-placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Panel dropdown — texte sombre sur fond clair */
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item {
+  color: #1e293b !important;
+  padding: 8px 12px !important;
+}
+
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item:hover {
+  background-color: #f3f4f6 !important;
+  color: #1f2937 !important;
+}
+
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+
+/* Correction z-index dropdown dans les modals */
+.p-dialog .p-dropdown-panel {
+  z-index: 1100 !important;
+  max-height: 200px !important;
+  overflow-y: auto !important;
+  position: fixed !important;
+}
+
+.p-dropdown-panel {
+  z-index: 1000 !important;
+  max-height: 300px !important;
+  overflow-y: auto !important;
+}
+
+.p-dialog-content .p-dropdown {
+  width: 100% !important;
+}
+
+.p-dialog-content .p-dropdown-panel {
+  min-width: 100% !important;
+  z-index: 1100 !important;
+}
+
+.p-dropdown-panel .p-dropdown-items {
+  max-height: 180px !important;
+  overflow-y: auto !important;
+}
+
+.p-dropdown-filter-container {
+  padding: 8px !important;
+}
+
+.p-dropdown-filter {
+  width: 100% !important;
+  color: #374151 !important;
+}
+
+.planning-cell.proposed .cell-content::after {
+  background: #3b82f6;
+}
+
+.planning-cell.validated .cell-content::after {
+  background: #10b981;
+}
+
+.planning-cell.refused .cell-content::after {
+  background: #ef4444;
+}
+
+
+
+
+/* 🔥 NOUVEAU: Styles pour la modale d'aide Excel */
+.excel-help-content {
+  padding: 10px;
+  color: #374151;
+}
+
+.excel-help-content h3 {
+  color: #1e293b !important;
+  margin-bottom: 15px;
+  font-size: 1.3rem;
+}
+
+.excel-help-content h4 {
+  color: #475569 !important;
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.excel-help-content p {
+  color: #374151 !important;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.format-section {
+  margin-bottom: 25px;
+  padding: 15px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 4px solid #3b82f6;
+}
+
+.format-section ul {
+  margin: 10px 0;
+  padding-left: 25px;
+}
+
+.format-section li {
+  margin-bottom: 8px;
+  line-height: 1.6;
+  color: #475569 !important;
+}
+
+.activity-codes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.activity-codes-grid div {
+  padding: 8px 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.9rem;
+  color: #475569 !important;
+}
+
+.warning-section {
+  border-left-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.warning-section h4 {
+  color: #d97706 !important;
+}
+
+.warning-section li {
+  color: #92400e !important;
+}
+
+.example-section {
+  border-left-color: #10b981;
+  background: #f0fdf4;
+}
+
+.example-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 0.9rem;
+}
+
+.example-table th,
+.example-table td {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  text-align: left;
+}
+
+.example-table th {
+  background: #e5e7eb;
+  font-weight: 600;
+  color: #374151 !important;
+}
+
+.example-table td {
+  background: white;
+  color: #6b7280 !important;
+}
+
+.tip-section {
+  border-left-color: #8b5cf6;
+  background: #faf5ff;
+}
+
+.tip-section h4 {
+  color: #7c3aed !important;
+}
+
+.tip-section p {
+  color: #6b7280 !important;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Assurer que tous les textes dans le modal Excel sont visibles */
+.p-dialog .excel-help-content * {
+  color: inherit !important;
+}
+
+.p-dialog .excel-help-content h3,
+.p-dialog .excel-help-content h4,
+.p-dialog .excel-help-content p,
+.p-dialog .excel-help-content li {
+  color: #374151 !important;
+}
+
+/* ===== Section Besoins / Écarts séparée ===== */
+.ecarts-section {
+  margin-top: 32px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  padding: 20px 24px;
+  overflow-x: auto;
+}
+
+.ecarts-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ecarts-title i {
+  color: #6366f1;
+}
+
+.ecarts-table-wrapper {
+  overflow-x: auto;
+}
+
+.ecarts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.ecarts-shift-header {
+  width: 80px;
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #64748b;
+  background: #f8fafc;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.ecarts-day-header {
+  text-align: center;
+  padding: 6px 4px;
+  background: #f8fafc;
+  border-bottom: 2px solid #e2e8f0;
+  min-width: 52px;
+}
+
+.ecarts-day-header.weekend-col {
+  background: #f1f5f9;
+}
+
+.ecarts-day-name {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.75rem;
+}
+
+.ecarts-day-num {
+  color: #94a3b8;
+  font-size: 0.7rem;
+}
+
+.ecarts-shift-row {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.ecarts-shift-row:last-child {
+  border-bottom: none;
+}
+
+.ecarts-shift-label {
+  padding: 8px 12px;
+  vertical-align: middle;
+}
+
+.shift-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+.shift-J02 { background: #dbeafe; color: #1d4ed8; }
+.shift-J1  { background: #d1fae5; color: #065f46; }
+.shift-JB  { background: #fef3c7; color: #92400e; }
+
+.ecarts-day-cell {
+  padding: 6px 4px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.ecarts-day-cell.weekend-col {
+  background: #fafafa;
+}
+
+.ecarts-cell-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px;
+  border-radius: 8px;
+  min-width: 44px;
+}
+
+.cell-present {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #1e293b;
+}
+
+.cell-sep {
+  display: none;
+}
+
+.cell-need {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  line-height: 1;
+}
+
+.cell-need::before {
+  content: 'besoin: ';
+}
+
+.cell-ecart {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+
+/* États des cellules */
+.cell-deficit {
+  background: #fef2f2;
+}
+.cell-deficit .cell-present { color: #dc2626; }
+.cell-deficit .cell-ecart { background: #fee2e2; color: #dc2626; }
+
+.cell-ok {
+  background: #f0fdf4;
+}
+.cell-ok .cell-present { color: #16a34a; }
+.cell-ok .cell-ecart { background: #dcfce7; color: #16a34a; }
+
+.cell-surplus {
+  background: #fffbeb;
+}
+.cell-surplus .cell-present { color: #d97706; }
+.cell-surplus .cell-ecart { background: #fef3c7; color: #d97706; }
+
+.cell-zero {
+  background: #f8fafc;
+  opacity: 0.5;
+}
+.cell-zero .cell-present { color: #94a3b8; }
+
+/* Panneau demandes de modification en attente */
+.pending-requests-panel {
+  background: #1e293b;
+  border: 2px solid #f59e0b;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.pending-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f59e0b;
+  color: #1e293b;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.pending-header i {
+  margin-right: 8px;
+}
+
+.close-panel-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #1e293b;
+  padding: 0 4px;
+}
+
+.pending-list {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pending-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: #334155;
+  border-radius: 8px;
+  border-left: 4px solid #64748b;
+  gap: 12px;
+}
+
+.pending-item.highlighted {
+  border-left-color: #f59e0b;
+  background: #3d4f6b;
+  box-shadow: 0 0 0 2px #f59e0b55;
+}
+
+.pending-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: #f1f5f9;
+  font-size: 0.9rem;
+}
+
+.pending-agent {
+  font-weight: 600;
+  color: #93c5fd;
+}
+
+.pending-date {
+  color: #94a3b8;
+}
+
+.pending-code strong {
+  color: #fbbf24;
+  font-size: 1rem;
+}
+
+.pending-comment {
+  color: #94a3b8;
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+.pending-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-validate {
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.2s;
+}
+
+.btn-validate:hover {
+  background: #059669;
+}
+
+.btn-refuse {
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.2s;
+}
+
+.btn-refuse:hover {
+  background: #dc2626;
+}
+
+.btn-goto-week {
+  background: transparent;
+  color: #93c5fd;
+  border: 1px solid #93c5fd;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+  margin-left: 8px;
+}
+
+.btn-goto-week:hover {
+  background: #1e40af;
+  color: white;
+  border-color: #1e40af;
+}
+
+/* Cellule mise en évidence depuis une notification */
+.planning-cell.pending-highlight {
+  outline: 3px solid #f59e0b !important;
+  outline-offset: -2px;
+  animation: pulse-highlight 1.5s ease-in-out infinite;
+  z-index: 2;
+  position: relative;
+}
+
+@keyframes pulse-highlight {
+  0%, 100% { outline-color: #f59e0b; box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+  50% { outline-color: #fbbf24; box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+}
+
+/* ── Modale aide format Excel ── */
+.excel-help-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.format-section h4 {
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #1e293b;
+}
+
+.format-section ul {
+  margin: 0;
+  padding-left: 18px;
+  line-height: 1.8;
+}
+
+.format-note {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.warning-section {
+  background: #fef9c3;
+  border: 1px solid #fde047;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.warning-section h4 { color: #92400e; }
+
+/* Aperçu tableau format */
+.format-preview-wrapper {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.format-preview-table {
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  min-width: 100%;
+}
+
+.format-preview-table th,
+.format-preview-table td {
+  border: 1px solid #e2e8f0;
+  padding: 5px 8px;
+  text-align: center;
+  white-space: pre-line;
+}
+
+.row-meta th { background: #f8fafc; color: #94a3b8; }
+.row-sem th  { background: #f1f5f9; color: #64748b; font-weight: 600; }
+.row-day th  { background: #e2e8f0; color: #374151; font-weight: 700; }
+.row-empty td { height: 6px; background: #f8fafc; }
+.row-agent td { background: white; }
+
+.col-meta  { width: 24px; background: #f8fafc !important; }
+.col-nom   { min-width: 100px; font-weight: 600; text-align: left !important; }
+.col-prenom{ min-width: 80px; text-align: left !important; }
+.col-mat   { min-width: 80px; color: #64748b; }
+.col-plan  { min-width: 40px; }
+.col-month { background: #dbeafe !important; color: #1d4ed8 !important; font-weight: 600; }
+.col-day   { background: #eff6ff !important; min-width: 50px; }
+.col-empty { width: 16px; background: #f8fafc !important; }
+.col-code  { min-width: 50px; background: #f0fdf4 !important; }
+
+/* Grille codes activité */
+.activity-codes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+/* ── Modale simulation service réduit ── */
+.sim-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sim-intro {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.sim-select-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.sim-count {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.sim-select-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.sim-link-btn {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.sim-link-btn:hover { color: #2563eb; }
+
+.sim-agents-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.sim-agent-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: white;
+  user-select: none;
+}
+
+.sim-agent-row:hover {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.sim-agent-selected {
+  border-color: #3b82f6 !important;
+  background: #eff6ff !important;
+}
+
+.sim-checkbox i {
+  font-size: 1.2rem;
+  color: #94a3b8;
+}
+
+.sim-agent-selected .sim-checkbox i {
+  color: #3b82f6;
+}
+
+.sim-agent-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sim-agent-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: #1e293b;
+}
+
+.sim-agent-contrat {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.sim-needs-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.sim-needs-label {
+  font-weight: 600;
+  color: #166534;
+}
+
+.sim-needs-badge {
+  color: #15803d;
+}
+
+/* ── Couleurs des boutons d'action — tous vert transparent ── */
+
+.btn-activities.p-button,
+.btn-elaborate.p-button,
+.btn-weekly.p-button,
+.btn-import.p-button,
+.btn-help.p-button,
+.btn-export.p-button,
+.btn-print.p-button {
+  background: transparent !important;
+  border: 1.5px solid #22c55e !important;
+  color: #22c55e !important;
+}
+
+.btn-activities.p-button:hover,
+.btn-elaborate.p-button:hover,
+.btn-weekly.p-button:hover,
+.btn-import.p-button:hover,
+.btn-help.p-button:hover,
+.btn-export.p-button:hover,
+.btn-print.p-button:hover {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: #16a34a !important;
+  color: #16a34a !important;
+}
+
+.btn-activities.p-button .p-button-label,
+.btn-elaborate.p-button .p-button-label,
+.btn-weekly.p-button .p-button-label,
+.btn-import.p-button .p-button-label,
+.btn-help.p-button .p-button-label,
+.btn-export.p-button .p-button-label,
+.btn-print.p-button .p-button-label {
+  color: inherit !important;
+}
+
+.btn-activities.p-button .p-button-icon,
+.btn-elaborate.p-button .p-button-icon,
+.btn-weekly.p-button .p-button-icon,
+.btn-import.p-button .p-button-icon,
+.btn-help.p-button .p-button-icon,
+.btn-export.p-button .p-button-icon,
+.btn-print.p-button .p-button-icon {
+  color: inherit !important;
+}
+
+.btn-export.p-button:disabled,
+.btn-print.p-button:disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+}
+
+.btn-help.p-button {
+  padding: 0.5rem 0.6rem !important;
+  min-width: unset !important;
+}
