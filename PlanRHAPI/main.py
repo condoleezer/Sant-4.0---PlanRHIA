@@ -21,11 +21,12 @@ app = FastAPI(
 origins = [
     "http://localhost:4200",
     "http://127.0.0.1:4200",
+    "https://saphir-it0m.onrender.com"
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200", "http://127.0.0.1:4200"],
+    allow_origins=["http://localhost:4200", "http://127.0.0.1:4200", "https://saphir-it0m.onrender.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -90,7 +91,7 @@ app.include_router(hublo_proxy.router)
 app.include_router(leave_window.router)
 
 # Serve static files for Angular app (seulement si le dossier existe)
-_dist_path = Path(r"c:\Users\madav\Documents\Projets\CHA\santerhivyduval-duval_and_ivy\PlanRhApp\dist\plan-rh-app")
+_dist_path = Path("dist/plan-rh-app")
 if _dist_path.exists():
     app.mount("/admin", StaticFiles(directory=str(_dist_path)), name="admin")
 
