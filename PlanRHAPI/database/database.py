@@ -1,7 +1,12 @@
 from pymongo import MongoClient
 
-client = MongoClient('localhost', 27017)
-db = client['planRhIA']
+MONGO_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+
+client = MongoClient(MONGO_URI)
+DB_NAME = os.getenv("DB_NAME", "planRhIA")
+db = client[DB_NAME]
+
+
 programs = db['annual_programs']
 users = db["users"]
 services = db["services"]
