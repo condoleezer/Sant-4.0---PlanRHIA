@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from database.database import user_contrat, users
 
 # Configuration de la base de données
-MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/')
+MONGO_URI = os.getenv('MONGO_URI', os.getenv('MONGODB_URI', os.getenv('MONGODB_URL', 'mongodb://localhost:27017/')))
 DATABASE_NAME = os.getenv('DATABASE_NAME', 'planRhIA')
 
 client = MongoClient(MONGO_URI)

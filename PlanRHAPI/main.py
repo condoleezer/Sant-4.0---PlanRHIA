@@ -21,12 +21,12 @@ app = FastAPI(
 origins = [
     "http://localhost:4200",
     "http://127.0.0.1:4200",
-    "https://saphir-it0m.onrender.com"
+    "https://saphir-it0m.onrender.com",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200", "http://127.0.0.1:4200", "https://saphir-it0m.onrender.com"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -98,6 +98,33 @@ if _dist_path.exists():
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+@app.get("/health")
+async def health_check():
+    """Diagnostic endpoint - vérifie la connexion MongoDB"""
+    import os
+    from pymongo import MongoClient
+    mongo_uri = os.getenv("MONGO_URI", os.getenv("MONGODB_URI", os.getenv("MONGODB_URL", "NOT_SET")))
+    db_name = os.getenv("DATABASE_NAME", os.getenv("DB_NAME", "planRhIA"))
+    
+    result = {
+        "status": "ok",
+        "mongo_uri_set": mongo_uri != "NOT_SET",
+        "mongo_uri_preview": mongo_uri[:30] + "..." if len(mongo_uri) > 30 else mongo_uri,
+        "db_name": db_name,
+    }
+    
+    try:
+        client = MongoClient(mongo_uri, serverSelectionTimeoutMS=3000)
+        client.admin.command('ping')
+        result["mongo_connected"] = True
+        db = client[db_name]
+        result["collections"] = db.list_collection_names()
+    except Exception as e:
+        result["mongo_connected"] = False
+        result["mongo_error"] = str(e)
+    
+    return result
 
 @app.get("/hello/{name}")
 async def say_hello(name: str):

@@ -6,7 +6,7 @@ import os
 from pymongo import MongoClient
 from pydantic import BaseModel
 
-MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/')
+MONGO_URI = os.getenv('MONGO_URI', os.getenv('MONGODB_URI', os.getenv('MONGODB_URL', 'mongodb://localhost:27017/')))
 DATABASE_NAME = os.getenv('DATABASE_NAME', 'planRhIA')
 client = MongoClient(MONGO_URI)
 db = client[DATABASE_NAME]
