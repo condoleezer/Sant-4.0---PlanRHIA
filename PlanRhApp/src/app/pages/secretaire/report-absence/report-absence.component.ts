@@ -1,347 +1,421 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewEncapsulation, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { TableModule } from 'primeng/table';
 import { CommonModule } from '@angular/common';
-import { TabViewModule } from 'primeng/tabview';
-import { InputTextModule } from 'primeng/inputtext';
-import { DatePickerModule } from 'primeng/datepicker';
+import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
+
+// PrimeNG
 import { ButtonModule } from 'primeng/button';
+import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
-import { MessageService } from 'primeng/api';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
+import { TagModule } from 'primeng/tag';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { MessageService } from 'primeng/api';
+
+// Services
 import { AbsenceService } from '../../../services/absence/absence.service';
 import { UserService } from '../../../services/user/user.service';
 import { CodeService } from '../../../services/code/code.service';
-import { Code } from '../../../models/services';
-import { ServiceService } from '../../../services/service/service.service';
 import { AuthService } from '../../../services/auth/auth.service';
+import { PlanningExchangeService, CompatibleAgent } from '../../../services/planning-exchange/planning-exchange.service';
+import { AlertsRttService } from '../../../services/alerts-rtt/alerts-rtt.service';
+
+// Models
 import { User } from '../../../models/User';
-import { Service } from '../../../models/services';
-import { Response } from '../../../dtos/response/Response';
+import { Code } from '../../../models/services';
 import { CreateAbsenceRequest } from '../../../dtos/request/CreateAbsenceRequest';
+import { Response } from '../../../dtos/response/Response';
+
+type Step = 'calendar' | 'exchange' | 'absence-form';
 
 @Component({
   selector: 'app-report-absence',
-  imports: [
-    TableModule,
-    CommonModule,
-    TabViewModule,
-    InputTextModule,
-    DatePickerModule,
-    ButtonModule,
-    SelectModule,
-    ReactiveFormsModule,
-    ToastModule
-  ],
   standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    ButtonModule,
+    DatePickerModule,
+    SelectModule,
+    InputTextModule,
+    TextareaModule,
+    ToastModule,
+    TagModule,
+    ProgressSpinnerModule,
+  ],
   templateUrl: './report-absence.component.html',
   styleUrls: ['./report-absence.component.css'],
+  encapsulation: ViewEncapsulation.None,
   providers: [MessageService, AuthService]
 })
-export class ReportAbsenceComponent implements OnInit {
-  reportForm: FormGroup;
-  replacementForm: FormGroup;
-  nurses: User[] = [];
-  codeAbsence: Code[] = [];
+export class ReportAbsenceComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+
+  // ── Wizard state ──────────────────────────────────────────────────────────
+  step: Step = 'calendar';
+  selectedDate: Date | null = null;
+  selectedDateStr = '';
+  isEligibleForExchange = false;   // >= 60 jours
+  today = new Date();
+
+  // ── User / service ────────────────────────────────────────────────────────
   currentUser: User | null = null;
   serviceId: string | null = null;
-  isLoading: boolean = true;
-  today: Date = new Date();
+  isLoading = true;
+
+  // ── Exchange step ─────────────────────────────────────────────────────────
+  compatibleAgents: CompatibleAgent[] = [];
+  loadingAgents = false;
+  requesterPlanningId = '';
+  requesterActivityCode = '';
+  selectedAgent: CompatibleAgent | null = null;
+  selectedTargetPlanning: any = null;
+  exchangeMessage = '';
+  submittingExchange = false;
+
+  // Dates de récupération que A propose à B
+  myRestDays: { planning_id: string; date: string; activity_code: string; plage_horaire: string; b_activity_code?: string; b_planning_id?: string; b_plage_horaire?: string }[] = [];
+  loadingMyRestDays = false;
+  proposedRecoveryDates: { planning_id: string; date: string; activity_code: string; plage_horaire: string; b_activity_code?: string; b_planning_id?: string }[] = [];
+  recoveryStepDone = false;
+
+  // ── Absence form ──────────────────────────────────────────────────────────
+  reportForm!: FormGroup;
+  codeAbsence: Code[] = [];
+  submittingAbsence = false;
+  caConflictWarning: string | null = null;  // avertissement collègues en congé
+  checkingCaConflict = false;
 
   constructor(
     private fb: FormBuilder,
     private absenceService: AbsenceService,
     private userService: UserService,
-    private serviceService: ServiceService,
     private codeService: CodeService,
     private authService: AuthService,
+    private planningExchangeService: PlanningExchangeService,
+    private alertsRttService: AlertsRttService,
     private messageService: MessageService,
-    private router: Router
-  ) {
-    this.reportForm = this.fb.group({
-      absenceCodeId: ['', Validators.required],
-      date: ['', Validators.required],
-      startHour: ['', Validators.required],
-      endHour: ['', Validators.required],
-      reason: ['', Validators.required],
-      comment: ['', Validators.required]
-    }, { validators: [this.timeRangeValidator, this.validateMin72Hours] });
+    private cdr: ChangeDetectorRef,
+  ) {}
 
-    this.replacementForm = this.fb.group({
-      absenceCodeId: ['', Validators.required],
-      date: ['', Validators.required],
-      startHour: ['', Validators.required],
-      endHour: ['', Validators.required],
-      reason: ['', Validators.required],
-      comment: ['', Validators.required],
-      replacementId: ['', Validators.required]
-    }, { validators: [this.timeRangeValidator, this.validateMin72Hours] });
-  }
-
-  ngOnInit() {
+  ngOnInit(): void {
+    this.buildAbsenceForm();
     this.loadCurrentUser();
     this.loadCodes();
+    // Force la détection de changements pour éviter le flash de thème sombre au premier chargement
+    setTimeout(() => this.cdr.detectChanges(), 0);
   }
 
-  timeRangeValidator(control: FormGroup): { [key: string]: boolean } | null {
-    const startHour = control.get('startHour')?.value;
-    const endHour = control.get('endHour')?.value;
+  ngAfterViewInit(): void {
+    // Force la détection de changements après le rendu initial
+    // pour éviter le problème de thème sombre au premier chargement
+    setTimeout(() => this.cdr.detectChanges(), 0);
+  }
 
-    if (
-      startHour instanceof Date &&
-      endHour instanceof Date &&
-      !isNaN(startHour.getTime()) &&
-      !isNaN(endHour.getTime())
-    ) {
-      if (startHour.getTime() >= endHour.getTime()) {
-        return { invalidTimeRange: true };
-      }
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // ── Form builder ──────────────────────────────────────────────────────────
+  private buildAbsenceForm(): void {
+    this.reportForm = this.fb.group({
+      absenceCodeId: ['', Validators.required],
+      startHour:     ['', Validators.required],
+      endHour:       ['', Validators.required],
+      reason:        ['', Validators.required],
+      comment:       [''],
+    }, { validators: [this.timeRangeValidator] });
+  }
+
+  timeRangeValidator(g: FormGroup): { [k: string]: boolean } | null {
+    const s = g.get('startHour')?.value;
+    const e = g.get('endHour')?.value;
+    if (s instanceof Date && e instanceof Date && !isNaN(s.getTime()) && !isNaN(e.getTime())) {
+      if (s.getTime() >= e.getTime()) return { invalidTimeRange: true };
     }
     return null;
   }
 
-  formatTime(time: Date | string): string {
-    if (typeof time === 'string') {
-      return time;
-    }
-    if (!(time instanceof Date) || isNaN(time.getTime())) {
-      return '00:00';
-    }
-    const hours = time.getHours().toString().padStart(2, '0');
-    const minutes = time.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
-  }
-
-  loadCurrentUser() {
-    this.isLoading = true;
-    this.authService.getUserInfo().subscribe({
-      next: (user: User | null) => {
-        if (!user) {
+  // ── Data loading ──────────────────────────────────────────────────────────
+  loadCurrentUser(): void {
+    this.authService.getUserInfo()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (user: User | null) => {
+          this.currentUser = user;
+          this.serviceId = user?.service_id || null;
           this.isLoading = false;
-          this.router.navigate(['/']);
-          return;
-        }
-        this.currentUser = user;
-        this.serviceId = this.currentUser.service_id || null;
-        this.isLoading = false;
-        
-        // Charger les infirmiers APRÈS avoir récupéré le service de l'utilisateur
-        this.loadNurses();
-      },
-      error: () => {
-        this.showError('Erreur lors du chargement de l\'utilisateur');
-        this.isLoading = false;
-        this.router.navigate(['/']);
-      }
-    });
+        },
+        error: () => { this.isLoading = false; }
+      });
   }
 
-  validateMin72Hours(control: FormGroup): { [key: string]: boolean } | null {
-    const date = control.get('date')?.value;
-    const startHour = control.get('startHour')?.value;
-
-    if (!date || !startHour) {
-      return null;
-    }
-
-    const startDateTime = new Date(date);
-    startDateTime.setHours(startHour.getHours(), startHour.getMinutes());
-
-    const now = new Date();
-    const diffInMs = startDateTime.getTime() - now.getTime();
-    const diffInHours = diffInMs / (1000 * 60 * 60);
-
-    if (diffInHours < 72) {
-      return { min72Hours: true };
-    }
-
-    return null;
-  }
-
-  loadNurses() {
-    this.userService.getNurses().subscribe({
-      next: (response: Response<User[]>) => {
-        if (!response || !response.data) {
-          this.nurses = [];
-          this.showWarning('Aucun infirmier trouvé.');
-          return;
-        }
-        
-        // Filtrer les infirmiers du même service que l'utilisateur connecté
-        const filteredNurses = response.data.filter(nurse => {
-          // Exclure l'utilisateur lui-même
-          if (nurse._id === this.currentUser?._id) {
-            return false;
-          }
-          // Inclure seulement les infirmiers du même service
-          return nurse.service_id === this.serviceId;
-        });
-        
-        // Ajouter une propriété displayName pour l'affichage
-        this.nurses = filteredNurses.map(nurse => ({
-          ...nurse,
-          displayName: `${nurse.first_name} ${nurse.last_name}`
-        }));
-        
-        console.log(`Infirmiers du service ${this.serviceId}:`, this.nurses.length);
-      },
-      error: () => {
-        this.showError('Erreur lors du chargement des infirmiers');
-        this.nurses = [];
-      }
-    });
-  }
-
-  loadCodes() {
-    // D'abord synchroniser les codes depuis les plannings
+  loadCodes(): void {
     this.codeService.syncCodesFromPlannings().subscribe({
-      next: () => {
-        // Ensuite charger tous les codes
-        this.codeService.findAllCodes().subscribe({
-          next: (response: Response<Code[]>) => {
-            if (!response || !response.data) {
-              this.codeAbsence = [];
-              this.showWarning('Aucun code trouvé.');
-              return;
-            }
-            this.codeAbsence = response.data;
-          },
-          error: () => {
-            this.showError('Erreur lors du chargement des codes absences');
-            this.codeAbsence = [];
-          }
-        });
-      },
-      error: () => {
-        // En cas d'erreur de synchronisation, charger quand même les codes existants
-        this.codeService.findAllCodes().subscribe({
-          next: (response: Response<Code[]>) => {
-            if (!response || !response.data) {
-              this.codeAbsence = [];
-              this.showWarning('Aucun code trouvé.');
-              return;
-            }
-            this.codeAbsence = response.data;
-          },
-          error: () => {
-            this.showError('Erreur lors du chargement des codes absences');
-            this.codeAbsence = [];
-          }
-        });
-      }
+      next: () => this.fetchCodes(),
+      error: () => this.fetchCodes()
     });
   }
 
-  submitReport() {
-    console.log('🔍 submitReport appelé');
-    console.log('🔍 Form valid:', !this.reportForm.invalid);
-    console.log('🔍 Form errors:', this.reportForm.errors);
-    console.log('🔍 isLoading:', this.isLoading);
-    console.log('🔍 currentUser:', this.currentUser);
-    console.log('🔍 serviceId:', this.serviceId);
-    
-    if (this.reportForm.invalid || this.reportForm.errors?.['invalidTimeRange'] || this.reportForm.errors?.['min72Hours']) {
-      console.log('❌ Formulaire invalide');
+  private fetchCodes(): void {
+    this.codeService.findAllCodes()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (r: Response<Code[]>) => { this.codeAbsence = r?.data || []; },
+        error: () => {}
+      });
+  }
+
+  // ── STEP 1 : Calendar ─────────────────────────────────────────────────────
+  onDateSelected(date: Date): void {
+    this.selectedDate = date;
+    this.selectedDateStr = this.formatDate(date);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(date);
+    target.setHours(0, 0, 0, 0);
+    const diffDays = Math.ceil((target.getTime() - today.getTime()) / 86400000);
+
+    this.isEligibleForExchange = diffDays >= 60;
+
+    if (this.isEligibleForExchange) {
+      this.step = 'exchange';
+      this.loadCompatibleAgents();
+    } else {
+      this.step = 'absence-form';
+      // Vérifier les conflits CA dès la sélection de la date
+      if (this.currentUser?._id && this.serviceId) {
+        this.checkCaConflict();
+      }
+    }
+  }
+
+  // ── STEP 2a : Exchange ────────────────────────────────────────────────────
+  loadCompatibleAgents(): void {
+    if (!this.currentUser?._id || !this.selectedDateStr) return;
+    this.loadingAgents = true;
+    this.compatibleAgents = [];
+    this.selectedAgent = null;
+    this.selectedTargetPlanning = null;
+    this.proposedRecoveryDates = [];
+    this.recoveryStepDone = false;
+    this.myRestDays = [];
+
+    this.planningExchangeService.getCompatibleAgents(this.currentUser._id, this.selectedDateStr)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res: any) => {
+          this.compatibleAgents = res.data || [];
+          this.requesterPlanningId = res.requester_planning?.planning_id || '';
+          this.requesterActivityCode = res.requester_planning?.activity_code || '';
+          this.loadingAgents = false;
+          // Les repos sont chargés après sélection de l'agent (voir selectAgent)
+        },
+        error: (err: any) => {
+          this.loadingAgents = false;
+          if (err.status === 400) {
+            this.messageService.add({
+              severity: 'info',
+              summary: 'Aucun planning',
+              detail: 'Vous n\'avez pas de planning validé à cette date. Redirigé vers la demande d\'absence.',
+              life: 5000
+            });
+            this.step = 'absence-form';
+          }
+        }
+      });
+  }
+
+  loadMyRestDays(): void {
+    if (!this.currentUser?._id) return;
+    this.loadingMyRestDays = true;
+    // Passer le target_id pour filtrer uniquement les dates où B travaille
+    const targetId = this.selectedAgent?._id;
+    this.planningExchangeService.getMyRestDays(this.currentUser._id, targetId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res: any) => { this.myRestDays = res.data || []; this.loadingMyRestDays = false; },
+        error: () => { this.myRestDays = []; this.loadingMyRestDays = false; }
+      });
+  }
+
+  toggleProposedRecoveryDate(day: { planning_id: string; date: string; activity_code: string; plage_horaire: string }): void {
+    const idx = this.proposedRecoveryDates.findIndex(d => d.date === day.date);
+    if (idx >= 0) this.proposedRecoveryDates.splice(idx, 1);
+    else this.proposedRecoveryDates.push(day);
+  }
+
+  isProposedRecoveryDate(date: string): boolean {
+    return this.proposedRecoveryDates.some(d => d.date === date);
+  }
+
+  selectAgent(agent: CompatibleAgent): void {
+    this.selectedAgent = agent;
+    this.selectedTargetPlanning = null;
+    this.proposedRecoveryDates = [];
+    this.recoveryStepDone = false;
+    // Charger les dates où A est en repos ET B travaille
+    this.loadMyRestDays();
+  }
+
+  selectTargetPlanning(planning: any): void {
+    this.selectedTargetPlanning = planning;
+  }
+
+  submitExchange(): void {
+    if (!this.currentUser?._id || !this.selectedAgent || !this.requesterPlanningId) return;
+
+    this.submittingExchange = true;
+    const data = {
+      requester_id: this.currentUser._id,
+      target_id: this.selectedAgent._id,
+      requester_date: this.selectedDateStr,
+      target_date: '',
+      requester_planning_id: this.requesterPlanningId,
+      target_planning_id: '',
+      message: this.exchangeMessage,
+      proposed_recovery_dates: this.proposedRecoveryDates
+    };
+
+    this.planningExchangeService.createExchangeRequest(data)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res: any) => {
+          this.submittingExchange = false;
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Demande envoyée',
+            detail: `Proposition d'échange envoyée à ${this.selectedAgent!.first_name} ${this.selectedAgent!.last_name}. L'échange sera appliqué automatiquement si accepté.`,
+            life: 8000
+          });
+          this.reset();
+        },
+        error: (err: any) => {
+          this.submittingExchange = false;
+          const detail = err.error?.detail;
+          if (err.status === 422 && detail?.error_code === 'EXCHANGE_TOO_SOON') {
+            // Ne devrait pas arriver ici (on a déjà vérifié), mais au cas où
+            this.messageService.add({ severity: 'warn', summary: 'Échange impossible', detail: detail.message, life: 8000 });
+            this.step = 'absence-form';
+          } else {
+            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: typeof detail === 'string' ? detail : 'Erreur lors de la demande d\'échange' });
+          }
+        }
+      });
+  }
+
+  goToAbsenceForm(): void {
+    this.step = 'absence-form';
+    this.caConflictWarning = null;
+    // Vérifier les conflits CA dès l'ouverture du formulaire
+    if (this.currentUser?._id && this.serviceId && this.selectedDateStr) {
+      this.checkCaConflict();
+    }
+  }
+
+  /** Vérifie si des collègues sont déjà en congé sur la période sélectionnée */
+  checkCaConflict(): void {
+    if (!this.currentUser?._id || !this.serviceId || !this.selectedDateStr) return;
+    this.checkingCaConflict = true;
+    this.alertsRttService.checkCaConflict(
+      this.currentUser._id,
+      this.serviceId,
+      this.selectedDateStr,
+      this.selectedDateStr
+    ).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res) => {
+        this.caConflictWarning = res.warning;
+        this.checkingCaConflict = false;
+      },
+      error: () => { this.checkingCaConflict = false; }
+    });
+  }
+
+  // ── STEP 2b : Absence form ────────────────────────────────────────────────
+  submitAbsence(): void {
+    if (this.reportForm.invalid || !this.currentUser?._id || !this.serviceId || !this.selectedDate) {
       this.reportForm.markAllAsTouched();
-      if (this.reportForm.errors?.['min72Hours']) {
-        this.showError('Impossible d\'effectuer une demande d\'absence moins de 72h avant le début de l\'absence');
-      } else if (this.reportForm.errors?.['invalidTimeRange']) {
-        this.showError('La date et heure de fin doivent être postérieures à la date et heure de début.');
-      }
       return;
     }
 
-    if (this.isLoading || !this.currentUser?._id || !this.serviceId) {
-      console.log('❌ Données manquantes');
-      this.showError('Données utilisateur ou service manquantes');
-      return;
-    }
-
-    const formValues = this.reportForm.value;
+    this.submittingAbsence = true;
+    const v = this.reportForm.value;
     const absenceData: CreateAbsenceRequest = {
       staff_id: this.currentUser._id,
-      start_date: this.formatDate(formValues.date),
-      start_hour: this.formatTime(formValues.startHour),
-      end_date: this.formatDate(formValues.date),
-      end_hour: this.formatTime(formValues.endHour),
-      reason: formValues.reason,
-      comment: formValues.comment,
+      start_date: this.selectedDateStr,
+      start_hour: this.formatTime(v.startHour),
+      end_date: this.selectedDateStr,
+      end_hour: this.formatTime(v.endHour),
+      reason: v.reason,
+      comment: v.comment || '',
       service_id: this.serviceId,
-      absence_code_id: formValues.absenceCodeId,
-      replacement_id: undefined,
+      absence_code_id: v.absenceCodeId,
       status: 'En cours'
     };
 
-    this.absenceService.createAbsence(absenceData).subscribe({
-      next: () => {
-        this.showSuccess('Absence signalée avec succès');
-        this.reportForm.reset();
-      },
-      error: (err) => {
-        this.showError(err.error?.message || 'Erreur lors de la demande de l\'absence');
-      }
-    });
+    this.absenceService.createAbsence(absenceData)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.submittingAbsence = false;
+          this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Demande d\'absence envoyée à l\'encadrement' });
+          // Vérifier les heures sup après soumission
+          if (this.currentUser?._id) {
+            this.alertsRttService.checkAndNotifyOvertime(this.currentUser._id).subscribe();
+          }
+          this.reset();
+        },
+        error: (err: any) => {
+          this.submittingAbsence = false;
+          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message || 'Erreur lors de la soumission' });
+        }
+      });
   }
 
-  submitReplacement() {
-    if (this.replacementForm.invalid || this.replacementForm.errors?.['invalidTimeRange'] || this.replacementForm.errors?.['min72Hours']) {
-      this.replacementForm.markAllAsTouched();
-      if (this.replacementForm.errors?.['min72Hours']) {
-        this.showError('Impossible d\'effectuer une demande d\'absence moins de 72h avant le début de l\'absence');
-      } else if (this.replacementForm.errors?.['invalidTimeRange']) {
-        this.showError('La date et heure de fin doivent être postérieures à la date et heure de début.');
-      }
-      return;
-    }
-
-    if (this.isLoading || !this.currentUser?._id || !this.serviceId) {
-      this.showError('Données utilisateur ou service manquantes');
-      return;
-    }
-
-    const formValues = this.replacementForm.value;
-    const absenceData: CreateAbsenceRequest = {
-      staff_id: this.currentUser._id,
-      start_date: this.formatDate(formValues.date),
-      start_hour: this.formatTime(formValues.startHour),
-      end_date: this.formatDate(formValues.date),
-      end_hour: this.formatTime(formValues.endHour),
-      reason: formValues.reason,
-      comment: formValues.comment,
-      replacement_id: formValues.replacementId,
-      absence_code_id: formValues.absenceCodeId,
-      service_id: this.serviceId,
-      status: 'En cours'
-    };
-
-    this.absenceService.createAbsence(absenceData).subscribe({
-      next: () => {
-        this.showSuccess('Demande de remplacement transmise');
-        this.replacementForm.reset();
-      },
-      error: (err) => {
-        this.showError(err.error?.message || 'Erreur lors de la demande de l\'absence');
-      }
-    });
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  reset(): void {
+    this.step = 'calendar';
+    this.selectedDate = null;
+    this.selectedDateStr = '';
+    this.compatibleAgents = [];
+    this.selectedAgent = null;
+    this.selectedTargetPlanning = null;
+    this.exchangeMessage = '';
+    this.myRestDays = [];
+    this.proposedRecoveryDates = [];
+    this.recoveryStepDone = false;
+    this.reportForm.reset();
   }
 
   formatDate(date: Date): string {
-    if (!(date instanceof Date) || isNaN(date.getTime())) {
-      return '';
-    }
-    return date.toISOString().split('T')[0];
+    if (!(date instanceof Date) || isNaN(date.getTime())) return '';
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
-  showSuccess(message: string) {
-    this.messageService.add({ severity: 'success', summary: 'Succès', detail: message });
+  formatDateDisplay(dateStr: string): string {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   }
 
-  showError(message: string) {
-    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: message });
+  formatTime(t: Date | string): string {
+    if (typeof t === 'string') return t;
+    if (!(t instanceof Date) || isNaN(t.getTime())) return '00:00';
+    return `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
   }
 
-  showWarning(message: string) {
-    this.messageService.add({ severity: 'warn', summary: 'Attention', detail: message });
+  daysUntil(dateStr: string): number {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const target = new Date(dateStr); target.setHours(0, 0, 0, 0);
+    return Math.ceil((target.getTime() - today.getTime()) / 86400000);
   }
 }

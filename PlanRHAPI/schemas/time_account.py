@@ -8,13 +8,14 @@ from datetime import datetime
 
 class TimeAccountCreate(BaseModel):
     user_id: str
-    reference_date: str  # Format: YYYY-MM-DD
+    reference_date: str
     year: int
-    chs_days: float = 0.0  # Compte Heures Supplémentaires
-    cfr_days: float = 0.0  # Compte Fériés/Récupérations
-    ca_days: float = 0.0  # Congés Annuels
-    rtt_days: float = 0.0  # Réduction du Temps de Travail
-    cet_days: float = 0.0  # Compte Épargne Temps
+    chs_days: float = 0.0          # Heures sup calculées depuis les plannings (en jours)
+    chs_exchange_hours: float = 0.0 # Heures sup créditées par échanges (en heures, jamais écrasé)
+    cfr_days: float = 0.0
+    ca_days: float = 0.0
+    rtt_days: float = 0.0
+    cet_days: float = 0.0
     calculated_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -23,6 +24,7 @@ class TimeAccountUpdate(BaseModel):
     reference_date: Optional[str] = None
     year: Optional[int] = None
     chs_days: Optional[float] = None
+    chs_exchange_hours: Optional[float] = None
     cfr_days: Optional[float] = None
     ca_days: Optional[float] = None
     rtt_days: Optional[float] = None
@@ -36,6 +38,7 @@ class TimeAccountResponse(BaseModel):
     reference_date: str
     year: int
     chs_days: float
+    chs_exchange_hours: float = 0.0
     cfr_days: float
     ca_days: float
     rtt_days: float

@@ -5,13 +5,14 @@
 export interface TimeAccount {
   id: string;
   user_id: string;
-  reference_date: string; // Format: YYYY-MM-DD
+  reference_date: string;
   year: number;
-  chs_days: number; // Compte Heures Supplémentaires
-  cfr_days: number; // Compte Fériés/Récupérations
-  ca_days: number; // Congés Annuels
-  rtt_days: number; // Réduction du Temps de Travail
-  cet_days: number; // Compte Épargne Temps
+  chs_days: number;
+  chs_exchange_hours: number; // Heures sup créditées par échanges (en heures exactes)
+  cfr_days: number;
+  ca_days: number;
+  rtt_days: number;
+  cet_days: number;
   calculated_at?: string;
   created_at?: string;
   updated_at?: string;

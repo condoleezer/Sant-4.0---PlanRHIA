@@ -32,21 +32,10 @@
   border-left: 4px solid #007bff;
 }
 
-.stat-card.new {
-  border-left-color: #17a2b8;
-}
-
-.stat-card.in-progress {
-  border-left-color: #ffc107;
-}
-
-.stat-card.resolved {
-  border-left-color: #28a745;
-}
-
-.stat-card.critical {
-  border-left-color: #dc3545;
-}
+.stat-card.new { border-left-color: #17a2b8; }
+.stat-card.in-progress { border-left-color: #ffc107; }
+.stat-card.resolved { border-left-color: #28a745; }
+.stat-card.critical { border-left-color: #dc3545; }
 
 .stat-number {
   font-size: 2rem;
@@ -98,10 +87,7 @@
   align-items: center;
 }
 
-.filter-dropdown,
-.filter-calendar {
-  min-width: 150px;
-}
+.filter-dropdown, .filter-calendar { min-width: 150px; }
 
 .clear-button {
   background: #6c757d !important;
@@ -115,13 +101,8 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.alerts-table {
-  width: 100%;
-}
-
-.critical-row {
-  background-color: #fff5f5 !important;
-}
+.alerts-table { width: 100%; }
+.critical-row { background-color: #fff5f5 !important; }
 
 .alert-title {
   font-weight: bold;
@@ -135,35 +116,13 @@
   text-decoration: underline;
 }
 
-.alert-description {
-  color: #6c757d;
-  font-size: 0.9rem;
-}
+.alert-description { color: #6c757d; font-size: 0.9rem; }
+.alert-type { color: #495057; font-size: 0.9rem; }
 
-.alert-type {
-  color: #495057;
-  font-size: 0.9rem;
-}
-
-.user-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.user-name {
-  font-weight: 500;
-  color: #2c3e50;
-}
-
-.user-service {
-  color: #6c757d;
-  font-size: 0.8rem;
-}
-
-.alert-date {
-  color: #6c757d;
-  font-size: 0.9rem;
-}
+.user-info { display: flex; flex-direction: column; }
+.user-name { font-weight: 500; color: #2c3e50; }
+.user-service { color: #6c757d; font-size: 0.8rem; }
+.alert-date { color: #6c757d; font-size: 0.9rem; }
 
 .action-buttons {
   display: flex;
@@ -177,32 +136,13 @@
   color: #6c757d;
 }
 
-.empty-state h3 {
-  margin: 15px 0 10px 0;
-  color: #495057;
-}
+.empty-state h3 { margin: 15px 0 10px 0; color: #495057; }
+.empty-state p { margin: 0; }
 
-.empty-state p {
-  margin: 0;
-}
-
-.alert-details {
-  padding: 20px 0;
-}
-
-.detail-section {
-  margin-bottom: 20px;
-}
-
-.detail-section h4 {
-  color: #2c3e50;
-  margin-bottom: 10px;
-}
-
-.alert-description-full {
-  color: #6c757d;
-  line-height: 1.6;
-}
+.alert-details { padding: 20px 0; }
+.detail-section { margin-bottom: 20px; }
+.detail-section h4 { color: #2c3e50; margin-bottom: 10px; }
+.alert-description-full { color: #6c757d; line-height: 1.6; }
 
 .detail-grid {
   display: grid;
@@ -222,17 +162,10 @@
   font-size: 0.9rem;
 }
 
-.detail-item span {
-  color: #6c757d;
-}
+.detail-item span { color: #6c757d; }
 
-.action-form {
-  padding: 20px 0;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
+.action-form { padding: 20px 0; }
+.form-group { margin-bottom: 20px; }
 
 .form-group label {
   display: block;
@@ -243,60 +176,15 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .alerts-container {
-    padding: 10px;
-  }
-  
-  .stats-cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .filter-controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .filter-dropdown,
-  .filter-calendar {
-    min-width: auto;
-  }
-  
-  .action-buttons {
-    flex-direction: column;
-  }
-  
-  .detail-grid {
-    grid-template-columns: 1fr;
-  }
+  .alerts-container { padding: 10px; }
+  .stats-cards { grid-template-columns: repeat(2, 1fr); }
+  .filter-controls { flex-direction: column; align-items: stretch; }
+  .filter-dropdown, .filter-calendar { min-width: auto; }
+  .action-buttons { flex-direction: column; }
+  .detail-grid { grid-template-columns: 1fr; }
 }
 
-/* Couleurs pour les priorités */
-.text-danger {
-  color: #dc3545 !important;
-}
-
-.text-warning {
-  color: #ffc107 !important;
-}
-
-.text-info {
-  color: #17a2b8 !important;
-}
-
-.text-success {
-  color: #28a745 !important;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+.text-danger { color: #dc3545 !important; }
+.text-warning { color: #ffc107 !important; }
+.text-info { color: #17a2b8 !important; }
+.text-success { color: #28a745 !important; }

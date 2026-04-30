@@ -19,6 +19,8 @@ import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextarea } from 'primeng/inputtextarea';
 import { ReplacementAIService, ReplacementSuggestion, ChatMessage } from '../../../services/replacement-ai/replacement-ai.service';
+import { ExchangeReciprocityService, ReciprocityEntry } from '../../../services/exchange-reciprocity/exchange-reciprocity.service';
+import { CalendarSyncService } from '../../../services/calendar-sync/calendar-sync.service';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DialogModule } from 'primeng/dialog';
 
@@ -63,6 +65,9 @@ export class TreatAbsenceComponent implements OnInit {
   // NOUVEAU : état agent disponible mais pas optimal
   selectedUserIsNotOptimal: { rank: number; total: number; topSuggestion: any | null } | null = null;
 
+  // Réciprocité
+  replacementReciprocity: ReciprocityEntry | null = null; // dette du remplaçant envers l'absent
+
   // Chatbot
   chatMessages: ChatMessage[] = [];
   chatInput = '';
@@ -104,7 +109,9 @@ export class TreatAbsenceComponent implements OnInit {
     private router: Router,
     private messageService: MessageService,
     private replacementAIService: ReplacementAIService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private reciprocityService: ExchangeReciprocityService,
+    private calendarSyncService: CalendarSyncService
   ) {
     this.hubloUrl = this.sanitizer.bypassSecurityTrustResourceUrl('https://ng.hublo.com/admin/login');
   }
@@ -259,6 +266,7 @@ export class TreatAbsenceComponent implements OnInit {
     this.absenceService.updateAbsence(absenceId, status, replacementId).subscribe({
       next: () => {
         this.showSuccess('Absence approuvée');
+        this.calendarSyncService.forceRefresh();
         this.loadAbsenceDetails(absenceId);
       },
       error: (err) => {
@@ -281,6 +289,7 @@ export class TreatAbsenceComponent implements OnInit {
     this.absenceService.updateAbsence(absenceId, status, replacementId).subscribe({
       next: () => {
         this.showSuccess('Absence refusée');
+        this.calendarSyncService.forceRefresh();
         this.loadAbsenceDetails(absenceId);
       },
       error: (err) => {
@@ -564,7 +573,7 @@ export class TreatAbsenceComponent implements OnInit {
           initialMessage += '\n  - Durée max 48h/semaine (p.19)';
           initialMessage += '\n  - Limites heures sup: 240h/an, 20h/mois (p.21)';
           initialMessage += '\n• Même service (poids: 30)';
-          initialMessage += '\n• Spécialité compatible (poids: 25)';
+          initialMessage += '\n• Métier compatible (poids: 25)';
           initialMessage += '\n• Droits à congés disponibles (poids: 20)';
           initialMessage += '\n• Aucun repos planifié (poids: 20)';
           initialMessage += '\n• Équité des remplacements (poids: 15)';
@@ -650,6 +659,31 @@ export class TreatAbsenceComponent implements OnInit {
     this.selectedUserBlocked = null;
     this.selectedUserIsNotOptimal = null;
     this.selectedUserEvaluation = null;
+
+    // Vérifier si le remplaçant a une dette de réciprocité envers l'absent
+    this.replacementReciprocity = null;
+    if (this.staff?._id && suggestion.user_id) {
+      this.reciprocityService.checkReciprocity(suggestion.user_id, this.staff._id).subscribe({
+        next: (res) => {
+          if (res.has_debt) {
+            // Le remplaçant doit déjà des heures à l'absent → signaler
+            this.replacementReciprocity = {
+              id: res.reciprocity_id || '',
+              exchange_id: '',
+              creditor_id: this.staff!._id!,
+              debtor_id: suggestion.user_id,
+              hours_owed: res.hours_remaining || 0,
+              hours_repaid: 0,
+              hours_remaining: res.hours_remaining || 0,
+              status: 'pending',
+              expires_at: res.expires_at || '',
+              repayment_exchanges: [],
+            };
+          }
+        },
+        error: () => {}
+      });
+    }
 
     this.showSuccess(`Suggestion sélectionnée : ${suggestion.name}`);
   }

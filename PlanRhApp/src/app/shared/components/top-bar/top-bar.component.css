@@ -29,7 +29,7 @@
   align-items: center;
   gap: 16px;
   padding: 16px 8px 8px;
-  background: white;
+  background: #1e293b;
 }
 
 /* Avatar + crayon */
@@ -63,8 +63,8 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: #f1f5f9;
-  border: 1.5px solid #e2e8f0;
+  background: #334155;
+  border: 1.5px solid #475569;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -74,7 +74,7 @@
   transition: all 0.15s;
 }
 .profile-edit-btn:hover {
-  background: #dbeafe;
+  background: #1e40af;
   border-color: #3b82f6;
 }
 
@@ -83,18 +83,18 @@
   margin: 0;
   font-size: 1.2rem;
   font-weight: 700;
-  color: #1e293b;
+  color: #f1f5f9;
 }
 .profile-matricule {
   font-size: 0.82rem;
-  color: #64748b;
+  color: #94a3b8;
   font-weight: 500;
   letter-spacing: 0.5px;
   margin-top: -4px;
 }
 .profile-role-badge {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
   padding: 3px 12px;
   border-radius: 20px;
   font-size: 0.8rem;
@@ -115,9 +115,9 @@
   align-items: center;
   gap: 14px;
   padding: 14px 18px;
-  background: #f8fafc;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 10px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 .profile-info-item i {
   color: #3b82f6;
@@ -139,7 +139,7 @@
 }
 .profile-info-value {
   font-size: 0.9rem;
-  color: #1e293b;
+  color: #e2e8f0;
   font-weight: 500;
 }
 
@@ -166,11 +166,11 @@
 }
 .edit-field input {
   padding: 10px 14px;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid #334155;
   border-radius: 8px;
   font-size: 0.92rem;
-  color: #1e293b;
-  background: #f8fafc;
+  color: #e2e8f0;
+  background: #0f172a;
   outline: none;
   transition: border-color 0.15s;
   width: 100%;
@@ -178,7 +178,7 @@
 }
 .edit-field input:focus {
   border-color: #3b82f6;
-  background: white;
+  background: #0f172a;
 }
 
 .password-input-wrapper {

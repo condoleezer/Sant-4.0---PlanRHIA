@@ -1,4 +1,4 @@
-<div class="planification-container">
+﻿<div class="planification-container">
 
   <!-- Header -->
   <div class="planification-header">
@@ -30,31 +30,31 @@
         </p-dropdown>
       </div>
 
-      <!-- Filtre par rôle -->
+      <!-- Filtre Jour — toujours visible, avec croix pour effacer -->
       <div class="filter-group">
-        <label>Rôle</label>
+        <label>Jour</label>
         <p-dropdown
-          [(ngModel)]="filters.role"
-          [options]="roles"
-          optionLabel="label"
-          optionValue="value"
-          (onChange)="onFilterChange('role')"
-          placeholder="Tous les rôles"
+          [(ngModel)]="filters.jour"
+          [options]="jours"
+          (onChange)="onFilterChange('jour')"
+          placeholder="Tous les jours"
           [showClear]="true"
         >
         </p-dropdown>
       </div>
 
-      <!-- 🔥 MODIFIÉ: Filtre par spécialité -->
+
+
+      <!-- 🔥 MODIFIÉ: Filtre par métier -->
       <div class="filter-group">
-        <label>Spécialité</label>
+        <label>Métier</label>
         <p-dropdown
           [(ngModel)]="selectedSpecialityId"
           [options]="specialities"
           optionLabel="label"
           optionValue="value"
           (onChange)="onFilterChange('speciality')"
-          placeholder="Toutes les spécialités"
+          placeholder="Tous les métiers"
           [showClear]="true"
         >
         </p-dropdown>
@@ -134,48 +134,56 @@
     </div>
   </div>
 
-  <!-- Navigation des semaines -->
-  <div class="week-navigation" *ngIf="!loading && agents.length > 0">
-    <button 
-      class="nav-button prev-button" 
-      (click)="previousWeeks()" 
-      [disabled]="!canGoPrevious()"
-      title="Semaine précédente">
-      ‹ Semaine précédente
-    </button>
-    
-    <div class="current-period">
-      <span *ngIf="planningWeeks.length > 0">
-        Semaine {{ planningWeeks[0].semaine }} - {{ filters.annee }}
-      </span>
+  <!-- Sélecteur de vue + Navigation -->
+  <div class="view-nav-bar" *ngIf="!loading && agents.length > 0">
+    <!-- Boutons de vue -->
+    <div class="view-mode-buttons">
+      <button class="view-btn" [class.active]="viewMode === 'day'" (click)="setViewMode('day')">
+        <i class="pi pi-calendar-minus"></i> Jour
+      </button>
+      <button class="view-btn" [class.active]="viewMode === 'week'" (click)="setViewMode('week')">
+        <i class="pi pi-calendar"></i> Semaine
+      </button>
+      <button class="view-btn" [class.active]="viewMode === 'month'" (click)="setViewMode('month')">
+        <i class="pi pi-calendar-plus"></i> Mois
+      </button>
+      <button class="view-btn" [class.active]="isYearView" (click)="setViewMode('year')">
+        <i class="pi pi-calendar-times"></i> Année
+      </button>
     </div>
-    
-    <button 
-      class="nav-button next-button" 
-      (click)="nextWeeks()" 
-      [disabled]="!canGoNext()"
-      title="Semaine suivante">
-      Semaine suivante ›
-    </button>
+
+    <!-- Navigation période -->
+    <div class="period-navigation">
+      <button class="period-nav-btn" (click)="previousWeeks()" [disabled]="!canGoPrevious()">‹</button>
+      <span class="period-label">{{ getViewPeriodLabel() }}</span>
+      <button class="period-nav-btn" (click)="nextWeeks()" [disabled]="!canGoNext()">›</button>
+    </div>
   </div>
 
-  <!-- Tableau de planification -->
-  <div class="planning-table-container" *ngIf="!loading && agents.length > 0">
+  <!-- Vue Année : FullCalendar multiMonth -->
+  <div class="year-fullcalendar-container" *ngIf="!loading && agents.length > 0 && isYearView && yearCalendarReady">
+    <full-calendar [options]="yearCalendarOptions"></full-calendar>
+  </div>
+
+  <!-- Tableau de planification (vues Jour/Semaine/Mois) -->
+  <div class="planning-table-container" *ngIf="!loading && agents.length > 0 && !isYearView">
     <table class="planning-table">
       <!-- En-têtes -->
       <thead>
         <!-- 🔥 MODIFIÉ: Une seule ligne avec les dates complètes -->
         <tr class="date-headers">
-          <th rowspan="2" class="agent-header">Nom</th>
-          <th rowspan="2" class="agent-header">Prénom</th>
-          <th rowspan="2" class="contract-header">Contrat hebdo</th>
-          <th *ngFor="let day of getAllDays()" class="date-header">
-            {{ getFullDateLabel(day) }}
+          <th rowspan="2" class="agent-header">Agent</th>
+          <th rowspan="2" class="contract-header">Contrat</th>
+          <th *ngFor="let day of getAllDays()" class="date-header" 
+              [class.compact-header]="viewMode === 'month'"
+              [class.year-header]="isYearView">
+            <ng-container *ngIf="viewMode === 'month' || isYearView">{{ getCompactDateLabel(day) }}</ng-container>
+            <ng-container *ngIf="viewMode !== 'month' && !isYearView">{{ getFullDateLabel(day) }}</ng-container>
           </th>
         </tr>
 
         <!-- En-têtes des jours de la semaine -->
-        <tr class="day-headers">
+        <tr class="day-headers" *ngIf="viewMode !== 'month' && !isYearView">
           <th *ngFor="let day of getAllDays()" class="day-header">
             {{ getDayName(day) }}
           </th>
@@ -185,33 +193,37 @@
       <!-- Corps du tableau -->
       <tbody>
         <tr *ngFor="let agent of agents" class="agent-row">
-          <td class="agent-cell">{{ agent.nom }}</td>
-          <td class="agent-cell">{{ agent.prenom }}</td>
-          <td class="contract-cell">
-            {{ formatContractHours(agent.contrat_hebdo) }}
-          </td>
+          <td class="agent-cell">{{ agent.nom }} {{ agent.prenom }}</td>
+          <td class="contract-cell">{{ formatContractHours(agent.contrat_hebdo) }}</td>
 
           <!-- Cellules de planning -->
           <td
             *ngFor="let day of getAllDays()"
             class="planning-cell"
-            [class.proposed]="getCellStatus(agent.id, day) === 'proposé' && !isCellPlanningRequest(agent.id, day)"
-            [class.planning-request]="isCellPlanningRequest(agent.id, day)"
-            [class.validated]="getCellStatus(agent.id, day) === 'validé'"
-            [class.refused]="getCellStatus(agent.id, day) === 'refusé'"
-            [class.editable]="editMode"
-            [class.empty]="getCellStatus(agent.id, day) === 'vide'"
-            [class.pending-highlight]="isCellHighlighted(agent.id, day)"
-            [style.background-color]="getCellCode(agent.id, day) ? getActivityColor(getCellCode(agent.id, day)) : null"
-            (click)="onCellClick(agent.id, day)"
-            [title]="getCellTooltip(agent.id, day)"
+            [class.compact-cell]="viewMode === 'month' || isYearView"
+            [class.year-cell]="isYearView"
+            [class.proposed]="!isYearView && getCellStatus(agent.id, day) === 'proposé' && !isCellPlanningRequest(agent.id, day)"
+            [class.planning-request]="!isYearView && isCellPlanningRequest(agent.id, day)"
+            [class.validated]="!isYearView && getCellStatus(agent.id, day) === 'validé'"
+            [class.refused]="!isYearView && getCellStatus(agent.id, day) === 'refusé'"
+            [class.editable]="editMode && !isYearView"
+            [class.empty]="!isYearView && getCellStatus(agent.id, day) === 'vide'"
+            [class.pending-highlight]="!isYearView && isCellHighlighted(agent.id, day)"
+            [style.background-color]="isYearView ? getActivityColor(getMonthDominantCode(agent.id, day)) : (getCellCode(agent.id, day) ? getActivityColor(getCellCode(agent.id, day)) : null)"
+            (click)="!isYearView && onCellClick(agent.id, day)"
+            [title]="isYearView ? getMonthDominantCode(agent.id, day) : getCellTooltip(agent.id, day)"
           >
-            <!-- Contenu de la cellule -->
-            <div class="cell-content">
-              <span class="activity-code">{{
-                getCellCode(agent.id, day)
-              }}</span>
+            <!-- Vue année : code dominant + nb jours -->
+            <div class="cell-content" *ngIf="isYearView">
+              <span class="activity-code year-code">{{ getMonthDominantCode(agent.id, day) }}</span>
+              <span class="year-days" *ngIf="getMonthWorkedDays(agent.id, day) > 0">{{ getMonthWorkedDays(agent.id, day) }}j</span>
+            </div>
 
+            <!-- Vue normale -->
+            <div class="cell-content" *ngIf="!isYearView">
+              <span class="activity-code">{{ getCellCode(agent.id, day) }}</span>
+
+              <!-- Boutons d'action pour les propositions -->
               <!-- Boutons d'action pour les propositions -->
               <div
                 *ngIf="getCellStatus(agent.id, day) === 'proposé'"
@@ -249,7 +261,7 @@
   </div>
 
   <!-- Section Besoins / Écarts séparée -->
-  <div class="ecarts-section" *ngIf="!loading && weeklyNeedsData.length > 0 && agents.length > 0">
+  <div class="ecarts-section" *ngIf="!loading && weeklyNeedsData.length > 0 && agents.length > 0 && !isYearView">
     <h3 class="ecarts-title">
       <i class="pi pi-chart-bar"></i> Suivi des effectifs par créneau
     </h3>
@@ -749,7 +761,7 @@
         <div class="sim-agent-info">
           <span class="sim-agent-name">{{ agent.nom }} {{ agent.prenom }}</span>
           <span class="sim-agent-contrat">
-            {{ getAgentSpecialityLabel(agent) }} · {{ formatContractHours(agent.contrat_hebdo) }}h/sem
+            {{ formatContractHours(agent.contrat_hebdo) }}h/sem
           </span>
         </div>
       </div>

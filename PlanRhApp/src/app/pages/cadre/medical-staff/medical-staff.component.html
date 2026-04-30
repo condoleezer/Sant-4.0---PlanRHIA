@@ -13,7 +13,7 @@
       <span class="p-input-icon-left w-full">
         <input pInputText type="text" [(ngModel)]="searchTerm" 
                (input)="applyFilter()" 
-               placeholder="Rechercher par nom, prénom, téléphone, email, rôle, service ou spécialité..."
+               placeholder="Rechercher par nom, prénom, téléphone, email, rôle, service ou métier..."
                class="w-full border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors h-11">
       </span>
     </div>
@@ -33,7 +33,7 @@
           <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Prénom</th>
           <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Téléphone</th>
           <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Service</th>
-          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Spécialité</th>
+          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Métier</th>
           <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Jour de travail</th>
           <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Contrat</th>
           <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Actions</th>
@@ -153,7 +153,7 @@
         <p>{{ selectedUserForDetails.serviceName || 'Non attribué' }}</p>
       </div>
       <div>
-        <label class="font-medium">Spécialité :</label>
+        <label class="font-medium">Métier :</label>
         <p>{{ selectedUserForDetails.specialityName || 'Non attribué' }}</p>
       </div>
       <div *ngIf="selectedContrat">

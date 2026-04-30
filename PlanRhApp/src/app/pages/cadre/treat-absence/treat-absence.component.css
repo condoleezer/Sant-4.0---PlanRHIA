@@ -1130,3 +1130,30 @@
     align-items: flex-start;
   }
 }
+
+/* Réciprocité */
+.reciprocity-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #fff7ed;
+  border: 1px solid #f97316;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin: 12px 0;
+}
+.reciprocity-icon {
+  font-size: 1.4rem;
+  color: #f97316;
+  flex-shrink: 0;
+}
+.reciprocity-content strong {
+  display: block;
+  color: #c2410c;
+  margin-bottom: 4px;
+}
+.reciprocity-content p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #7c2d12;
+}

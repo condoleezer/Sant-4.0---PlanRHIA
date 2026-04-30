@@ -36,8 +36,9 @@ export interface PlanningFilters {
   annee: number;
   mois: number;
   semaine: number;
-  role?: string; // Filtre par rôle
-  service_id?: string; // Filtre par service
+  jour?: number;
+  role?: string;
+  service_id?: string;
 }
 
 @Injectable({
@@ -57,9 +58,9 @@ export class PlanificationService {
   }
 
   // Tâche 1.3.1 : Récupérer les données de planning
-  getPlanningData(filters: PlanningFilters): Observable<PlanningCell[]> {
+  getPlanningData(filters: PlanningFilters, viewMode: string = 'week'): Observable<PlanningCell[]> {
     const params = new HttpParams()
-      .set('date', this.getDateRange(filters))
+      .set('date', this.getDateRange(filters, viewMode))
       .set('service_id', this.getCurrentUserServiceId());
     
     return this.http.get<any>(`${this.apiUrl}/plannings`, { params })
@@ -264,13 +265,15 @@ export class PlanificationService {
   }
 
   // Méthodes utilitaires
-  private getDateRange(filters: PlanningFilters): string {
+  private getDateRange(filters: PlanningFilters, viewMode: string = 'week'): string {
     const year = filters.annee;
+    const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if (viewMode === 'year') {
+      return `${year}-01-01,${year}-12-31`;
+    }
     const month = filters.mois;
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0);
-    // Format local pour éviter les décalages UTC
-    const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     return `${fmt(startDate)},${fmt(endDate)}`;
   }
 

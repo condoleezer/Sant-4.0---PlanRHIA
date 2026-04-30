@@ -1,5 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Subject, Observable, interval } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { switchMap, distinctUntilChanged, filter } from 'rxjs/operators';
+import { environment } from '../../environment/environment';
 
 /**
  * Interface pour représenter un changement de planning
@@ -15,19 +18,14 @@ export interface PlanningChange {
 
 /**
  * Service centralisé pour la synchronisation des calendriers
- * 
- * Ce service permet de :
- * - Notifier les changements de planning entre tous les composants
- * - Forcer un rafraîchissement global
- * - Maintenir une synchronisation automatique toutes les 30 secondes
  */
 @Injectable({
   providedIn: 'root'
 })
 export class CalendarSyncService {
   private planningChange$ = new Subject<PlanningChange>();
-  // Rafraîchissement automatique désactivé (était: interval(30000))
-  // private refreshInterval$ = interval(30000);
+  private refreshInterval$ = interval(30000); // Rafraîchissement automatique toutes les 30 secondes
+  private lastKnownUpdate: string | null = null;
 
   /**
    * Observable pour s'abonner aux changements de planning
@@ -35,15 +33,31 @@ export class CalendarSyncService {
   planningChanges$: Observable<PlanningChange> = this.planningChange$.asObservable();
 
   /**
-   * Observable pour le rafraîchissement automatique (désactivé)
-   * Pour réactiver: décommenter la ligne refreshInterval$ ci-dessus et remplacer NEVER par refreshInterval$
+   * Observable pour le rafraîchissement automatique (30 secondes)
    */
-  autoRefresh$: Observable<number> = new Observable(observer => {
-    // Ne jamais émettre - rafraîchissement automatique désactivé
-  });
+  autoRefresh$: Observable<number> = this.refreshInterval$;
 
-  constructor() {
+  constructor(private http: HttpClient) {
     console.log('CalendarSyncService initialisé');
+    this.startCrossSessionPolling();
+  }
+
+  /**
+   * Poll le backend toutes les 10s pour détecter les changements cross-session
+   * (échanges acceptés par un autre agent, modifications cadre, etc.)
+   */
+  private startCrossSessionPolling(): void {
+    interval(10000).pipe(
+      switchMap(() => this.http.get<{ last_update: string }>(`${environment.apiUrl}/plannings/last-update`))
+    ).subscribe({
+      next: (res) => {
+        if (this.lastKnownUpdate && res.last_update !== this.lastKnownUpdate) {
+          this.forceRefresh();
+        }
+        this.lastKnownUpdate = res.last_update;
+      },
+      error: () => {} // silencieux si le backend est indisponible
+    });
   }
 
   /**

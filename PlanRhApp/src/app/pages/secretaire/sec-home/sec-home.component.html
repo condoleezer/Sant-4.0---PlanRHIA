@@ -53,39 +53,138 @@
         </div>
       </div>
 
-      <!-- GESTION PERSONNELLE Section -->
-      <div class="section-container">
-        <h2 class="section-title">GESTION PERSONNELLE</h2>
+      <!-- BALANCE HORAIRE MENSUELLE -->
+      <div class="section-container" *ngIf="monthlyBalance">
+        <h2 class="section-title">Balance horaire — {{ monthlyBalance.month_name }} {{ currentYear }}</h2>
 
-        <!-- Note: Surveillance SAPHIR supprimée car elle ne faisait que simuler des données -->
+        <div class="gauges-row-home">
 
-        <!-- Anomalies and Events Cards -->
-        <div class="personal-management-cards">
-          <div class="management-card anomalies-card">
-            <div class="card-number">{{ anomaliesCount }}</div>
-            <div class="card-text">anomalie(s) à résoudre</div>
-            <div class="card-details">
-              <div class="detail-item">• Erreurs: {{ errorsCount }}</div>
-              <div class="detail-item">
-                • Absences non justifiées: {{ unjustifiedAbsencesCount }}
-              </div>
-              <div class="detail-item">
-                • Dépassements horaires: {{ overtimeCount }}
-              </div>
+          <!-- Jauge 1 : Heures dues (prorata du jour) -->
+          <div class="gauge-item-home">
+            <svg viewBox="0 0 120 70" class="gauge-svg-home">
+              <path d="M10,65 A50,50 0 0,1 110,65" fill="none" stroke="#e2e8f0" stroke-width="10" stroke-linecap="round"/>
+              <path d="M10,65 A50,50 0 0,1 110,65" fill="none" stroke="#3b82f6" stroke-width="10" stroke-linecap="round"
+                    [attr.stroke-dasharray]="getSemiDash(monthlyBalance.prorata_obligation, monthlyBalance.monthly_obligation)"
+                    stroke-dashoffset="0"/>
+            </svg>
+            <div class="gauge-center-home">
+              <span class="gauge-val-home">{{ monthlyBalance.prorata_obligation | number:'1.0-0' }}h</span>
+              <span class="gauge-sub-home">/ {{ monthlyBalance.monthly_obligation | number:'1.0-0' }}h</span>
+            </div>
+            <div class="gauge-lbl-home">Heures dues</div>
+            <div class="gauge-sub-info">Jour {{ monthlyBalance.days_elapsed }}/{{ monthlyBalance.days_in_month }}</div>
+          </div>
+
+          <!-- Jauge 2 : Heures effectuées -->
+          <div class="gauge-item-home">
+            <svg viewBox="0 0 120 70" class="gauge-svg-home">
+              <path d="M10,65 A50,50 0 0,1 110,65" fill="none" stroke="#e2e8f0" stroke-width="10" stroke-linecap="round"/>
+              <path d="M10,65 A50,50 0 0,1 110,65" fill="none"
+                    [attr.stroke]="monthlyBalance.status === 'avance' ? '#10b981' : '#f59e0b'"
+                    stroke-width="10" stroke-linecap="round"
+                    [attr.stroke-dasharray]="getSemiDash(monthlyBalance.worked_hours, monthlyBalance.monthly_obligation)"
+                    stroke-dashoffset="0"/>
+            </svg>
+            <div class="gauge-center-home">
+              <span class="gauge-val-home">{{ monthlyBalance.worked_hours | number:'1.0-0' }}h</span>
+              <span class="gauge-sub-home">{{ monthlyBalance.progress_pct }}%</span>
+            </div>
+            <div class="gauge-lbl-home">Heures effectuées</div>
+          </div>
+
+          <!-- Jauge 3 : Solde mensuel -->
+          <div class="gauge-item-home">
+            <svg viewBox="0 0 120 70" class="gauge-svg-home">
+              <path d="M10,65 A50,50 0 0,1 110,65" fill="none" stroke="#e2e8f0" stroke-width="10" stroke-linecap="round"/>
+              <path d="M10,65 A50,50 0 0,1 110,65" fill="none"
+                    [attr.stroke]="monthlyBalance.balance >= 0 ? '#10b981' : '#ef4444'"
+                    stroke-width="10" stroke-linecap="round"
+                    [attr.stroke-dasharray]="getSemiDash(getAbsBalance(), monthlyBalance.monthly_obligation)"
+                    stroke-dashoffset="0"/>
+            </svg>
+            <div class="gauge-center-home">
+              <span class="gauge-val-home"
+                    [style.color]="monthlyBalance.balance >= 0 ? '#10b981' : '#ef4444'">
+                {{ monthlyBalance.balance >= 0 ? '+' : '' }}{{ monthlyBalance.balance | number:'1.0-0' }}h
+              </span>
+              <span class="gauge-sub-home">{{ monthlyBalance.balance_days | number:'1.0-1' }}j</span>
+            </div>
+            <div class="gauge-lbl-home">Solde</div>
+            <div class="gauge-status-home">
+              <span class="status-pill-home"
+                    [class.avance]="monthlyBalance.status === 'avance'"
+                    [class.retard]="monthlyBalance.status !== 'avance'">
+                <i [class]="monthlyBalance.status === 'avance' ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"></i>
+                {{ monthlyBalance.status === 'avance' ? 'En avance' : 'En retard' }}
+              </span>
             </div>
           </div>
 
-          <div class="management-card events-card">
-            <div class="card-number">{{ pendingEventsCount }}</div>
-            <div class="card-text">évènement(s) en attente</div>
-            <div class="card-details">
-              <div class="detail-item">
-                • Demandes équipe: {{ teamRequestsCount }}
-              </div>
-              <div class="detail-item">
-                • Autres: {{ pendingEventsCount - teamRequestsCount }}
-              </div>
+        </div>
+      </div>
+
+      <!-- Chargement balance -->
+      <div class="section-container balance-loading" *ngIf="!monthlyBalance">
+        <h2 class="section-title">Balance horaire du mois</h2>
+        <p class="balance-loading-text"><i class="pi pi-spin pi-spinner"></i> Chargement...</p>
+      </div>
+
+      <!-- SYNTHÈSE MOIS EN COURS -->
+      <div class="section-container" *ngIf="monthlyCurrent">
+        <h2 class="section-title">
+          Ce mois-ci — {{ monthlyCurrent.month_name }} {{ monthlyCurrent.year }}
+        </h2>
+
+        <!-- Bandeau alerte si dépassement -->
+        <div class="monthly-alert-banner" *ngIf="monthlyCurrent.alert">
+          <i class="pi pi-exclamation-triangle"></i>
+          <span>{{ monthlyCurrent.alert_message }}</span>
+        </div>
+
+        <!-- Barre de progression du mois -->
+        <div class="monthly-progress-block">
+          <div class="monthly-progress-labels">
+            <span class="mp-label">Heures travaillées</span>
+            <span class="mp-value" [class.mp-over]="monthlyCurrent.overtime_hours > 0">
+              {{ monthlyCurrent.hours_worked }}h
+              <span *ngIf="monthlyCurrent.overtime_hours > 0" class="mp-overtime">
+                +{{ monthlyCurrent.overtime_hours }}h sup.
+              </span>
+            </span>
+          </div>
+          <div class="monthly-bar-track">
+            <!-- Barre heures travaillées -->
+            <div class="monthly-bar-fill"
+                 [style.width]="getMonthBarWidth(monthlyCurrent.hours_worked, monthlyCurrent.monthly_threshold)"
+                 [style.background]="monthlyCurrent.alert ? '#ef4444' : monthlyCurrent.overtime_hours > 0 ? '#f59e0b' : '#10b981'">
             </div>
+            <!-- Marqueur seuil mensuel -->
+            <div class="monthly-threshold-line"
+                 [style.left]="getMonthThresholdLeft(monthlyCurrent.monthly_threshold, monthlyCurrent.hours_worked)">
+            </div>
+          </div>
+          <div class="monthly-progress-footer">
+            <span class="mp-elapsed">Jour {{ monthlyCurrent.days_elapsed }}/{{ monthlyCurrent.days_in_month }}</span>
+            <span class="mp-threshold">Seuil : {{ monthlyCurrent.monthly_threshold }}h</span>
+            <span class="mp-prorata">Prorata : {{ monthlyCurrent.prorata_threshold }}h</span>
+          </div>
+        </div>
+
+        <!-- Compteurs rapides -->
+        <div class="monthly-counters">
+          <div class="mc-item">
+            <span class="mc-val">{{ monthlyCurrent.ca_taken }}</span>
+            <span class="mc-lbl">CA posés</span>
+          </div>
+          <div class="mc-item">
+            <span class="mc-val">{{ monthlyCurrent.rtt_taken }}</span>
+            <span class="mc-lbl">RTT posés</span>
+          </div>
+          <div class="mc-item" [class.mc-alert]="monthlyCurrent.rtt_suggested > 0">
+            <span class="mc-val" [style.color]="monthlyCurrent.rtt_suggested > 0 ? '#ef4444' : '#10b981'">
+              {{ monthlyCurrent.rtt_suggested }}
+            </span>
+            <span class="mc-lbl">RTT suggérés</span>
           </div>
         </div>
       </div>
@@ -117,26 +216,23 @@
       <div class="section-container">
         <h2 class="section-title">À venir</h2>
 
-        <!-- Upcoming Events List -->
         <div class="upcoming-events">
-          <div
-            *ngFor="let event of filteredUpcomingEvents"
-            class="upcoming-event"
-          >
-            <div class="event-code">
-              {{ event.metadata?.code_temps || "Code temps" }}
+          <!-- Congés réels depuis le planning -->
+          <ng-container *ngIf="upcomingLeaves.length > 0">
+            <div *ngFor="let leave of upcomingLeaves" class="upcoming-event">
+              <div class="event-code">{{ leave.code }}</div>
+              <div class="event-title">{{ leave.label }}</div>
+              <div class="event-date">{{ formatEventDate(leave.date) }}</div>
+              <div class="event-status" *ngIf="leave.status !== 'validé'">
+                <span class="status-badge pending">{{ leave.status }}</span>
+              </div>
             </div>
-            <div class="event-title">{{ event.title }}</div>
-            <div class="event-date" *ngIf="event.due_date">
-              {{ formatEventDate(event.due_date) }}
-            </div>
-          </div>
+          </ng-container>
 
-          <!-- Default upcoming event if none exist -->
-          <div *ngIf="filteredUpcomingEvents.length === 0" class="upcoming-event">
-            <div class="event-code">Code temps du congé annuel</div>
-            <div class="event-title">Congé Annuel</div>
-            <div class="event-date">23/04/2025</div>
+          <!-- Aucun congé planifié -->
+          <div *ngIf="upcomingLeaves.length === 0" class="no-upcoming">
+            <i class="pi pi-calendar"></i>
+            <span>Aucun congé planifié à venir</span>
           </div>
         </div>
       </div>

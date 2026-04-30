@@ -100,7 +100,7 @@ export class SpecialityComponent implements OnInit {
     const request: CreateSpecialityRequest = { name: rawValues.name };
     this.specialityService.createSpeciality(request).subscribe({
       next: () => {
-        this.sharedService.showSuccess('Spécialité créée avec succès');
+        this.sharedService.showSuccess('Métier créé avec succès');
         this.specialityVisible = false;
         this.loadSpecialities();
       },
@@ -117,7 +117,7 @@ export class SpecialityComponent implements OnInit {
     const request: CreateSpecialityRequest = { name: rawValues.name };
     this.specialityService.updateSpeciality(this.currentSpecialityId, request).subscribe({
       next: () => {
-        this.sharedService.showSuccess('Spécialité mise à jour avec succès');
+        this.sharedService.showSuccess('Métier mis à jour avec succès');
         this.specialityVisible = false;
         this.loadSpecialities();
       },
@@ -134,7 +134,7 @@ export class SpecialityComponent implements OnInit {
     if (!this.specialityToDelete) return;
     this.specialityService.deleteSpeciality(this.specialityToDelete.id).subscribe({
       next: () => {
-        this.sharedService.showSuccess('Spécialité supprimée avec succès');
+        this.sharedService.showSuccess('Métier supprimé avec succès');
         this.deleteSpecialityDialog = false;
         this.loadSpecialities();
       },

@@ -109,8 +109,8 @@
       <div class="h-2"></div>
 
       <p-iftalabel>
-        <p-select [options]="specialityOptions" id="speciality" optionLabel="label" optionValue="value" placeholder="Sélectionner une spécialité" class="w-full md:w-56" formControlName="speciality" class="uniform-input"/>
-        <label for="speciality">Spécialité</label>
+        <p-select [options]="specialityOptions" id="speciality" optionLabel="label" optionValue="value" placeholder="Sélectionner un métier" class="w-full md:w-56" formControlName="speciality" class="uniform-input"/>
+        <label for="speciality">Métier</label>
       </p-iftalabel>
       <div class="h-2"></div>
 
@@ -150,7 +150,7 @@
         <p>{{ selectedUserForDetails.serviceName || 'Non attribué' }}</p>
       </div>
       <div>
-        <label class="font-medium">Spécialité :</label>
+        <label class="font-medium">Métier :</label>
         <p>{{ selectedUserForDetails.specialityName || 'Non attribué' }}</p>
       </div>
       <div *ngIf="selectedContrat">

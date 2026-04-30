@@ -76,6 +76,7 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     children: [
       { path: '', component: CadreHomeComponent },
+      { path: 'mon-agenda', component: MonAgendaComponent },
       { path: 'calendar', component: CalendarComponent },
       { path: 'planification', component: PlanificationComponent },
       { path: 'leave-window', component: LeaveWindowComponent },

@@ -1,40 +1,568 @@
-/* Style pour les boutons des onglets */
-.tab-button {
-  padding: 0.5rem 1rem;
-  border-radius: 0.75rem;
-  border: none;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-/* Conteneur du formulaire */
-.form-container {
-  max-width: 800px; /* Un peu plus large pour accommoder 2 colonnes */
+/* ── Container ─────────────────────────────────────────────────────────── */
+.wizard-container {
+  max-width: 860px;
   margin: 0 auto;
+  padding: 1.5rem;
+  min-height: 100vh;
 }
 
-/* Groupe de champs */
-.form-group {
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.wizard-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-bottom: 1.5rem;
+}
+
+.breadcrumb span { display: flex; align-items: center; gap: 0.35rem; }
+.breadcrumb span.active { color: #3b82f6; font-weight: 600; }
+.breadcrumb span.done  { color: #10b981; }
+.breadcrumb .sep { color: #475569; font-size: 0.75rem; }
+
+/* ── Step card ──────────────────────────────────────────────────────────── */
+.step-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+/* ── Step intro ─────────────────────────────────────────────────────────── */
+.step-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.step-icon {
+  font-size: 2rem;
+  color: #3b82f6;
+  margin-top: 0.25rem;
+}
+
+.step-intro h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 0.25rem;
+}
+
+.step-intro p {
+  color: #94a3b8;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* ── Rule legend ────────────────────────────────────────────────────────── */
+.rule-legend {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-/* Label */
-.form-label {
-  font-weight: 500;
-  color: #374151; /* Gris foncé */
+.rule-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
 }
 
-/* Bouton en bas à droite */
-.form-actions {
+.rule-item.eligible {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #6ee7b7;
+}
+
+.rule-item.eligible i { color: #10b981; }
+
+.rule-item.not-eligible {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  color: #fde68a;
+}
+
+.rule-item.not-eligible i { color: #fbbf24; }
+
+/* ── Calendar picker ────────────────────────────────────────────────────── */
+.calendar-picker-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.calendar-picker-wrapper ::ng-deep p-datepicker,
+.calendar-picker-wrapper ::ng-deep .p-datepicker {
+  width: auto !important;
+  max-width: 380px !important;
+  display: block !important;
+  margin: 0 auto !important;
+}
+
+/* ── Date banner ────────────────────────────────────────────────────────── */
+.date-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.date-banner.eligible {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.date-banner.eligible i { color: #10b981; font-size: 1.5rem; }
+
+.date-banner.not-eligible {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.date-banner.not-eligible i { color: #fbbf24; font-size: 1.5rem; }
+
+.date-banner div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+}
+
+.date-banner strong { color: #1e293b; font-size: 1rem; }
+.date-banner span   { color: #475569; font-size: 0.85rem; }
+
+.btn-back {
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s;
+}
+
+.btn-back:hover { border-color: #3b82f6; color: #3b82f6; }
+
+/* ── Section title ──────────────────────────────────────────────────────── */
+.section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.badge {
+  background: #3b82f6;
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.8rem;
+}
+
+/* ── My planning card ───────────────────────────────────────────────────── */
+.my-planning-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.activity-badge {
+  background: #3b82f6;
+  color: #fff;
+  font-weight: 700;
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.planning-date { color: #94a3b8; font-size: 0.9rem; }
+
+/* ── Loading / empty ────────────────────────────────────────────────────── */
+.loading-state, .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  color: #64748b;
+  text-align: center;
+}
+
+.empty-state i { font-size: 2.5rem; color: #94a3b8; }
+
+/* ── Agents grid ────────────────────────────────────────────────────────── */
+.agents-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.agent-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.agent-card:hover { border-color: #3b82f6; background: #eff6ff; }
+.agent-card.selected { border-color: #3b82f6; background: #eff6ff; }
+
+.agent-avatar {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: #1e40af;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.agent-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+}
+
+.agent-name { color: #1e293b; font-weight: 600; }
+.agent-meta { color: #64748b; font-size: 0.82rem; }
+
+.selected-icon { color: #3b82f6; font-size: 1.25rem; margin-left: auto; }
+
+/* ── Target plannings ───────────────────────────────────────────────────── */
+.target-plannings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.plannings-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.planning-option {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 130px;
+}
+
+.planning-option:hover { border-color: #3b82f6; }
+.planning-option.selected { border-color: #3b82f6; background: #eff6ff; }
+
+.planning-date-label { color: #64748b; font-size: 0.82rem; }
+.planning-code-badge { color: #1e293b; font-weight: 700; font-size: 1rem; }
+.planning-time { color: #94a3b8; font-size: 0.8rem; }
+
+/* ── Message section ────────────────────────────────────────────────────── */
+.message-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.message-section label { color: #1e293b; font-size: 0.9rem; font-weight: 500; }
+
+/* ── Exchange recap ─────────────────────────────────────────────────────── */
+.exchange-recap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  background: rgba(16,185,129,0.08);
+  border: 1px solid rgba(16,185,129,0.2);
+  border-radius: 10px;
+  padding: 1.25rem;
+}
+
+.recap-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.recap-label { color: #64748b; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.recap-code  { color: #1e293b; font-weight: 700; font-size: 1.3rem; }
+.recap-date  { color: #64748b; font-size: 0.82rem; }
+.recap-arrow { color: #10b981; font-size: 1.5rem; }
+
+/* ── Absence form ───────────────────────────────────────────────────────── */
+.form-subtitle {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-group.full-width { grid-column: 1 / -1; }
+
+.form-group label { color: #1e293b; font-size: 0.9rem; font-weight: 500; }
+
+.error { color: #f87171; font-size: 0.8rem; }
+
+/* ── Actions ────────────────────────────────────────────────────────────── */
+.step-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e2e8f0;
 }
 
-/* Styles appliqués globalement 
-.p-tabview {
-    /* Style du conteneur principal 
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}*/
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .exchange-recap { flex-direction: column; }
+  .recap-arrow { transform: rotate(90deg); }
+  .step-actions { flex-direction: column; }
+}
+
+
+.agent-card.blocked {
+  opacity: 0.6;
+  cursor: not-allowed;
+  border-color: #fca5a5 !important;
+  background: #fff5f5;
+}
+.avatar-blocked { background: #ef4444 !important; }
+.charte-blocked { color: #dc2626; font-size: 0.75rem; }
+.charte-warning { color: #d97706; font-size: 0.75rem; }
+.blocked-icon { color: #dc2626; margin-left: auto; }
+
+/* Fix p-datePicker inline (PrimeNG v19) */
+.calendar-picker-wrapper ::ng-deep .p-datepicker-inline {
+  width: auto !important;
+  max-width: 380px !important;
+  display: block !important;
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  color: #1e293b !important;
+  margin: 0 auto !important;
+}
+
+.calendar-picker-wrapper ::ng-deep .p-datepicker-calendar-container {
+  width: 100% !important;
+}
+
+.calendar-picker-wrapper ::ng-deep .p-datepicker-calendar {
+  width: 100% !important;
+}
+
+/* Flèches de navigation visibles */
+.calendar-picker-wrapper ::ng-deep .p-datepicker-prev-button,
+.calendar-picker-wrapper ::ng-deep .p-datepicker-next-button {
+  display: inline-flex !important;
+  visibility: visible !important;
+  color: #065594 !important;
+  cursor: pointer !important;
+}
+
+.calendar-picker-wrapper ::ng-deep .p-datepicker-prev-button svg,
+.calendar-picker-wrapper ::ng-deep .p-datepicker-next-button svg {
+  display: inline-block !important;
+  visibility: visible !important;
+  width: 1rem !important;
+  height: 1rem !important;
+  opacity: 1 !important;
+  position: static !important;
+  left: auto !important;
+}
+
+/* ── Dates de récupération proposées par A ── */
+.recovery-proposal-section {
+  margin-top: 20px;
+  padding: 16px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+}
+.recovery-proposal-section h4 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  color: #166534;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.recovery-proposal-hint {
+  font-size: 0.82rem;
+  color: #4b7c5e;
+  margin: 0 0 12px;
+}
+.rest-days-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rest-day-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  background: white;
+  color: #1e293b;
+  transition: all 0.15s;
+  user-select: none;
+}
+.rest-day-chip:hover { border-color: #3b82f6; background: #eff6ff; color: #1e40af; }
+.rest-day-chip.selected { border-color: #10b981; background: #d1fae5; color: #065f46; font-weight: 600; }
+.rest-day-chip .rest-code {
+  font-size: 0.75rem;
+  background: #e5e7eb;
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: #374151;
+}
+.rest-day-chip.selected .rest-code { background: #a7f3d0; color: #065f46; }
+.proposed-summary {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: #059669;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.recovery-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+/* ── Section dates standalone (avant sélection agent) ── */
+.recovery-proposal-section.standalone {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 16px;
+}
+.recovery-proposal-section.standalone h4 {
+  font-size: 1rem;
+  color: #166534;
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Récap dates proposées ── */
+.proposed-recap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #d1fae5;
+  border: 1px solid #6ee7b7;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.875rem;
+  color: #065f46;
+  font-weight: 500;
+}
+.proposed-recap.no-dates {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+.recap-edit-btn {
+  margin-left: auto;
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  opacity: 0.8;
+  transition: opacity 0.15s;
+}
+.recap-edit-btn:hover { opacity: 1; }
+
+/* ── Avertissement CA collègues ── */
+.ca-conflict-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fff7ed;
+  border: 1px solid #f97316;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 0.875rem;
+  color: #9a3412;
+  line-height: 1.5;
+}
+.ca-conflict-warning i {
+  color: #f97316;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}

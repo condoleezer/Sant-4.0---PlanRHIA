@@ -15,7 +15,7 @@
 .portal-title {
   font-size: 2rem;
   font-weight: bold;
-  color: #333;
+  color: #1e293b;
   margin: 0;
 }
 
@@ -58,14 +58,14 @@
 .section-title {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #333;
+  color: #1e293b;
   margin: 0 0 15px 0;
   text-transform: uppercase;
 }
 
 .section-subtitle {
   font-size: 1rem;
-  color: #666;
+  color: #475569;
   margin: 0 0 20px 0;
   text-align: center;
 }
@@ -160,7 +160,7 @@
 /* Calendar Section */
 .calendar-date {
   font-size: 0.9rem;
-  color: #666;
+  color: #475569;
   margin: 0 0 15px 0;
 }
 
@@ -175,7 +175,7 @@
 .hr-event-title {
   font-size: 0.85rem;
   font-weight: bold;
-  color: #333;
+  color: #1e293b;
   margin-bottom: 5px;
 }
 
@@ -220,13 +220,13 @@
 
 .event-title {
   font-weight: bold;
-  color: #333;
+  color: #1e293b;
   margin-bottom: 5px;
 }
 
 .event-description {
   font-size: 0.9rem;
-  color: #666;
+  color: #475569;
   margin-bottom: 5px;
 }
 
@@ -343,7 +343,7 @@
 .alerts-title {
   font-size: 1rem;
   font-weight: 600;
-  color: #333;
+  color: #1e293b;
 }
 
 .alerts-count {
@@ -367,7 +367,7 @@
 
 .no-alerts {
   text-align: center;
-  color: #999;
+  color: #64748b;
   padding: 15px;
   font-size: 0.95rem;
 }
@@ -431,13 +431,13 @@
 
 .alert-title {
   font-weight: 600;
-  color: #333;
+  color: #1e293b;
   margin-bottom: 4px;
   font-size: 0.95rem;
 }
 
 .alert-description {
-  color: #666;
+  color: #475569;
   font-size: 0.85rem;
   margin-bottom: 6px;
   line-height: 1.3;
@@ -447,18 +447,18 @@
   display: flex;
   gap: 12px;
   font-size: 0.75rem;
-  color: #999;
+  color: #64748b;
 }
 
 .alert-type {
   background: #f0f0f0;
   padding: 2px 8px;
   border-radius: 3px;
-  color: #666;
+  color: #475569;
 }
 
 .alert-date {
-  color: #999;
+  color: #64748b;
 }
 
 .alert-actions {
@@ -488,4 +488,213 @@
   .alert-actions {
     justify-content: flex-start;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BALANCE HORAIRE — jauges demi-cercle dans l'accueil
+═══════════════════════════════════════════════════════════════ */
+.balance-subtitle-home {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: -10px 0 20px;
+  font-style: italic;
+}
+
+.gauges-row-home {
+  display: flex;
+  justify-content: space-around;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.gauge-item-home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 120px;
+  max-width: 180px;
+}
+
+.gauge-svg-home {
+  width: 100%;
+  max-width: 150px;
+}
+
+.gauge-center-home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: -0.8rem;
+  margin-bottom: 0.4rem;
+}
+
+.gauge-val-home {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.1;
+}
+
+.gauge-sub-home {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.gauge-lbl-home {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #475569;
+  text-align: center;
+}
+
+.gauge-status-home {
+  margin-top: 4px;
+}
+
+.status-pill-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.status-pill-home.avance { background: #d1fae5; color: #065f46; }
+.status-pill-home.retard { background: #fee2e2; color: #991b1b; }
+
+.balance-loading {
+  min-height: 120px;
+}
+
+.balance-loading-text {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SYNTHÈSE MOIS EN COURS
+═══════════════════════════════════════════════════════════════ */
+.monthly-alert-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-left: 4px solid #ef4444;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  font-size: 0.88rem;
+  color: #7f1d1d;
+}
+.monthly-alert-banner i { color: #ef4444; flex-shrink: 0; margin-top: 2px; }
+
+.monthly-progress-block { margin-bottom: 16px; }
+
+.monthly-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+.mp-label { font-size: 0.82rem; color: #64748b; font-weight: 600; }
+.mp-value { font-size: 1rem; font-weight: 700; color: #1e293b; }
+.mp-value.mp-over { color: #f59e0b; }
+.mp-overtime { font-size: 0.75rem; color: #ef4444; font-weight: 700; margin-left: 4px; }
+
+.monthly-bar-track {
+  position: relative;
+  height: 20px;
+  background: #e2e8f0;
+  border-radius: 6px;
+  overflow: visible;
+  margin-bottom: 6px;
+}
+.monthly-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.4s ease;
+  min-width: 2px;
+}
+.monthly-threshold-line {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  background: #94a3b8;
+  border-radius: 1px;
+  z-index: 2;
+}
+
+.monthly-progress-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.monthly-counters {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 4px;
+}
+.mc-item {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 12px 8px;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+}
+.mc-item.mc-alert { border-color: #fca5a5; background: #fff5f5; }
+.mc-val {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.1;
+  margin-bottom: 3px;
+}
+.mc-lbl {
+  font-size: 0.7rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.gauge-sub-info {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  text-align: center;
+  margin-top: 2px;
+}
+
+.no-upcoming {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+  font-size: 0.88rem;
+  padding: 12px 0;
+}
+
+.no-upcoming i { font-size: 1.1rem; }
+
+.status-badge {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.status-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
 }

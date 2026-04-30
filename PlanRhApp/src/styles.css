@@ -4,37 +4,25 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Global styles to prevent horizontal scrolling */
+/* Global styles */
 * {
   box-sizing: border-box;
 }
 
 html, body {
-  overflow-x: hidden;
   width: 100%;
-  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  /* Ne pas bloquer overflow-x globalement — les tableaux ont besoin de scroller */
 }
 
 body {
-  margin: 0;
-  padding: 0;
+  overflow-x: hidden; /* Seulement sur body, pas html */
 }
 
-/* Ensure all containers respect viewport width */
-.container, .container-fluid, [class*="container"] {
+/* Les conteneurs de page ne bloquent pas le scroll horizontal */
+.container, .container-fluid {
   max-width: 100%;
-  overflow-x: hidden;
-}
-
-/* Prevent PrimeNG components from causing horizontal scroll */
-.p-component {
-  max-width: 100%;
-}
-
-/* Ensure grids don't overflow */
-.grid, [class*="grid"] {
-  max-width: 100%;
-  overflow-x: hidden;
 }
 
 /* ── Planification dropdowns : fond sombre + texte blanc ── */
@@ -150,3 +138,390 @@ app-planification .p-dropdown .p-dropdown-trigger svg {
 .p-select-overlay .p-select-filter::placeholder {
   color: rgba(255, 255, 255, 0.4) !important;
 }
+
+/* ── FullCalendar — Supprimer les icônes noires (more-link, col-header) ── */
+.fc-daygrid-more-link {
+  background: #065594 !important;
+  color: white !important;
+  border-radius: 3px !important;
+  font-size: 0.7rem !important;
+  font-weight: 600 !important;
+  padding: 1px 5px !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Supprimer l'icône/image noire à droite du +4 more */
+.fc-daygrid-more-link .fc-icon,
+.fc-daygrid-more-link svg,
+.fc-daygrid-more-link img,
+.fc-daygrid-more-link span[class*="icon"],
+.fc-daygrid-more-link span[class*="arrow"] {
+  display: none !important;
+}
+
+/* Supprimer les flèches ↕ sur les en-têtes de colonnes */
+.fc-col-header-cell-cushion .fc-icon,
+.fc-col-header-cell-cushion svg,
+.fc-col-header-cell-cushion span[class*="icon"],
+.fc-col-header-cell-cushion span[class*="sort"],
+.fc-col-header-cell-cushion span[class*="arrow"] {
+  display: none !important;
+}
+
+/* Masquer les numéros de semaine */
+.fc-daygrid-week-number {
+  display: none !important;
+}
+
+/* ── FullCalendar multiMonth — Supprimer les icônes de tri noires sur les en-têtes ── */
+/* Ces icônes apparaissent dans la vue annuelle (multiMonthYear) */
+.fc-multimonth-header-table th .fc-col-header-cell-cushion,
+.fc-col-header-cell-cushion {
+  position: relative;
+}
+
+/* Masquer tout élément après le texte dans les en-têtes */
+.fc-col-header-cell a {
+  pointer-events: none;
+}
+
+/* Cibler le sort icon natif FullCalendar */
+.fc-icon-chevron-up,
+.fc-icon-chevron-down,
+.fc-icon-chevrons-up-down,
+.fc-icon-sort,
+.fc-col-header-cell .fc-icon {
+  display: none !important;
+}
+
+/* Supprimer aria-sort visuellement — uniquement les icônes SVG */
+.fc-col-header-cell[aria-sort] .fc-icon,
+.fc-col-header-cell[aria-sort] svg {
+  display: none !important;
+}
+
+/* Masquer les boutons de tri dans les th FullCalendar */
+.fc-col-header-cell button,
+.fc-col-header-cell input,
+.fc-col-header-cell select {
+  display: none !important;
+}
+
+/* Supprimer l'apparence de tri sur les th */
+.fc-col-header-cell {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ── Masquer les spinners natifs input[type=number] dans FullCalendar ── */
+.fc input[type="number"] {
+  -webkit-appearance: none !important;
+  -moz-appearance: textfield !important;
+  appearance: none !important;
+}
+
+.fc input[type="number"]::-webkit-inner-spin-button,
+.fc input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+  display: none !important;
+}
+
+/* Masquer complètement tout input dans les en-têtes FullCalendar */
+.fc-col-header-cell input,
+.fc-col-header-cell-cushion input,
+.fc th input {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  position: absolute !important;
+}
+
+
+/* Masquer les icônes SVG dans les en-têtes — pas les pseudo-éléments texte */
+.fc-col-header-cell .fc-icon,
+.fc-col-header-cell svg,
+.fc-col-header-cell path,
+.fc-col-header-cell-cushion .fc-icon,
+.fc-col-header-cell-cushion svg,
+.fc-col-header-cell-cushion path,
+.fc-scrollgrid-sync-table .fc-icon,
+.fc-scrollgrid-sync-table svg,
+.fc-scrollgrid-sync-table path {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  position: absolute !important;
+  left: -99999px !important;
+}
+
+/* Multimonth */
+.fc-multimonth .fc-col-header-cell .fc-icon,
+.fc-multimonth .fc-col-header-cell svg,
+.fc-multimonth .fc-col-header-cell path,
+.fc-multimonth .fc-col-header-cell-cushion .fc-icon,
+.fc-multimonth .fc-col-header-cell-cushion svg,
+.fc-multimonth .fc-col-header-cell-cushion path {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Forcer pointer-events none sur les icônes */
+.fc-col-header-cell .fc-icon,
+.fc-col-header-cell svg {
+  pointer-events: none !important;
+}
+
+
+/* ── PrimeNG DatePicker popup — thème sombre (uniquement les popups dans le body) ── */
+/* On cible uniquement les datepickers qui sont des popups (appendTo="body")
+   en excluant les datepickers inline ([inline]="true") */
+body > .p-datepicker:not(.p-datepicker-inline),
+body > .p-overlay > .p-datepicker:not(.p-datepicker-inline) {
+  background: #1e293b !important;
+  border: 1px solid #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+body > .p-datepicker:not(.p-datepicker-inline) .p-datepicker-header,
+body > .p-overlay > .p-datepicker:not(.p-datepicker-inline) .p-datepicker-header {
+  background: #1e293b !important;
+  border-bottom: 1px solid #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+body > .p-datepicker:not(.p-datepicker-inline) .p-datepicker-title,
+body > .p-overlay > .p-datepicker:not(.p-datepicker-inline) .p-datepicker-title {
+  color: #e2e8f0 !important;
+}
+
+body > .p-datepicker:not(.p-datepicker-inline) .p-datepicker-title .p-datepicker-month,
+body > .p-datepicker:not(.p-datepicker-inline) .p-datepicker-title .p-datepicker-year,
+body > .p-overlay > .p-datepicker:not(.p-datepicker-inline) .p-datepicker-title .p-datepicker-month,
+body > .p-overlay > .p-datepicker:not(.p-datepicker-inline) .p-datepicker-title .p-datepicker-year {
+  color: #e2e8f0 !important;
+  background: transparent !important;
+}
+
+body > .p-datepicker:not(.p-datepicker-inline) .p-datepicker-prev,
+body > .p-datepicker:not(.p-datepicker-inline) .p-datepicker-next,
+body > .p-overlay > .p-datepicker:not(.p-datepicker-inline) .p-datepicker-prev,
+body > .p-overlay > .p-datepicker:not(.p-datepicker-inline) .p-datepicker-next {
+  color: #94a3b8 !important;
+  background: transparent !important;
+}
+
+body > .p-datepicker:not(.p-datepicker-inline) .p-datepicker-prev:hover,
+body > .p-datepicker:not(.p-datepicker-inline) .p-datepicker-next:hover,
+body > .p-overlay > .p-datepicker:not(.p-datepicker-inline) .p-datepicker-prev:hover,
+body > .p-overlay > .p-datepicker:not(.p-datepicker-inline) .p-datepicker-next:hover {
+  color: #e2e8f0 !important;
+  background: #334155 !important;
+}
+
+body > .p-datepicker:not(.p-datepicker-inline) table th,
+body > .p-overlay > .p-datepicker:not(.p-datepicker-inline) table th {
+  color: #64748b !important;
+  font-weight: 600 !important;
+}
+
+body > .p-datepicker:not(.p-datepicker-inline) table td > span,
+body > .p-overlay > .p-datepicker:not(.p-datepicker-inline) table td > span {
+  color: #e2e8f0 !important;
+  background: transparent !important;
+  border-radius: 50% !important;
+}
+
+body > .p-datepicker:not(.p-datepicker-inline) table td > span:hover,
+body > .p-overlay > .p-datepicker:not(.p-datepicker-inline) table td > span:hover {
+  background: #334155 !important;
+  color: #ffffff !important;
+}
+
+body > .p-datepicker:not(.p-datepicker-inline) table td.p-datepicker-today > span,
+body > .p-overlay > .p-datepicker:not(.p-datepicker-inline) table td.p-datepicker-today > span {
+  background: rgba(59, 130, 246, 0.2) !important;
+  color: #3b82f6 !important;
+  font-weight: 700 !important;
+}
+
+body > .p-datepicker:not(.p-datepicker-inline) table td > span.p-highlight,
+body > .p-overlay > .p-datepicker:not(.p-datepicker-inline) table td > span.p-highlight {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+body > .p-datepicker:not(.p-datepicker-inline) table td.p-datepicker-other-month > span,
+body > .p-overlay > .p-datepicker:not(.p-datepicker-inline) table td.p-datepicker-other-month > span {
+  color: #475569 !important;
+}
+
+body > .p-datepicker:not(.p-datepicker-inline) table td.p-disabled > span,
+body > .p-overlay > .p-datepicker:not(.p-datepicker-inline) table td.p-disabled > span {
+  color: #334155 !important;
+  opacity: 0.4 !important;
+}
+
+/* ── Fin PrimeNG DatePicker ─────────────────────────────────────────────── */
+
+p-sorticon,
+.p-sortable-column-icon,
+.p-sort-icon,
+.p-sortable-column .p-icon,
+th .p-sortable-column-icon,
+th .p-sort-icon {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* ── PrimeNG Calendar inline — fond blanc, texte lisible ─────────────────── */
+/* S'applique à tous les p-datepicker [inline]="true" dans l'app */
+.p-datepicker-inline,
+.p-datepicker.p-datepicker-inline,
+p-datepicker.p-datepicker-inline > .p-datepicker,
+.calendar-picker-wrapper .p-datepicker,
+.calendar-picker-wrapper p-datepicker .p-datepicker {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  color: #1e293b !important;
+  width: 100% !important;
+}
+
+.p-datepicker-inline .p-datepicker-header {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  color: #1e293b !important;
+  border-radius: 8px 8px 0 0 !important;
+  padding: 10px !important;
+}
+
+.p-datepicker-inline .p-datepicker-title,
+.p-datepicker-inline .p-datepicker-title .p-datepicker-month,
+.p-datepicker-inline .p-datepicker-title .p-datepicker-year {
+  color: #1e293b !important;
+  font-weight: 600 !important;
+  background: transparent !important;
+}
+
+.p-datepicker-inline .p-datepicker-prev,
+.p-datepicker-inline .p-datepicker-next {
+  color: #065594 !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  pointer-events: all !important;
+}
+
+.p-datepicker-inline .p-datepicker-prev:hover,
+.p-datepicker-inline .p-datepicker-next:hover {
+  background: #eff6ff !important;
+  border-radius: 50% !important;
+}
+
+/* Rendre les icônes SVG des flèches visibles */
+.p-datepicker-inline .p-datepicker-prev svg,
+.p-datepicker-inline .p-datepicker-next svg,
+.p-datepicker-inline .p-datepicker-prev .p-icon,
+.p-datepicker-inline .p-datepicker-next .p-icon {
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 1rem !important;
+  height: 1rem !important;
+  position: static !important;
+  left: auto !important;
+  color: #065594 !important;
+  fill: #065594 !important;
+}
+
+.p-datepicker-inline table {
+  width: 100% !important;
+}
+
+.p-datepicker-inline table th {
+  color: #64748b !important;
+  font-weight: 600 !important;
+  font-size: 0.8rem !important;
+  text-align: center !important;
+  padding: 6px !important;
+}
+
+.p-datepicker-inline table td {
+  padding: 2px !important;
+  text-align: center !important;
+}
+
+.p-datepicker-inline table td > span {
+  color: #1e293b !important;
+  background: transparent !important;
+  border-radius: 50% !important;
+  width: 2rem !important;
+  height: 2rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.875rem !important;
+  cursor: pointer !important;
+}
+
+.p-datepicker-inline table td > span:hover {
+  background: #dbeafe !important;
+  color: #1e40af !important;
+}
+
+.p-datepicker-inline table td.p-datepicker-today > span {
+  background: #065594 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.p-datepicker-inline table td > span.p-highlight {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.p-datepicker-inline table td.p-disabled > span,
+.p-datepicker-inline table td.p-datepicker-other-month > span {
+  color: #cbd5e1 !important;
+  opacity: 0.5 !important;
+  cursor: default !important;
+  pointer-events: none !important;
+}
+
+/* Dates disponibles (non désactivées) — mise en évidence */
+.p-datepicker-inline table td:not(.p-disabled):not(.p-datepicker-other-month) > span {
+  color: #065594 !important;
+  font-weight: 600 !important;
+}
+/* ── Fin Calendar inline ─────────────────────────────────────────────────── */
+
+/* ── Exception : SVG dans les calendriers PrimeNG inline ─────────────────── */
+/* Annule les règles globales qui masquent les SVG FullCalendar */
+.p-datepicker-inline svg,
+.p-datepicker-inline path,
+.p-datepicker-prev-button svg,
+.p-datepicker-next-button svg,
+.p-datepicker-prev svg,
+.p-datepicker-next svg,
+.calendar-picker-wrapper svg,
+.calendar-picker-wrapper path,
+.recovery-calendar-wrapper svg,
+.recovery-calendar-wrapper path {
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: auto !important;
+  height: auto !important;
+  position: static !important;
+  left: auto !important;
+  pointer-events: auto !important;
+}
+/* ── Fin exception calendriers ───────────────────────────────────────────── */

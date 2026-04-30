@@ -8,6 +8,7 @@ import { ContratService, Contrat, WorkDay } from '../../../services/contrat/cont
 import { AbsenceService } from '../../../services/absence/absence.service';
 import { PlanningService } from '../../../services/planning/planning.service';
 import { AuthService } from '../../../services/auth/auth.service';
+import { CalendarSyncService } from '../../../services/calendar-sync/calendar-sync.service';
 import { User } from '../../../models/User';
 import { Role } from '../../../models/role';
 import { Service } from '../../../models/services';
@@ -64,7 +65,7 @@ export class SecMedicalStaffComponent implements AfterViewInit {
     "Prénom",
     "Contact",
     "Jour de travail de la semaine",
-    "Compétence",
+    "Métier",
     "Actions"
   ];
 
@@ -124,6 +125,7 @@ export class SecMedicalStaffComponent implements AfterViewInit {
     private absenceService: AbsenceService,
     private planningService: PlanningService,
     private authService: AuthService,
+    private calendarSyncService: CalendarSyncService,
     private fb: FormBuilder,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
@@ -151,6 +153,12 @@ export class SecMedicalStaffComponent implements AfterViewInit {
 
   ngOnInit() {
     this.loadCurrentUser();
+    // Se mettre à jour quand un planning change (échange, modification cadre, etc.)
+    this.calendarSyncService.planningChanges$.subscribe(() => {
+      if (this.selectedUserForCalendar) {
+        this.viewCalendar(this.selectedUserForCalendar);
+      }
+    });
   }
 
   loadCurrentUser() {
@@ -446,7 +454,7 @@ export class SecMedicalStaffComponent implements AfterViewInit {
           resolve();
         },
         error: () => {
-          this.showError('Erreur lors du chargement des spécialités');
+          this.showError('Erreur lors du chargement des métiers');
           resolve();
         }
       });

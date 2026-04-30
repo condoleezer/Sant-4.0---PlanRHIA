@@ -95,7 +95,7 @@
       <div class="profile-info-item" *ngIf="user.specialityName">
         <i class="pi pi-star"></i>
         <div>
-          <span class="profile-info-label">Spécialité</span>
+          <span class="profile-info-label">Métier</span>
           <span class="profile-info-value">{{ user.specialityName }}</span>
         </div>
       </div>
@@ -104,23 +104,23 @@
     <!-- ── MODE ÉDITION ── -->
     <div class="profile-edit-form" *ngIf="editMode">
 
-      <div class="edit-field">
+      <div class="edit-field" *ngIf="user.role === 'admin'">
         <label>Matricule</label>
         <input type="text" [(ngModel)]="editForm.matricule" placeholder="ex: INF123456ABCD" />
       </div>
-      <div class="edit-field">
+      <div class="edit-field" *ngIf="user.role === 'admin'">
         <label>Prénom</label>
         <input type="text" [(ngModel)]="editForm.first_name" placeholder="Prénom" />
       </div>
-      <div class="edit-field">
+      <div class="edit-field" *ngIf="user.role === 'admin'">
         <label>Nom</label>
         <input type="text" [(ngModel)]="editForm.last_name" placeholder="Nom" />
       </div>
-      <div class="edit-field">
+      <div class="edit-field" *ngIf="user.role === 'admin'">
         <label>Email</label>
         <input type="email" [(ngModel)]="editForm.email" placeholder="Email" />
       </div>
-      <div class="edit-field">
+      <div class="edit-field" *ngIf="user.role === 'admin'">
         <label>Téléphone</label>
         <input type="tel" [(ngModel)]="editForm.phoneNumber" placeholder="ex: 06 12 34 56 78" />
       </div>

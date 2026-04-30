@@ -44,6 +44,39 @@
   margin-bottom: 2rem;
 }
 
+.calc-date {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin-bottom: 1.25rem;
+  font-style: italic;
+}
+
+.counter-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.6;
+}
+
+.counter-card.chs .counter-icon { color: #059669; }
+.counter-card.cfr .counter-icon { color: #dc2626; }
+.counter-card.ca  .counter-icon { color: #2563eb; }
+.counter-card.rtt .counter-icon { color: #7c3aed; }
+
+.no-data-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem 2rem;
+  gap: 1rem;
+  color: #64748b;
+}
+
+.no-data-container i {
+  font-size: 3rem;
+  color: #94a3b8;
+}
+
 .counters-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -120,23 +153,17 @@
 
 .no-data-container {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 4rem 2rem;
-}
-
-.no-data-content {
-  text-align: center;
-  max-width: 500px;
-}
-
-.no-data-content h3 {
-  color: #1e293b;
-  margin: 1rem 0;
-}
-
-.no-data-content p {
+  gap: 1rem;
   color: #64748b;
+}
+
+.no-data-container i {
+  font-size: 3rem;
+  color: #94a3b8;
 }
 
 .remark-section {
@@ -177,3 +204,437 @@
   }
 }
 
+
+/* ── Datepicker thème clair pour cette page ─────────────────────────────── */
+:host ::ng-deep .p-datepicker {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #1e293b !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+
+:host ::ng-deep .p-datepicker .p-datepicker-header {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+:host ::ng-deep .p-datepicker .p-datepicker-title .p-datepicker-month,
+:host ::ng-deep .p-datepicker .p-datepicker-title .p-datepicker-year {
+  color: #1e293b !important;
+  background: transparent !important;
+  font-weight: 600 !important;
+}
+
+:host ::ng-deep .p-datepicker .p-datepicker-prev,
+:host ::ng-deep .p-datepicker .p-datepicker-next {
+  color: #475569 !important;
+  background: transparent !important;
+  border-radius: 50% !important;
+  width: 2rem !important;
+  height: 2rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+:host ::ng-deep .p-datepicker .p-datepicker-prev:hover,
+:host ::ng-deep .p-datepicker .p-datepicker-next:hover {
+  background: #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+:host ::ng-deep .p-datepicker table th {
+  color: #64748b !important;
+  font-weight: 600 !important;
+}
+
+:host ::ng-deep .p-datepicker table td > span {
+  color: #1e293b !important;
+  background: transparent !important;
+  border-radius: 50% !important;
+}
+
+:host ::ng-deep .p-datepicker table td > span:hover {
+  background: #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+:host ::ng-deep .p-datepicker table td.p-datepicker-today > span {
+  background: #dbeafe !important;
+  color: #1d4ed8 !important;
+  font-weight: 700 !important;
+}
+
+:host ::ng-deep .p-datepicker table td > span.p-highlight {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+:host ::ng-deep .p-datepicker table td.p-datepicker-other-month > span {
+  color: #94a3b8 !important;
+}
+
+/* ── Balance horaire — demi-cercles ──────────────────────────────────────── */
+.balance-section {
+  margin-bottom: 2rem;
+  background: white;
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.balance-header {
+  margin-bottom: 1.5rem;
+}
+
+.balance-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.2rem;
+}
+
+.balance-subtitle {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.gauges-row {
+  display: flex;
+  justify-content: space-around;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.gauge-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 140px;
+  max-width: 200px;
+  position: relative;
+}
+
+.gauge-svg {
+  width: 100%;
+  max-width: 160px;
+}
+
+.gauge-center-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: -1rem;
+  margin-bottom: 0.5rem;
+}
+
+.gauge-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.1;
+}
+
+.gauge-value.positive { color: #059669; }
+.gauge-value.negative { color: #dc2626; }
+
+.gauge-sub {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.gauge-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+  text-align: center;
+}
+
+.gauge-hint {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-align: center;
+  margin-top: 0.2rem;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-pill.avance { background: #d1fae5; color: #065f46; }
+.status-pill.retard { background: #fee2e2; color: #991b1b; }
+
+.counter-exchange {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #059669;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* ── Bandeau information CHS annuel élevé ── */
+.chs-info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #fffbeb;
+  border: 1px solid #fbbf24;
+  border-left: 4px solid #f59e0b;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+}
+.chs-info-icon {
+  color: #d97706;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.chs-info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  color: #92400e;
+}
+.chs-info-content strong {
+  font-size: 0.95rem;
+  color: #78350f;
+}
+.chs-info-content span {
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SYNTHÈSE MENSUELLE RTT
+═══════════════════════════════════════════════════════════════ */
+.rtt-monthly-section {
+  background: white;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  border: 1px solid #e2e8f0;
+}
+
+.rtt-monthly-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 1.25rem;
+}
+
+.rtt-monthly-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rtt-monthly-title i { color: #3b82f6; }
+
+.rtt-loading-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 0.88rem;
+  padding: 12px 0;
+}
+
+/* Alerte annuelle */
+.rtt-annual-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-left: 4px solid #ef4444;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 0.88rem;
+  color: #7f1d1d;
+}
+
+.rtt-annual-alert i { color: #ef4444; font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+.rtt-annual-alert div { display: flex; flex-direction: column; gap: 3px; }
+.rtt-annual-alert strong { color: #991b1b; }
+
+/* Mini compteurs */
+.rtt-mini-counters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.rtt-mini-card {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 14px 12px;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+}
+
+.rtt-mini-card.alert-card { border-color: #fca5a5; background: #fff5f5; }
+
+.rtt-mini-value {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.rtt-mini-value.orange { color: #f59e0b; }
+.rtt-mini-value.blue   { color: #3b82f6; }
+.rtt-mini-value.green  { color: #10b981; }
+.rtt-mini-value.red    { color: #ef4444; }
+
+.rtt-mini-label {
+  font-size: 0.72rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* Barres */
+.rtt-bars-wrapper {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+}
+
+.rtt-legend-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.legend-item { display: flex; align-items: center; gap: 5px; }
+
+.legend-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-dot.green  { background: #10b981; }
+.legend-dot.orange { background: #f59e0b; }
+.legend-dot.red    { background: #ef4444; }
+
+.legend-line-dash {
+  width: 14px; height: 0;
+  border-top: 2px dashed #94a3b8;
+  flex-shrink: 0;
+}
+
+.rtt-bar-list { display: flex; flex-direction: column; gap: 7px; }
+
+.rtt-bar-row {
+  display: grid;
+  grid-template-columns: 34px 1fr 50px 90px;
+  align-items: center;
+  gap: 8px;
+}
+
+.rtt-bar-month-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  text-align: right;
+}
+
+.rtt-bar-track {
+  position: relative;
+  height: 16px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: visible;
+}
+
+.rtt-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+  min-width: 2px;
+}
+
+.rtt-threshold-marker {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: #94a3b8;
+  border-radius: 1px;
+  z-index: 2;
+}
+
+.rtt-bar-hours {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #374151;
+  text-align: right;
+}
+
+.rtt-bar-hours.alert-text { color: #ef4444; }
+
+.rtt-bar-extra {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+}
+
+.rtt-bar-extra.ok { color: #10b981; }
+.rtt-bar-extra.empty { color: #cbd5e1; }
+
+.overtime-tag {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.rtt-suggest-tag {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-radius: 999px;
+  padding: 1px 5px;
+  font-weight: 700;
+  font-size: 0.68rem;
+}
+
+/* Mois futurs grisés */
+.future-month { opacity: 0.45; }
+.future-text { color: #cbd5e1 !important; }
+.future-label { font-size: 0.68rem; color: #94a3b8; font-style: italic; }
+
+.rtt-no-data-msg {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #64748b;
+  font-size: 0.88rem;
+  padding: 16px 0;
+}
+.rtt-no-data-msg i { color: #94a3b8; }

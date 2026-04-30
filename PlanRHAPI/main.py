@@ -8,7 +8,7 @@ from routers import (
     user, service, pole, speciality, code, program, absence, asks,
     planning, replacement, replacement_ai, contrat, role, availability,
     time_account, saphir, activite, planning_optimization, hublo_proxy,
-    leave_window
+    leave_window, planning_exchange, exchange_reciprocity, alerts_rtt
 )
 
 app = FastAPI(
@@ -21,7 +21,8 @@ app = FastAPI(
 origins = [
     "http://localhost:4200",
     "http://127.0.0.1:4200",
-    "https://saphir-it0m.onrender.com",
+    "https://chaplanifiarh.fr",
+    "https://www.chaplanifiarh.fr",
 ]
 
 app.add_middleware(
@@ -68,6 +69,7 @@ app.include_router(replacement_ai.router)  # Système expert/IA pour suggestions
 app.include_router(planning.router)  # Plannings validés et simulations
 app.include_router(availability.router)  # Disponibilités proposées/validées
 app.include_router(planning_optimization.router, tags=["planning-optimization"], prefix="")  # Optimisation de planning avec OR-Tools
+app.include_router(planning_exchange.router, tags=["planning-exchange"], prefix="")  # Échanges de planning entre agents
 
 # Gestion des contrats et codes d'activité
 app.include_router(contrat.router)
@@ -89,6 +91,12 @@ app.include_router(hublo_proxy.router)
 
 # Gestion des fenêtres de dépôt de congés
 app.include_router(leave_window.router)
+
+# Réciprocité des remplacements
+app.include_router(exchange_reciprocity.router, tags=["exchange-reciprocity"], prefix="")
+
+# Alertes heures supplémentaires et avertissements CA
+app.include_router(alerts_rtt.router, tags=["alerts-rtt"], prefix="")
 
 # Serve static files for Angular app (seulement si le dossier existe)
 _dist_path = Path("dist/plan-rh-app")

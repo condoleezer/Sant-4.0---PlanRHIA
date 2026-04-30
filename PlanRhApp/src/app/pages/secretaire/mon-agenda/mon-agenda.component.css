@@ -685,3 +685,808 @@ input[type="time"]::-moz-clear {
   align-items: center;
   gap: 4px;
 }
+
+/* =============================================================================
+   STYLES POUR L'ÉCHANGE DE PLANNING
+   ============================================================================= */
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.exchange-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.exchange-info-section h3,
+.compatible-agents-section h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+
+.exchange-rule-info {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  align-items: flex-start;
+}
+
+.exchange-rule-info.warning {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+.exchange-rule-info i {
+  font-size: 1.5rem;
+  margin-top: 0.25rem;
+}
+
+.exchange-rule-info:not(.warning) i {
+  color: #10b981;
+}
+
+.exchange-rule-info.warning i {
+  color: #fbbf24;
+}
+
+.rule-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.rule-text strong {
+  color: #ffffff;
+  font-size: 0.95rem;
+}
+
+.rule-text span {
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.planning-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.planning-card.my-planning {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.planning-date-small {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.planning-details {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.activity-code {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #ffffff;
+}
+
+.time-range {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.exchange-arrow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+  color: #3b82f6;
+}
+
+.loading-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 1rem;
+  color: #94a3b8;
+}
+
+.loading-state i,
+.empty-state i {
+  font-size: 2rem;
+}
+
+.agents-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.agent-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.agent-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.agent-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.agent-name {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.agent-matricule {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.agent-plannings label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.planning-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.planning-option {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 150px;
+}
+
+.planning-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+.planning-option.selected {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
+}
+
+.planning-code {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.planning-time {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+/* Styles pour le modal des demandes reçues */
+.exchange-requests-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.requests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.request-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.request-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.requester-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.requester-name {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.request-date {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.exchange-comparison {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 1rem;
+  align-items: center;
+}
+
+.planning-side h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-bottom: 0.5rem;
+}
+
+.exchange-arrow-horizontal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #3b82f6;
+}
+
+.request-message {
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid #3b82f6;
+  padding: 1rem;
+  border-radius: 4px;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.request-message i {
+  color: #3b82f6;
+  margin-top: 0.25rem;
+}
+
+.request-message p {
+  margin: 0;
+  color: #e2e8f0;
+  font-style: italic;
+}
+
+.request-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .exchange-comparison {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .exchange-arrow-horizontal {
+    transform: rotate(90deg);
+  }
+
+  .planning-options {
+    flex-direction: column;
+  }
+
+  .planning-option {
+    min-width: 100%;
+  }
+}
+
+/* Panneau réciprocité */
+.reciprocity-panel {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  margin: 0 0 16px 0;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.reciprocity-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  cursor: pointer;
+  font-weight: 600;
+  color: #1e293b;
+  border-bottom: 1px solid #e5e7eb;
+}
+.reciprocity-badge {
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.reciprocity-badge.credit {
+  background: #dcfce7;
+  color: #16a34a;
+}
+.reciprocity-panel-body {
+  padding: 12px 16px;
+}
+.reciprocity-panel-body h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 8px 0 6px;
+  color: #374151;
+}
+.reciprocity-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.875rem;
+}
+.reciprocity-person { flex: 1; color: #1e293b; }
+.reciprocity-hours { font-weight: 700; color: #0f172a; min-width: 40px; }
+.reciprocity-expiry { color: #64748b; font-size: 0.8rem; }
+.reciprocity-expiry.expiring-soon { color: #dc2626; font-weight: 600; }
+
+/* Modal récupération */
+.recovery-modal-content { padding: 4px 0 12px; }
+.recovery-intro {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 0.875rem;
+  color: #1e40af;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.recovery-intro i { flex-shrink: 0; margin-top: 2px; }
+.recovery-loading, .recovery-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #64748b;
+  padding: 12px 0;
+  font-size: 0.875rem;
+}
+.recovery-list h4 { font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 8px; }
+.recovery-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.recovery-item:hover { border-color: #3b82f6; background: #eff6ff; }
+.recovery-item.selected { border-color: #2563eb; background: #dbeafe; }
+.recovery-date { font-weight: 600; color: #1e293b; min-width: 100px; }
+.recovery-code {
+  background: #065594;
+  color: #fff;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.recovery-hours { color: #64748b; font-size: 0.8rem; flex: 1; }
+.recovery-item .pi-check-circle { color: #2563eb; font-size: 1.1rem; margin-left: auto; }
+
+/* Calendrier échange */
+.selected-planning-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: #dcfce7;
+  border: 1px solid #16a34a;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #15803d;
+}
+
+.clear-link {
+  margin-left: auto;
+  cursor: pointer;
+  color: #dc2626;
+  font-size: 0.8rem;
+}
+.agent-card.selectable {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.agent-card.selectable:hover { border-color: #3b82f6; background: #eff6ff; }
+.agent-card.selectable.selected { border-color: #2563eb; background: #dbeafe; }
+.agent-card.selectable .selected-icon { margin-left: auto; color: #2563eb; font-size: 1.1rem; }
+
+/* Bouton réciprocités dans le header */
+.reciprocity-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #1e293b;
+  font-weight: 500;
+  transition: border-color 0.15s;
+}
+.reciprocity-btn:hover { border-color: #065594; }
+.recip-badge-red {
+  background: #fee2e2; color: #dc2626;
+  border-radius: 10px; padding: 1px 8px; font-size: 0.75rem; font-weight: 600;
+}
+.recip-badge-green {
+  background: #dcfce7; color: #16a34a;
+  border-radius: 10px; padding: 1px 8px; font-size: 0.75rem; font-weight: 600;
+}
+
+/* Modal réciprocités */
+.recip-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+}
+.recip-modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 620px;
+  max-width: 95vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.recip-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e5e7eb;
+  font-weight: 600; color: #1e293b;
+  background: #f8fafc;
+  border-radius: 12px 12px 0 0;
+}
+.recip-close {
+  background: none; border: none; cursor: pointer;
+  color: #64748b; font-size: 1rem; padding: 2px 6px; border-radius: 4px;
+}
+.recip-close:hover { background: #f1f5f9; }
+.recip-modal-body { padding: 16px 18px; }
+.recip-section { margin-bottom: 16px; }
+.recip-section-title {
+  font-size: 0.85rem; font-weight: 600; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 6px;
+}
+.recip-section-title.owed { color: #dc2626; }
+.recip-section-title.due { color: #16a34a; }
+.recip-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 0; border-bottom: 1px solid #f1f5f9;
+  font-size: 0.875rem; color: #1e293b;
+}
+.recip-name { flex: 1; }
+.recip-h { font-weight: 700; min-width: 40px; }
+.recip-date { color: #64748b; font-size: 0.8rem; }
+.recip-date.soon { color: #dc2626; font-weight: 600; }
+
+.recip-two-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.recip-col { min-width: 0; overflow: hidden; }
+.recip-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.875rem;
+  color: #1e293b;
+  flex-wrap: wrap;
+}
+.recip-name { flex: 1; min-width: 80px; }
+.recip-h { font-weight: 700; min-width: 35px; }
+.recip-date { color: #64748b; font-size: 0.78rem; }
+.recip-date.soon { color: #dc2626; font-weight: 600; }
+.recip-empty { color: #94a3b8; font-size: 0.8rem; padding: 8px 0; }
+
+.recip-recover-btn {
+  background: #065594;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.recip-recover-btn:hover { background: #054a7a; }
+
+/* Modal récupération réciprocité - compact */
+.recip-recovery-modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 420px;
+  max-width: 95vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+.recip-deadline-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff7ed;
+  border: 1px solid #f97316;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  color: #c2410c;
+  margin-bottom: 12px;
+}
+
+/* ── Bouton demandes d'échange ── */
+.exchange-requests-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  position: relative;
+  transition: background 0.2s;
+}
+.exchange-requests-btn:hover { background: #2563eb; }
+.exchange-requests-btn .badge {
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* ── Section dates de récupération proposées par A ── */
+.recovery-proposal-section {
+  margin-top: 16px;
+  padding: 14px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+}
+.recovery-proposal-section h4 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  color: #166534;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.recovery-proposal-hint {
+  font-size: 0.8rem;
+  color: #4b7c5e;
+  margin: 0 0 12px;
+}
+.rest-days-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rest-day-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  background: white;
+  transition: all 0.15s;
+  user-select: none;
+}
+.rest-day-chip:hover { border-color: #3b82f6; background: #eff6ff; }
+.rest-day-chip.selected { border-color: #10b981; background: #d1fae5; color: #065f46; font-weight: 600; }
+.rest-day-chip .rest-code {
+  font-size: 0.75rem;
+  background: #e5e7eb;
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: #374151;
+}
+.rest-day-chip.selected .rest-code { background: #a7f3d0; color: #065f46; }
+.proposed-summary {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: #059669;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Modal demandes reçues ── */
+.exchange-requests-content { padding: 4px 0; }
+.requests-list { display: flex; flex-direction: column; gap: 14px; }
+.request-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px;
+  background: #f8fafc;
+}
+.request-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.requester-name { font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 6px; }
+.request-date { font-size: 0.8rem; color: #94a3b8; }
+.planning-swap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+.swap-item { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+.swap-label { font-size: 0.75rem; color: #64748b; }
+.swap-item strong { font-size: 0.95rem; color: #1e293b; }
+.activity-badge {
+  background: #3b82f6;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.swap-arrow { color: #94a3b8; font-size: 1.2rem; }
+.request-message { font-size: 0.85rem; color: #64748b; display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.request-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+
+/* ── Modal récupération (B) ── */
+.recovery-modal-content { padding: 4px 0; }
+.recovery-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 0.9rem;
+  color: #1e40af;
+  margin-bottom: 16px;
+}
+.recovery-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  padding: 12px 0;
+}
+.recovery-loading { text-align: center; padding: 16px; color: #64748b; }
+.selected-planning-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: #d1fae5;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #065f46;
+}
+.clear-link { cursor: pointer; color: #ef4444; font-size: 0.85rem; margin-left: auto; }
+
+/* Avertissement sous-effectif CA */
+.ca-conflict-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fffbeb;
+  border: 1px solid #fbbf24;
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin: 10px 0;
+  font-size: 0.88rem;
+  color: #78350f;
+  line-height: 1.4;
+}
+
+.ca-conflict-warning i {
+  color: #f59e0b;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.ca-conflict-checking {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 0.82rem;
+  padding: 8px 0;
+}

@@ -11,10 +11,11 @@
           [showIcon]="true"
           dateFormat="dd/mm/yy"
           [maxDate]="maxDate"
+          appendTo="body"
         ></p-calendar>
       </div>
       <p-button
-        label="Actualiser"
+        label="Recalculer"
         icon="pi pi-refresh"
         (onClick)="onRefresh()"
         [loading]="loading"
@@ -23,58 +24,261 @@
     </div>
   </div>
 
-  <!-- Compteurs -->
-  <div class="counters-section" *ngIf="!loading && timeAccount">
-    <div class="counters-grid">
-      <div class="counter-card chs">
-        <div class="counter-label">CHS</div>
-        <div class="counter-value">{{ formatDays(timeAccount.chs_days) }}</div>
-        <div class="counter-description">Compte Heures Supplémentaires</div>
-      </div>
-
-      <div class="counter-card cfr">
-        <div class="counter-label">CFR</div>
-        <div class="counter-value">{{ formatDays(timeAccount.cfr_days) }}</div>
-        <div class="counter-description">Compte Fériés/Récupérations</div>
-      </div>
-
-      <div class="counter-card ca">
-        <div class="counter-label">CA</div>
-        <div class="counter-value">{{ formatDays(timeAccount.ca_days) }}</div>
-        <div class="counter-description">Congés Annuels</div>
-      </div>
-
-      <div class="counter-card rtt">
-        <div class="counter-label">RTT</div>
-        <div class="counter-value">{{ formatDays(timeAccount.rtt_days) }}</div>
-        <div class="counter-description">Réduction du Temps de Travail</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Loading state -->
+  <!-- Loading principal -->
   <div class="loading-container" *ngIf="loading">
     <p-progressSpinner></p-progressSpinner>
-    <p>Calcul des comptes de temps en cours...</p>
+    <p>Calcul en cours à partir de vos plannings...</p>
   </div>
 
-  <!-- No data state -->
-  <div class="no-data-container" *ngIf="!loading && !timeAccount">
-    <div class="no-data-content">
-      <i class="pi pi-info-circle" style="font-size: 3rem; color: #64748b"></i>
-      <h3>Aucun compte de temps disponible</h3>
-      <p>Cliquez sur "Actualiser" pour calculer vos comptes de temps.</p>
+  <ng-container *ngIf="!loading">
+
+    <!-- Compteurs CHS / CFR / CA / RTT -->
+    <div class="counters-section" *ngIf="timeAccount">
+      <div class="counters-grid">
+
+        <div class="counter-card chs">
+          <div class="counter-icon"><i class="pi pi-clock"></i></div>
+          <div class="counter-label">CHS</div>
+          <div class="counter-value">{{ formatHours(timeAccount.chs_days) }}</div>
+          <div *ngIf="timeAccount.chs_exchange_hours > 0" class="counter-exchange">
+            <i class="pi pi-arrow-right-arrow-left"></i>
+            +{{ timeAccount.chs_exchange_hours }}h échanges
+          </div>
+          <div class="counter-description">Heures supplémentaires accumulées</div>
+        </div>
+
+        <div class="counter-card cfr">
+          <div class="counter-icon"><i class="pi pi-calendar"></i></div>
+          <div class="counter-label">CFR</div>
+          <div class="counter-value">{{ formatDays(timeAccount.cfr_days) }}</div>
+          <div class="counter-description">Fériés & récupérations travaillés</div>
+        </div>
+
+        <div class="counter-card ca">
+          <div class="counter-icon"><i class="pi pi-sun"></i></div>
+          <div class="counter-label">CA</div>
+          <div class="counter-value">{{ formatDays(timeAccount.ca_days) }}</div>
+          <div class="counter-description">Congés annuels posés</div>
+        </div>
+
+        <div class="counter-card rtt">
+          <div class="counter-icon"><i class="pi pi-minus-circle"></i></div>
+          <div class="counter-label">RTT</div>
+          <div class="counter-value">{{ formatDays(timeAccount.rtt_days) }}</div>
+          <div class="counter-description">RTT posés</div>
+        </div>
+
+      </div>
     </div>
-  </div>
 
-  <!-- Remarque -->
-  <div class="remark-section" *ngIf="!loading && timeAccount">
-    <p class="remark-text">
-      <strong>Remarque :</strong> On peut rajouter une jauge de temps pour chaque type de congés
-    </p>
-  </div>
+    <!-- Bandeau CHS élevé -->
+    <div class="chs-info-banner"
+         *ngIf="timeAccount && (timeAccount.chs_days + timeAccount.chs_exchange_hours) >= 80">
+      <div class="chs-info-icon"><i class="pi pi-info-circle"></i></div>
+      <div class="chs-info-content">
+        <strong>Compteur CHS élevé</strong>
+        <span>
+          Vous avez accumulé
+          <strong>{{ timeAccount.chs_days + timeAccount.chs_exchange_hours }}h</strong>
+          d'heures supplémentaires cette année.
+          Pensez à poser des RTT pour équilibrer votre compteur
+          ({{ getRttSuggested(timeAccount.chs_days + timeAccount.chs_exchange_hours) }} RTT suggérés).
+        </span>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         BALANCE HORAIRE ANNUELLE
+    ═══════════════════════════════════════════════════════════ -->
+    <div class="balance-section" *ngIf="hourlyBalance">
+      <div class="balance-header">
+        <div>
+          <h2 class="balance-title">Balance horaire {{ hourlyBalance.year }}</h2>
+          <p class="balance-subtitle">{{ hourlyBalance.contract_type_label }}</p>
+        </div>
+      </div>
+      <div class="gauges-row">
+        <div class="gauge-item">
+          <svg viewBox="0 0 120 70" class="gauge-svg">
+            <path d="M10,65 A50,50 0 0,1 110,65" fill="none" stroke="#e2e8f0" stroke-width="10" stroke-linecap="round"/>
+            <path d="M10,65 A50,50 0 0,1 110,65" fill="none" stroke="#3b82f6" stroke-width="10" stroke-linecap="round"
+                  [attr.stroke-dasharray]="getSemiDash(hourlyBalance.prorata_obligation, hourlyBalance.annual_obligation)"
+                  stroke-dashoffset="0"/>
+          </svg>
+          <div class="gauge-center-text">
+            <span class="gauge-value">{{ hourlyBalance.prorata_obligation | number:'1.0-0' }}h</span>
+            <span class="gauge-sub">/ {{ hourlyBalance.annual_obligation | number:'1.0-0' }}h</span>
+          </div>
+          <div class="gauge-label">Heures dues</div>
+        </div>
+        <div class="gauge-item">
+          <svg viewBox="0 0 120 70" class="gauge-svg">
+            <path d="M10,65 A50,50 0 0,1 110,65" fill="none" stroke="#e2e8f0" stroke-width="10" stroke-linecap="round"/>
+            <path d="M10,65 A50,50 0 0,1 110,65" fill="none"
+                  [attr.stroke]="hourlyBalance.status === 'avance' ? '#10b981' : '#f59e0b'"
+                  stroke-width="10" stroke-linecap="round"
+                  [attr.stroke-dasharray]="getSemiDash(hourlyBalance.worked_hours, hourlyBalance.annual_obligation)"
+                  stroke-dashoffset="0"/>
+          </svg>
+          <div class="gauge-center-text">
+            <span class="gauge-value">{{ hourlyBalance.worked_hours | number:'1.0-0' }}h</span>
+            <span class="gauge-sub">{{ hourlyBalance.progress_pct }}%</span>
+          </div>
+          <div class="gauge-label">Heures effectuées</div>
+        </div>
+        <div class="gauge-item">
+          <svg viewBox="0 0 120 70" class="gauge-svg">
+            <path d="M10,65 A50,50 0 0,1 110,65" fill="none" stroke="#e2e8f0" stroke-width="10" stroke-linecap="round"/>
+            <path d="M10,65 A50,50 0 0,1 110,65" fill="none"
+                  [attr.stroke]="hourlyBalance.balance >= 0 ? '#10b981' : '#ef4444'"
+                  stroke-width="10" stroke-linecap="round"
+                  [attr.stroke-dasharray]="getSemiDash(getAbsBalance(), hourlyBalance.annual_obligation)"
+                  stroke-dashoffset="0"/>
+          </svg>
+          <div class="gauge-center-text">
+            <span class="gauge-value" [class.positive]="hourlyBalance.balance >= 0" [class.negative]="hourlyBalance.balance < 0">
+              {{ hourlyBalance.balance >= 0 ? '+' : '' }}{{ hourlyBalance.balance | number:'1.0-0' }}h
+            </span>
+            <span class="gauge-sub">{{ hourlyBalance.balance_days | number:'1.0-1' }}j</span>
+          </div>
+          <div class="gauge-label">Solde</div>
+          <div class="gauge-hint">
+            <span class="status-pill" [class.avance]="hourlyBalance.status === 'avance'" [class.retard]="hourlyBalance.status === 'retard'">
+              <i [class]="hourlyBalance.status === 'avance' ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"></i>
+              {{ hourlyBalance.status === 'avance' ? 'En avance' : 'En retard' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SYNTHÈSE ANNUELLE — Jan → Déc
+    ═══════════════════════════════════════════════════════════ -->
+    <div class="rtt-monthly-section">
+      <div class="rtt-monthly-header">
+        <h2 class="rtt-monthly-title">
+          <i class="pi pi-chart-bar"></i> Synthèse annuelle des heures
+        </h2>
+        <p-dropdown
+          [options]="availableYears"
+          [(ngModel)]="selectedRttYear"
+          (onChange)="onRttYearChange()"
+          optionLabel="label"
+          optionValue="value"
+          [style]="{'min-width':'110px'}"
+        ></p-dropdown>
+      </div>
+
+      <!-- Chargement RTT -->
+      <div *ngIf="rttLoading" class="rtt-loading-inline">
+        <i class="pi pi-spin pi-spinner"></i> Chargement de la synthèse...
+      </div>
+
+      <!-- Erreur / aucune donnée -->
+      <div *ngIf="!rttLoading && !rttSummary" class="rtt-no-data-msg">
+        <i class="pi pi-info-circle"></i>
+        <span *ngIf="rttError">Erreur lors du chargement.</span>
+        <span *ngIf="!rttError">Aucune donnée disponible pour {{ selectedRttYear }}.</span>
+        <button pButton type="button" label="Réessayer" icon="pi pi-refresh"
+                class="p-button-sm p-button-text" (click)="loadRttSummary()"></button>
+      </div>
+
+      <ng-container *ngIf="!rttLoading && rttSummary">
+
+        <!-- Alerte annuelle dépassement -->
+        <div class="rtt-annual-alert" *ngIf="rttSummary.annual_alert">
+          <i class="pi pi-exclamation-triangle"></i>
+          <div>
+            <strong>Dépassement annuel — {{ rttSummary.total_overtime }}h supplémentaires</strong>
+            <span>
+              Obligation : <strong>{{ rttSummary.annual_obligation }}h</strong>
+              ({{ rttSummary.contract_label }}).
+              Posez <strong>{{ rttSummary.rtt_remaining_to_take }} RTT</strong> pour revenir dans la norme.
+            </span>
+          </div>
+        </div>
+
+        <!-- Compteurs résumé -->
+        <div class="rtt-mini-counters">
+          <div class="rtt-mini-card">
+            <span class="rtt-mini-value orange">{{ rttSummary.total_overtime }}h</span>
+            <span class="rtt-mini-label">Heures sup. {{ selectedRttYear }}</span>
+          </div>
+          <div class="rtt-mini-card">
+            <span class="rtt-mini-value blue">{{ rttSummary.total_rtt_suggested }}</span>
+            <span class="rtt-mini-label">RTT suggérés</span>
+          </div>
+          <div class="rtt-mini-card">
+            <span class="rtt-mini-value green">{{ rttSummary.rtt_taken }}</span>
+            <span class="rtt-mini-label">RTT posés</span>
+          </div>
+          <div class="rtt-mini-card" [class.alert-card]="rttSummary.rtt_remaining_to_take > 0">
+            <span class="rtt-mini-value"
+                  [class.red]="rttSummary.rtt_remaining_to_take > 0"
+                  [class.green]="rttSummary.rtt_remaining_to_take === 0">
+              {{ rttSummary.rtt_remaining_to_take }}
+            </span>
+            <span class="rtt-mini-label">RTT à poser</span>
+          </div>
+        </div>
+
+        <!-- Graphique barres Jan → Déc -->
+        <div class="rtt-bars-wrapper">
+          <div class="rtt-legend-row">
+            <span class="legend-item"><span class="legend-dot green"></span>Dans la norme</span>
+            <span class="legend-item"><span class="legend-dot orange"></span>Légèrement dépassé</span>
+            <span class="legend-item"><span class="legend-dot red"></span>Alerte (&gt;+20h)</span>
+            <span class="legend-item"><span class="legend-line-dash"></span>Seuil {{ rttSummary.monthly_threshold }}h/mois</span>
+          </div>
+          <div class="rtt-bar-list">
+            <div class="rtt-bar-row" *ngFor="let item of rttSummary.monthly_breakdown"
+                 [class.future-month]="item.is_future">
+              <div class="rtt-bar-month-label">{{ item.month_name | slice:0:3 }}</div>
+              <div class="rtt-bar-track">
+                <div
+                  class="rtt-bar-fill"
+                  [style.width]="item.is_future ? '0%' : getBarWidth(item.hours_worked, rttSummary.monthly_threshold)"
+                  [style.background]="item.is_future ? '#e2e8f0' : getBarColor(item)"
+                ></div>
+                <div
+                  class="rtt-threshold-marker"
+                  [style.left]="getThresholdLeft(rttSummary.monthly_threshold, item.hours_worked)"
+                ></div>
+              </div>
+              <div class="rtt-bar-hours"
+                   [class.alert-text]="item.alert"
+                   [class.future-text]="item.is_future">
+                {{ item.is_future ? '—' : (item.hours_worked > 0 ? item.hours_worked + 'h' : '—') }}
+              </div>
+              <div class="rtt-bar-extra" *ngIf="!item.is_future && item.overtime_hours > 0">
+                <span class="overtime-tag">+{{ item.overtime_hours }}h</span>
+                <span class="rtt-suggest-tag" *ngIf="item.rtt_suggested > 0">{{ item.rtt_suggested }} RTT</span>
+              </div>
+              <div class="rtt-bar-extra ok"
+                   *ngIf="!item.is_future && item.overtime_hours === 0 && item.has_data">
+                <i class="pi pi-check"></i>
+              </div>
+              <div class="rtt-bar-extra" *ngIf="item.is_future">
+                <span class="future-label">à venir</span>
+              </div>
+              <div class="rtt-bar-extra empty"
+                   *ngIf="!item.is_future && !item.has_data">—</div>
+            </div>
+          </div>
+        </div>
+
+      </ng-container>
+    </div>
+
+    <!-- No data -->
+    <div class="no-data-container" *ngIf="!timeAccount">
+      <i class="pi pi-info-circle"></i>
+      <p>Aucun planning trouvé pour cette période.</p>
+      <p-button label="Calculer" icon="pi pi-refresh" (onClick)="onRefresh()"></p-button>
+    </div>
+
+  </ng-container>
 </div>
 
-<!-- Toast pour les messages -->
 <p-toast></p-toast>
-

@@ -12,7 +12,7 @@
 /* Header avec navigation */
 .calendar-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   padding: 15px 20px;
   background: #065594;
@@ -20,19 +20,8 @@
 }
 
 .nav-button {
-  background: transparent;
-  border: none;
-  color: white !important;
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 5px 10px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-  font-weight: bold;
-}
-
-.nav-button:hover {
-  background: rgba(255, 255, 255, 0.2);
+  display: none !important;
+  visibility: hidden !important;
 }
 
 .month-year {

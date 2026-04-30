@@ -398,7 +398,7 @@ export class MedicalStaffComponent implements AfterViewInit {
           resolve();
         },
         error: () => {
-          this.showError('Erreur lors du chargement des spécialités');
+          this.showError('Erreur lors du chargement des métiers');
           resolve();
         }
       });

@@ -19,9 +19,8 @@ export class SecSideBarComponent {
     {title: 'Mon Agenda', link: '/sec/mon-agenda', icon: PrimeIcons.CALENDAR_PLUS},
     {title: 'Personnel Paramédical', link: '/sec/medical-staff', icon: PrimeIcons.BARS},
     {title: 'Calendrier équipe', link: '/sec/calendar', icon: PrimeIcons.CALENDAR},
-    {title: 'Demander un Remplacement ou une Absence', link: '/sec/report-absence', icon: PrimeIcons.INFO_CIRCLE},
+    {title: 'Gérer mon planning', link: '/sec/report-absence', icon: PrimeIcons.CALENDAR_PLUS},
     {title: 'Mes demandes', link: '/sec/asks', icon: PrimeIcons.CLIPBOARD},
-    {title: 'Mes alertes', link: '/sec/alerts', icon: PrimeIcons.BELL},
     {
       title: 'Mes comptes de temps / Synthèse des droits',
       icon: PrimeIcons.CLOCK,

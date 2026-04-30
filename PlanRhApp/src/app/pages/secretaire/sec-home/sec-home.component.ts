@@ -18,7 +18,9 @@ import { ServiceService } from '../../../services/service/service.service';
 import { AlertsService } from '../../../services/alerts/alerts.service';
 import { AnomaliesService } from '../../../services/anomalies/anomalies.service';
 import { EventsService } from '../../../services/events/events.service';
-// import { MonitoringService } from '../../../services/monitoring/monitoring.service'; // Supprimé car non utilisé
+import { AlertsRttService, MonthlyCurrent } from '../../../services/alerts-rtt/alerts-rtt.service';
+import { TimeAccountService } from '../../../services/time-account/time-account.service';
+import { PlanningService } from '../../../services/planning/planning.service';
 import { Alert } from '../../../models/alert';
 import { Anomaly } from '../../../models/anomaly';
 import { PendingEvent } from '../../../models/pendingEvent';
@@ -115,6 +117,14 @@ export class SecHomeComponent implements OnInit {
   filteredUpcomingEvents: PendingEvent[] = [];
   unresolvedAlertsCount: number = 0;
 
+  // Balance horaire mensuelle (mois courant)
+  monthlyBalance: any = null;
+  currentYear: number = new Date().getFullYear();
+  // Synthèse mois courant (alertes RTT)
+  monthlyCurrent: MonthlyCurrent | null = null;
+  // Prochains congés depuis le planning réel
+  upcomingLeaves: any[] = [];
+
   constructor(
     private absenceService: AbsenceService,
     private authService: AuthService,
@@ -124,7 +134,9 @@ export class SecHomeComponent implements OnInit {
     private alertsService: AlertsService,
     private anomaliesService: AnomaliesService,
     private eventsService: EventsService,
-    // private monitoringService: MonitoringService, // Supprimé car non utilisé
+    private alertsRttService: AlertsRttService,
+    private timeAccountService: TimeAccountService,
+    private planningService: PlanningService,
     private messageService: MessageService
   ) {}
 
@@ -152,6 +164,9 @@ export class SecHomeComponent implements OnInit {
         if (user?._id) {
           this.loggedInUser = user;
           this.loadDashboardData();
+          this.loadHourlyBalance(user._id);
+          // Vérifier les heures sup au chargement du dashboard
+          this.alertsRttService.checkAndNotifyOvertime(user._id).subscribe();
         } else {
           this.showError('Impossible de charger vos informations');
         }
@@ -160,6 +175,44 @@ export class SecHomeComponent implements OnInit {
         this.showError('Échec de la connexion au serveur');
       }
     });
+  }
+
+  loadHourlyBalance(userId: string): void {
+    // Balance mensuelle du mois courant
+    this.alertsRttService.getMonthlyBalance(userId).subscribe({
+      next: (data) => { this.monthlyBalance = data; },
+      error: () => {}
+    });
+    // Synthèse RTT mois courant (alertes)
+    this.alertsRttService.getMonthlyCurrent(userId).subscribe({
+      next: (data) => { this.monthlyCurrent = data; },
+      error: () => {}
+    });
+    // Prochains congés CA depuis le planning réel (max 2)
+    this.planningService.getUpcomingLeaves(userId, 2).subscribe({
+      next: (data) => { this.upcomingLeaves = data.upcoming_leaves || []; },
+      error: () => { this.upcomingLeaves = []; }
+    });
+  }
+
+  getSemiDash(value: number, max: number): string {
+    const arcLength = 157;
+    const pct = max > 0 ? Math.min(value / max, 1) : 0;
+    return `${pct * arcLength} ${arcLength}`;
+  }
+
+  getAbsBalance(): number {
+    return this.monthlyBalance ? Math.abs(this.monthlyBalance.balance) : 0;
+  }
+
+  getMonthBarWidth(hours: number, threshold: number): string {
+    const max = Math.max(threshold * 1.4, hours);
+    return `${Math.min((hours / max) * 100, 100)}%`;
+  }
+
+  getMonthThresholdLeft(threshold: number, hours: number): string {
+    const max = Math.max(threshold * 1.4, hours);
+    return `${Math.min((threshold / max) * 100, 100)}%`;
   }
 
   loadDashboardData(): void {

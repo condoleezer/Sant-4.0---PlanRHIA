@@ -1,7 +1,7 @@
 from json import dumps
 from uuid import uuid4
 from bson import ObjectId
-from fastapi import HTTPException, APIRouter, Depends, Response
+from fastapi import HTTPException, APIRouter, Depends, Response, Body
 from starlette import status
 from starlette.responses import JSONResponse
 import bcrypt
@@ -148,18 +148,41 @@ async def register(user_info: UserCreate):
         raise HTTPException(status_code=500, detail=f"Erreur interne du serveur: {str(e)}")
 
 @router.put("/users/update/{user_id}")
-async def update_user(user_id: str, user_data: dict):
+async def update_user(user_id: str, user_data: dict = Body(...), current_user: str = Depends(get_current_user)):
     try:
+        # Récupérer l'utilisateur courant pour vérifier son rôle
+        current_user_doc = users.find_one({"_id": ObjectId(current_user)})
+        if not current_user_doc:
+            raise HTTPException(status_code=401, detail="Utilisateur non authentifié")
+
+        current_role = current_user_doc.get("role", "")
+
+        # Vérifier que l'utilisateur ne peut modifier que son propre profil ou qu'il est admin
+        if current_user != user_id and current_role != "admin":
+            raise HTTPException(
+                status_code=403,
+                detail="Vous n'êtes pas autorisé à modifier ce profil"
+            )
+
+        # Si l'utilisateur n'est pas admin, il ne peut pas modifier le matricule
+        if current_role != "admin" and "matricule" in user_data:
+            raise HTTPException(
+                status_code=403,
+                detail="Seul l'administrateur peut modifier le matricule"
+            )
+
+        # Supprimer les champs vides/None pour ne pas écraser avec des valeurs vides
+        user_data = {k: v for k, v in user_data.items() if v is not None and v != ''}
+
         # Remove password from update if present to prevent accidental overwrite
-        if "password" in user_data:
-            del user_data["password"]
+        user_data.pop("password", None)
         user_data["updated_at"] = datetime.now()
 
         result = users.update_one(
             {"_id": ObjectId(user_id)},
             {"$set": user_data}
         )
-        if result.modified_count == 0:
+        if result.matched_count == 0:
             raise HTTPException(status_code=404, detail="Utilisateur introuvable")
         return {
             "message": "Utilisateur mis à jour avec succès",
@@ -168,6 +191,8 @@ async def update_user(user_id: str, user_data: dict):
                 "updated_at": user_data["updated_at"].isoformat()
             }
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Erreur lors de la mise à jour: {str(e)}")
 
@@ -182,8 +207,16 @@ async def delete_user_route(user_id: str):
         raise HTTPException(status_code=400, detail=f"Erreur lors de la suppression: {str(e)}")
 
 @router.put("/users/changePassword/{user_id}")
-async def change_password(user_id: str, password: PasswordChange):
+async def change_password(user_id: str, password: PasswordChange, current_user: dict = Depends(get_current_user)):
     try:
+        # Vérifier que l'utilisateur ne peut changer que son propre mot de passe
+        # ou qu'il est admin
+        if current_user["_id"] != user_id and current_user["role"] != "admin":
+            raise HTTPException(
+                status_code=403,
+                detail="Vous n'êtes pas autorisé à modifier ce mot de passe"
+            )
+        
         # Hash the new password
         hashed_password = hash_password(password.new_password)
         result = users.update_one(
@@ -193,6 +226,8 @@ async def change_password(user_id: str, password: PasswordChange):
         if result.modified_count == 0:
             raise HTTPException(status_code=404, detail="Utilisateur introuvable")
         return {"message": "Mot de passe modifié avec succès", "data": {"modified_count": result.modified_count}}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Erreur lors de la mise à jour du mot de passe: {str(e)}")
 

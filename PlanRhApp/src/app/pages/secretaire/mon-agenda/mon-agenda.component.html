@@ -2,11 +2,61 @@
   <!-- Header -->
   <div class="header">
     <h1 class="page-title">MON AGENDA</h1>
-    <div class="user-info" *ngIf="currentUser">
-      <span class="user-name"
-        >{{ currentUser.first_name }} {{ currentUser.last_name }}</span
+    <div class="header-actions">
+      <!-- Bouton réciprocités -->
+      <button
+        *ngIf="userReciprocities"
+        class="reciprocity-btn"
+        (click)="showReciprocityPanel = true"
       >
-      <span class="user-role">Soignant</span>
+        <i class="pi pi-sync"></i>
+        <span>Réciprocités</span>
+      </button>
+      <div class="user-info" *ngIf="currentUser">
+        <span class="user-name">{{ currentUser.first_name }} {{ currentUser.last_name }}</span>
+        <span class="user-role">Soignant</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal réciprocités -->
+  <div *ngIf="showReciprocityPanel && userReciprocities" class="recip-overlay" (click)="showReciprocityPanel = false">
+    <div class="recip-modal" (click)="$event.stopPropagation()">
+      <div class="recip-modal-header">
+        <span><i class="pi pi-sync"></i> Réciprocités de remplacement</span>
+        <button class="recip-close" (click)="showReciprocityPanel = false">✕</button>
+      </div>
+      <div class="recip-modal-body">
+        <div class="recip-two-cols">
+          <!-- Ce qu'on doit donner -->
+          <div class="recip-col">
+            <h4 class="recip-section-title owed">
+              <i class="pi pi-arrow-up"></i> À donner
+            </h4>
+            <div *ngIf="userReciprocities.debts.length === 0" class="recip-empty">Rien à rembourser</div>
+            <div class="recip-row" *ngFor="let debt of userReciprocities.debts">
+              <span class="recip-name">{{ debt.creditor_name }}</span>
+              <span class="recip-h">{{ debt.hours_remaining }}h</span>
+              <span class="recip-date" [class.soon]="debt.expiring_soon">{{ debt.expires_at }}</span>
+            </div>
+          </div>
+          <!-- Ce qu'on doit recevoir -->
+          <div class="recip-col">
+            <h4 class="recip-section-title due">
+              <i class="pi pi-arrow-down"></i> À recevoir
+            </h4>
+            <div *ngIf="userReciprocities.credits.length === 0" class="recip-empty">Rien à recevoir</div>
+            <div class="recip-row" *ngFor="let credit of userReciprocities.credits">
+              <span class="recip-name">{{ credit.debtor_name }}</span>
+              <span class="recip-h">{{ credit.hours_remaining }}h</span>
+              <span class="recip-date" [class.soon]="credit.expiring_soon">{{ credit.expires_at }}</span>
+              <button class="recip-recover-btn" (click)="openRecipRecovery(credit)">
+                <i class="pi pi-calendar-plus"></i> Récupérer
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -164,10 +214,20 @@
       <p-dropdown
         id="edit_activity_code"
         [(ngModel)]="editPlanningForm.activity_code"
-        [options]="activityCodes"
+        [options]="filteredActivityCodes"
         placeholder="Sélectionnez un code"
         [style]="{ width: '100%' }"
+        (onChange)="onActivityCodeChange(editPlanningForm.activity_code)"
       ></p-dropdown>
+    </div>
+
+    <!-- Avertissement sous-effectif si CA sélectionné et collègues déjà en congé -->
+    <div *ngIf="checkingCaConflict" class="ca-conflict-checking">
+      <i class="pi pi-spin pi-spinner"></i> Vérification en cours...
+    </div>
+    <div *ngIf="!checkingCaConflict && caConflictWarning" class="ca-conflict-warning">
+      <i class="pi pi-exclamation-triangle"></i>
+      <span>{{ caConflictWarning }}</span>
     </div>
 
     <div class="form-group">
@@ -385,3 +445,308 @@
 
 <!-- Toast Messages -->
 <p-toast></p-toast>
+
+<!-- Modal d'échange de planning -->
+<p-dialog
+  header="Proposer un échange de planning"
+  [(visible)]="showExchangeModal"
+  [modal]="true"
+  [style]="{ width: '560px', maxHeight: '80vh' }"
+  [closable]="true"
+  (onHide)="closeModals()"
+>
+  <div class="exchange-modal-content" *ngIf="selectedDay">
+
+    <!-- Planning de A -->
+    <div class="exchange-info-section">
+      <div class="planning-card my-planning">
+        <div class="planning-date">
+          <i class="pi pi-calendar"></i>
+          <span>{{ formatDate(selectedDay) }}</span>
+        </div>
+        <div class="planning-details">
+          <span class="activity-code">{{ editPlanningForm.activity_code }}</span>
+          <span class="time-range">{{ getTimeRangeForCode(editPlanningForm.activity_code) }}</span>
+        </div>
+      </div>
+      <div class="exchange-rule-info" *ngIf="isDateEligibleForExchange(selectedDay)">
+        <i class="pi pi-check-circle"></i>
+        <span>Échange direct possible</span>
+      </div>
+      <div class="exchange-rule-info warning" *ngIf="!isDateEligibleForExchange(selectedDay)">
+        <i class="pi pi-exclamation-triangle"></i>
+        <span>Cette date nécessite une demande d'absence à votre encadrement.</span>
+      </div>
+    </div>
+
+    <!-- Liste des agents compatibles -->
+    <div class="compatible-agents-section">
+      <h3>Choisissez un collègue</h3>
+
+      <div *ngIf="loadingCompatibleAgents" class="loading-state">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>Recherche en cours...</span>
+      </div>
+
+      <div *ngIf="!loadingCompatibleAgents && compatibleAgents.length === 0" class="empty-state">
+        <i class="pi pi-info-circle"></i>
+        <p>Aucun agent compatible trouvé</p>
+      </div>
+
+      <div *ngIf="!loadingCompatibleAgents && compatibleAgents.length > 0" class="agents-list">
+        <div
+          *ngFor="let agent of compatibleAgents"
+          class="agent-card selectable"
+          [class.selected]="selectedTargetPlanning?.agent_id === agent._id"
+          (click)="selectAgent(agent)"
+        >
+          <i class="pi pi-user"></i>
+          <span class="agent-name">{{ agent.first_name }} {{ agent.last_name }}</span>
+          <span class="agent-matricule">{{ agent.matricule }}</span>
+          <i class="pi pi-check-circle selected-icon" *ngIf="selectedTargetPlanning?.agent_id === agent._id"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message optionnel -->
+    <div class="form-group" *ngIf="selectedTargetPlanning">
+      <label for="exchange_message">Message (optionnel)</label>
+      <textarea
+        id="exchange_message"
+        pTextarea
+        [(ngModel)]="exchangeMessage"
+        rows="2"
+        placeholder="Expliquez votre demande..."
+        style="width: 100%"
+      ></textarea>
+    </div>
+
+    <!-- Dates de récupération proposées par A -->
+    <div class="recovery-proposal-section" *ngIf="selectedTargetPlanning">
+      <h4><i class="pi pi-calendar-plus"></i> Proposer des dates de récupération (optionnel)</h4>
+      <p class="recovery-proposal-hint">
+        Sélectionnez vos jours de repos que votre collègue pourra choisir pour récupérer son créneau.
+        S'il n'en choisit aucun, ses heures seront créditées en heures supplémentaires.
+      </p>
+      <div *ngIf="loadingMyRestDays" class="loading-state">
+        <i class="pi pi-spin pi-spinner"></i> Chargement...
+      </div>
+      <div *ngIf="!loadingMyRestDays && myRestDays.length === 0" class="recovery-empty">
+        <i class="pi pi-info-circle"></i> Aucun jour de repos disponible à proposer.
+      </div>
+      <div *ngIf="!loadingMyRestDays && myRestDays.length > 0" class="rest-days-list">
+        <div
+          *ngFor="let day of myRestDays"
+          class="rest-day-chip"
+          [class.selected]="isProposedRecoveryDate(day.planning_id)"
+          (click)="toggleProposedRecoveryDate(day)"
+        >
+          <i class="pi" [class.pi-check-circle]="isProposedRecoveryDate(day.planning_id)" [class.pi-circle]="!isProposedRecoveryDate(day.planning_id)"></i>
+          <span>{{ day.date | date:'dd/MM/yyyy' }}</span>
+          <span class="rest-code">{{ day.activity_code }}</span>
+        </div>
+      </div>
+      <div *ngIf="proposedRecoveryDates.length > 0" class="proposed-summary">
+        <i class="pi pi-check-circle"></i>
+        {{ proposedRecoveryDates.length }} date(s) proposée(s)
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <p-button label="Annuler" icon="pi pi-times" [outlined]="true" (onClick)="closeModals()"></p-button>
+      <p-button
+        label="Envoyer la demande"
+        icon="pi pi-send"
+        (onClick)="submitExchangeRequest()"
+        [disabled]="!selectedTargetPlanning"
+      ></p-button>
+    </div>
+  </div>
+</p-dialog>
+
+<!-- Modal récupération : proposé à B avant d'accepter l'échange -->
+<p-dialog
+  header="Répondre à la demande d'échange"
+  [(visible)]="showRecoveryModal"
+  [modal]="true"
+  [style]="{ width: '560px' }"
+  [closable]="false"
+>
+  <div class="recovery-modal-content">
+    <p class="recovery-intro">
+      <i class="pi pi-info-circle"></i>
+      Votre collègue vous propose de travailler à sa place.
+      Choisissez une date de récupération parmi celles qu'il vous propose, ou acceptez en <strong>heures supplémentaires</strong>.
+    </p>
+
+    <div *ngIf="loadingRequesterPlannings" class="recovery-loading">
+      <i class="pi pi-spin pi-spinner"></i> Chargement...
+    </div>
+
+    <div *ngIf="!loadingRequesterPlannings && requesterPlannings.length > 0">
+      <h4>Dates de récupération disponibles :</h4>
+      <div class="rest-days-list">
+        <div
+          *ngFor="let day of requesterPlannings"
+          class="rest-day-chip"
+          [class.selected]="selectedRecoveryDate === day.date"
+          (click)="selectedRecoveryDate = day.date; selectedRecoveryPlanningId = day.planning_id"
+        >
+          <i class="pi" [class.pi-check-circle]="selectedRecoveryDate === day.date" [class.pi-circle]="selectedRecoveryDate !== day.date"></i>
+          <span>{{ day.date | date:'dd/MM/yyyy' }}</span>
+          <span class="rest-code">{{ day.activity_code }}</span>
+        </div>
+      </div>
+      <div class="selected-planning-info" *ngIf="selectedRecoveryDate">
+        <i class="pi pi-check-circle"></i>
+        <span>
+          {{ selectedRecoveryDate }} —
+          <strong>{{ getRecoveryPlanningCode() }}</strong>
+          {{ getRecoveryPlanningHours() }}
+        </span>
+        <span class="clear-link" (click)="selectedRecoveryDate = null; selectedRecoveryPlanningId = null">✕ Annuler</span>
+      </div>
+    </div>
+
+    <div *ngIf="!loadingRequesterPlannings && requesterPlannings.length === 0" class="recovery-empty">
+      <i class="pi pi-calendar-times"></i>
+      <span>Votre collègue n'a pas proposé de dates de récupération.</span>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Refuser"
+      icon="pi pi-times"
+      severity="danger"
+      [outlined]="true"
+      (onClick)="showRecoveryModal = false; doRespondToExchange(pendingAcceptExchangeId, 'refusé')"
+    ></p-button>
+    <p-button
+      label="Accepter (heures sup)"
+      icon="pi pi-check"
+      [outlined]="true"
+      severity="secondary"
+      (onClick)="confirmAcceptExchange(false)"
+    ></p-button>
+    <p-button
+      label="Accepter avec récupération"
+      icon="pi pi-check-circle"
+      severity="success"
+      [disabled]="!selectedRecoveryDate"
+      (onClick)="confirmAcceptExchange(true)"
+    ></p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal demandes d'échange reçues -->
+<p-dialog
+  header="Demandes d'échange reçues"
+  [(visible)]="showExchangeRequestsModal"
+  [modal]="true"
+  [style]="{ width: '600px', maxHeight: '80vh' }"
+  [closable]="true"
+  (onHide)="showExchangeRequestsModal = false"
+>
+  <div class="exchange-requests-content">
+    <div *ngIf="loadingExchangeRequests" class="loading-state">
+      <i class="pi pi-spin pi-spinner"></i> Chargement...
+    </div>
+    <div *ngIf="!loadingExchangeRequests && pendingExchangeRequests.length === 0" class="empty-state">
+      <i class="pi pi-inbox"></i>
+      <p>Aucune demande d'échange en attente</p>
+    </div>
+    <div *ngIf="!loadingExchangeRequests && pendingExchangeRequests.length > 0" class="requests-list">
+      <div *ngFor="let req of pendingExchangeRequests" class="request-card">
+        <div class="request-header">
+          <span class="requester-name"><i class="pi pi-user"></i> {{ req.requester_name }}</span>
+          <span class="request-date">{{ req.created_at | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="request-details">
+          <div class="planning-swap">
+            <div class="swap-item">
+              <span class="swap-label">Il travaille le</span>
+              <strong>{{ req.requester_date | date:'dd/MM/yyyy' }}</strong>
+              <span class="activity-badge">{{ req.requester_activity_code }}</span>
+            </div>
+            <i class="pi pi-arrows-h swap-arrow"></i>
+            <div class="swap-item">
+              <span class="swap-label">Vous récupérez</span>
+              <strong>à définir</strong>
+            </div>
+          </div>
+          <div *ngIf="req.message" class="request-message">
+            <i class="pi pi-comment"></i> {{ req.message }}
+          </div>
+        </div>
+        <div class="request-actions">
+          <p-button
+            label="Refuser"
+            icon="pi pi-times"
+            severity="danger"
+            [outlined]="true"
+            size="small"
+            (onClick)="respondToExchangeRequest(req._id, 'refusé')"
+          ></p-button>
+          <p-button
+            label="Répondre"
+            icon="pi pi-check"
+            severity="success"
+            size="small"
+            (onClick)="showExchangeRequestsModal = false; respondToExchangeRequest(req._id, 'accepté')"
+          ></p-button>
+        </div>
+      </div>
+    </div>
+  </div>
+</p-dialog>
+
+<!-- Modal récupération depuis réciprocité -->
+<div *ngIf="showRecipRecoveryModal" class="recovery-overlay" (click)="showRecipRecoveryModal = false">
+  <div class="recip-recovery-modal" (click)="$event.stopPropagation()">
+    <div class="recovery-modal-header">
+      <span><i class="pi pi-calendar-plus"></i> Récupérer mes heures</span>
+      <button class="recovery-close-btn" (click)="showRecipRecoveryModal = false">✕</button>
+    </div>
+    <div class="recovery-modal-body">
+
+      <!-- Alerte date limite -->
+      <div class="recip-deadline-alert" *ngIf="recipExpiresAt">
+        <i class="pi pi-exclamation-triangle"></i>
+        Vous devez récupérer vos heures avant le <strong>{{ recipExpiresAt }}</strong>
+      </div>
+
+      <div *ngIf="loadingRecipDays" style="text-align:center;padding:16px;color:#64748b">
+        <i class="pi pi-spin pi-spinner"></i> Chargement...
+      </div>
+
+      <div *ngIf="!loadingRecipDays">
+        <p style="font-size:0.8rem;color:#64748b;margin-bottom:8px">
+          Jours de repos disponibles chez votre collègue (en bleu) :
+        </p>
+        <div class="recovery-calendar-wrapper">
+          <p-calendar
+            [inline]="true"
+            [disabledDates]="getDisabledDatesForRecip()"
+            [minDate]="today"
+            [maxDate]="recipMaxDate"
+            [firstDayOfWeek]="1"
+            (onSelect)="onRecipDateSelect($event)"
+          ></p-calendar>
+        </div>
+        <div *ngIf="recipSelectedDate" class="selected-planning-info" style="margin-top:10px">
+          <i class="pi pi-check-circle"></i>
+          <span>{{ recipSelectedDate }}</span>
+          <span class="clear-link" (click)="recipSelectedDate = null; recipSelectedPlanningId = null">✕</span>
+        </div>
+      </div>
+    </div>
+    <div class="recovery-modal-footer">
+      <p-button label="Annuler" icon="pi pi-times" [outlined]="true" severity="secondary"
+        (onClick)="showRecipRecoveryModal = false"></p-button>
+      <p-button label="Confirmer" icon="pi pi-check" severity="success"
+        [disabled]="!recipSelectedDate"
+        (onClick)="confirmRecipRecovery()"></p-button>
+    </div>
+  </div>
+</div>

@@ -16,6 +16,7 @@ import { SideBarDropComponent } from '../side-bar-drop/side-bar-drop.component';
 export class CadreSideBarComponent {
   items: NavItem[] = [
     {title: 'Accueil', link: '/cadre', icon: PrimeIcons.HOME},
+    {title: 'Mon Agenda', link: '/cadre/mon-agenda', icon: PrimeIcons.CALENDAR_PLUS},
     {title: 'Personnel Paramédical', link: '/cadre/medical-staff', icon: PrimeIcons.CLIPBOARD},
     {title: 'Calendrier', link: '/cadre/calendar', icon: PrimeIcons.CALENDAR},
     {

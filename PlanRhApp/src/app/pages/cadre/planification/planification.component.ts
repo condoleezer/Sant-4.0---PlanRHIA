@@ -1,8 +1,14 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, ElementRef, ViewEncapsulation } from '@angular/core';
+﻿import { Component, OnInit, OnDestroy, ChangeDetectorRef, ElementRef, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
+
+// FullCalendar
+import { FullCalendarModule } from '@fullcalendar/angular';
+import { CalendarOptions, EventInput } from '@fullcalendar/core';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import multiMonthPlugin from '@fullcalendar/multimonth';
 
 // PrimeNG Modules
 import { DialogModule } from 'primeng/dialog';
@@ -46,6 +52,7 @@ interface ActiviteFormModel extends Omit<Activite, 'heureDebut' | 'heureFin' | '
   imports: [
     CommonModule,
     FormsModule,
+    FullCalendarModule,
     DialogModule,
     ButtonModule,
     DropdownModule,
@@ -56,7 +63,7 @@ interface ActiviteFormModel extends Omit<Activite, 'heureDebut' | 'heureFin' | '
     InputTextModule,
     CalendarModule,
     ConfirmDialogModule,
-    TooltipModule // 🔥 NOUVEAU
+    TooltipModule
   ],
   templateUrl: './planification.component.html',
   styleUrls: ['./planification.component.css'],
@@ -77,20 +84,22 @@ export class PlanificationComponent implements OnInit, OnDestroy {
   filters: PlanningFilters = {
     annee: new Date().getFullYear(),
     mois: new Date().getMonth() + 1,
-    semaine: 0, // Sera initialisé dans ngOnInit
-    role: '', // Filtre par rôle (vide = tous)
-    service_id: '' // Filtre par service (vide = tous)
+    semaine: 0,
+    jour: undefined,
+    role: '',
+    service_id: ''
   };
   
   // Options des filtres
   annees: number[] = [];
   mois: {label: string, value: number}[] = [];
   semaines: {label: string, value: number}[] = [];
-  roles: {label: string, value: string}[] = []; // Options de rôles
-  services: {label: string, value: string}[] = []; // Options de services
-  specialities: {label: string, value: string}[] = []; // 🔥 MODIFIÉ: Options de spécialités
-  selectedSpecialityId: string = ''; // 🔥 MODIFIÉ: Filtre par speciality_id
-  currentServiceName: string = ''; // Nom du service du cadre connecté
+  jours: {label: string, value: number}[] = [];
+  roles: {label: string, value: string}[] = [];
+  services: {label: string, value: string}[] = [];
+  specialities: {label: string, value: string}[] = [];
+  selectedSpecialityId: string = '';
+  currentServiceName: string = '';
   
   // États
   editMode = false;
@@ -99,6 +108,40 @@ export class PlanificationComponent implements OnInit, OnDestroy {
   showEditModal = false;
   showSimulationOptions = false;
   showPlanMenu = false; // Menu Plan dropdown
+
+  // Mode de vue du planning
+  viewMode: 'day' | 'week' | 'month' | 'year' = 'week';
+
+  get isYearView(): boolean { return this.viewMode === 'year'; }
+  get isMonthView(): boolean { return this.viewMode === 'month'; }
+  get isCompactView(): boolean { return this.viewMode === 'month' || this.viewMode === 'year'; }
+
+  // Options FullCalendar pour la vue Année
+  yearCalendarReady = false;
+  yearPlanningCells: PlanningCell[] = []; // Cache des données annuelles
+  yearCalendarOptions: CalendarOptions = {
+    plugins: [dayGridPlugin, multiMonthPlugin],
+    initialView: 'multiMonthYear',
+    events: [],
+    headerToolbar: false,
+    views: {
+      multiMonthYear: {
+        type: 'multiMonth',
+        duration: { months: 12 },
+        multiMonthMaxColumns: 3,
+        fixedWeekCount: false
+      }
+    },
+    firstDay: 1,
+    dayMaxEvents: 3,
+    eventContent: (arg: any) => {
+      const code = arg.event.extendedProps.activityCode || '';
+      const color = arg.event.backgroundColor || '#065594';
+      return {
+        html: `<span style="background:${color};color:#fff;padding:1px 4px;border-radius:3px;font-size:0.7rem;font-weight:700;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${code}</span>`
+      };
+    }
+  };
 
   // Agents sélectionnés pour la simulation service réduit
   selectedAgentsForSim: Set<string> = new Set();
@@ -523,8 +566,8 @@ export class PlanificationComponent implements OnInit, OnDestroy {
     // Restaurer les filtres
     const savedFilters = this.planificationStateService.getFilters();
     if (savedFilters) {
-      this.filters = savedFilters;
-      this.initializeFilters(); // Réinitialiser les options des filtres
+      this.filters = { ...savedFilters, jour: (savedFilters as any).jour ?? new Date().getDate() };
+      this.initializeFilters();
     }
     
     // Restaurer les suppressions sauvegardées (si pas déjà fait dans ngOnInit)
@@ -615,6 +658,20 @@ export class PlanificationComponent implements OnInit, OnDestroy {
     
     // Générer les semaines de l'année
     this.updateWeeksOfYear();
+    // Générer les jours du mois courant
+    this.updateJours();
+  }
+
+  updateJours(): void {
+    const daysInMonth = new Date(this.filters.annee, this.filters.mois, 0).getDate();
+    this.jours = Array.from({ length: daysInMonth }, (_, i) => ({
+      label: String(i + 1),
+      value: i + 1
+    }));
+    // S'assurer que le jour sélectionné est valide
+    if ((this.filters.jour ?? 1) > daysInMonth) {
+      this.filters.jour = daysInMonth;
+    }
   }
 
   // Initialiser les options de rôles
@@ -668,33 +725,33 @@ export class PlanificationComponent implements OnInit, OnDestroy {
       });
   }
 
-  // 🔥 MODIFIÉ: Charger les spécialités depuis la collection speciality
+  // 🔥 MODIFIÉ: Charger les métiers depuis la collection speciality
   loadSpecialities(): void {
     this.specialityService.findAllSpecialities()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          console.log('📥 Réponse spécialités:', response);
+          console.log('📥 Réponse métiers:', response);
           const specialitiesData = response?.data || [];
-          console.log(`✅ ${specialitiesData.length} spécialités chargées`);
+          console.log(`✅ ${specialitiesData.length} métiers chargés`);
           
           this.specialities = [
-            { label: 'Toutes les spécialités', value: '' },
+            { label: 'Tous les métiers', value: '' },
             ...specialitiesData.map((speciality: any) => ({
-              label: speciality.name || 'Spécialité sans nom',
+              label: speciality.name || 'Métier sans nom',
               value: speciality.id || speciality._id || ''
             }))
           ];
           
-          console.log('✅ Spécialités mappées:', this.specialities.length);
+          console.log('✅ Métiers mappés:', this.specialities.length);
         },
         error: (error) => {
-          console.error('❌ Erreur lors du chargement des spécialités:', error);
-          this.specialities = [{ label: 'Toutes les spécialités', value: '' }];
+          console.error('❌ Erreur lors du chargement des métiers:', error);
+          this.specialities = [{ label: 'Tous les métiers', value: '' }];
           this.messageService.add({
             severity: 'warn',
             summary: 'Avertissement',
-            detail: 'Impossible de charger la liste des spécialités.'
+            detail: 'Impossible de charger la liste des métiers.'
           });
         }
       });
@@ -706,9 +763,22 @@ export class PlanificationComponent implements OnInit, OnDestroy {
     this.loadingMessage = 'Chargement des agents...';
     this.loadingProgress = 25;
     this.loadAgents();
-    this.loadPlanningData(forceReload); // Passer forceReload pour forcer le rechargement si nécessaire
-    this.loadAvailabilities(); // Tâche 1.3.2
-    // Les contrats seront chargés dans loadAgents() après la génération des semaines
+    this.loadPlanningData(forceReload);
+    this.loadAvailabilities();
+    // Précharger les données annuelles en arrière-plan
+    this.preloadYearData();
+  }
+
+  preloadYearData(): void {
+    this.planificationService.getPlanningData(this.filters, 'year')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          const validAgentIds = new Set(this.agents.map(a => String(a.id)));
+          this.yearPlanningCells = data.filter(c => validAgentIds.size === 0 || validAgentIds.has(String(c.agent_id)));
+        },
+        error: () => {} // Silencieux — pas critique
+      });
   }
 
   loadAgents(): void {
@@ -754,7 +824,7 @@ export class PlanificationComponent implements OnInit, OnDestroy {
               }
             }
             
-            // 🔥 MODIFIÉ: Filtrer par speciality_id si une spécialité est sélectionnée
+            // 🔥 MODIFIÉ: Filtrer par speciality_id si un métier est sélectionné
             if (this.selectedSpecialityId && this.selectedSpecialityId !== '') {
               const userSpecialityId = user.speciality_id ? String(user.speciality_id) : '';
               if (userSpecialityId !== this.selectedSpecialityId) {
@@ -800,7 +870,7 @@ export class PlanificationComponent implements OnInit, OnDestroy {
       return;
     }
     
-    this.planificationService.getPlanningData(this.filters)
+    this.planificationService.getPlanningData(this.filters, this.viewMode)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
@@ -828,6 +898,9 @@ export class PlanificationComponent implements OnInit, OnDestroy {
             }
           }
           this.planningCells = [...this.planningCells];
+          if (this.viewMode === 'year') {
+            this.refreshYearCalendar();
+          }
         },
         error: (error) => {
           this.handleError(error, 'chargement du planning');
@@ -1047,78 +1120,228 @@ export class PlanificationComponent implements OnInit, OnDestroy {
   generatePlanningWeeks(): void {
     this.planningWeeks = [];
     const year = this.filters.annee;
+
+    if (this.viewMode === 'day') {
+      // Vue journalière : le jour exact sélectionné via filters.jour
+      const d = new Date(this.filters.annee, this.filters.mois - 1, (this.filters.jour ?? 1));
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      this.planningWeeks.push({ semaine: this.filters.semaine, annee: year, dates: [`${y}-${m}-${day}`] });
+      return;
+    }
+
+    if (this.viewMode === 'month') {
+      // Vue mensuelle : tous les jours du mois sélectionné
+      const month = this.filters.mois - 1;
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const dates: string[] = [];
+      for (let d = 1; d <= daysInMonth; d++) {
+        const date = new Date(year, month, d);
+        const y = date.getFullYear();
+        const mo = String(date.getMonth() + 1).padStart(2, '0');
+        const da = String(date.getDate()).padStart(2, '0');
+        dates.push(`${y}-${mo}-${da}`);
+      }
+      this.planningWeeks.push({ semaine: 0, annee: year, dates });
+      return;
+    }
+
+    if (this.viewMode === 'year') {
+      // Vue annuelle : 12 colonnes, une par mois (label = "Jan", "Fév", etc.)
+      // On génère le 1er de chaque mois comme date représentative
+      const dates: string[] = [];
+      for (let month = 0; month < 12; month++) {
+        const d = new Date(year, month, 1);
+        const mo = String(d.getMonth() + 1).padStart(2, '0');
+        dates.push(`${year}-${mo}-01`);
+      }
+      this.planningWeeks.push({ semaine: 0, annee: year, dates });
+      return;
+    }
+
+    // Vue hebdomadaire (défaut) : 7 jours à partir du lundi de la semaine sélectionnée
     const startWeek = this.filters.semaine;
-    const numberOfWeeksToDisplay = 1;
     const totalWeeksInYear = this.getNumberOfWeeks(year);
 
-    for (let i = 0; i < numberOfWeeksToDisplay; i++) {
-      const currentWeekNumber = startWeek + i;
-      if (currentWeekNumber > totalWeeksInYear) {
-        break;
-      }
+    const dateForYear = new Date(year, 0, 1);
+    let weekStart = this.getStartOfWeek(dateForYear, startWeek);
 
-      const dateForYear = new Date(year, 0, 1);
-      let weekStart = this.getStartOfWeek(dateForYear, currentWeekNumber);
-      
-      // S'assurer que weekStart est bien un lundi
-      console.log('🔍 Vérification weekStart - jour:', weekStart.getDay(), '(0=Dim, 1=Lun)');
-      while (weekStart.getDay() !== 1) {
-        console.log('  ⚠️ weekStart n\'est pas un lundi, ajustement...');
-        weekStart.setDate(weekStart.getDate() + 1);
-      }
-      console.log('  ✅ weekStart final:', weekStart.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }));
-      
-      const dates = [];
-      for (let j = 0; j < 7; j++) {
-        const date = new Date(weekStart);
-        date.setDate(weekStart.getDate() + j);
-        // Utiliser le format local pour éviter les décalages UTC
-        const y = date.getFullYear();
-        const m = String(date.getMonth() + 1).padStart(2, '0');
-        const d = String(date.getDate()).padStart(2, '0');
-        dates.push(`${y}-${m}-${d}`);
-      }
-      
-      // Log pour déboguer l'ordre des jours
-      console.log('📅 Dates générées pour semaine', currentWeekNumber, ':');
-      dates.forEach((d, idx) => {
-        const dateObj = new Date(d);
-        const dayName = this.getDayName(d);
-        console.log(`  ${idx}: ${d} - ${dayName} (${dateObj.toLocaleDateString('fr-FR', { weekday: 'long' })})`);
-      });
-      
-      this.planningWeeks.push({
-        semaine: currentWeekNumber,
-        annee: weekStart.getFullYear(),
-        dates: dates
-      });
+    while (weekStart.getDay() !== 1) {
+      weekStart.setDate(weekStart.getDate() + 1);
     }
+
+    const dates: string[] = [];
+    for (let j = 0; j < 7; j++) {
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + j);
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      dates.push(`${y}-${m}-${d}`);
+    }
+
+    this.planningWeeks.push({ semaine: startWeek, annee: weekStart.getFullYear(), dates });
   }
 
   // Navigation par semaine unique
   previousWeeks(): void {
-    const newWeek = Math.max(1, this.filters.semaine - 1);
-    if (this.filters.semaine !== newWeek) {
-      this.filters.semaine = newWeek;
-      this.onFilterChange('semaine');
+    if (this.viewMode === 'day') {
+      const d = new Date(this.filters.annee, this.filters.mois - 1, (this.filters.jour ?? 1) - 1);
+      this.filters.annee = d.getFullYear();
+      this.filters.mois = d.getMonth() + 1;
+      this.filters.jour = d.getDate();
+      this.updateJours();
+      this.onFilterChange('jour');
+    } else if (this.viewMode === 'week') {
+      const newWeek = Math.max(1, this.filters.semaine - 1);
+      if (this.filters.semaine !== newWeek) {
+        this.filters.semaine = newWeek;
+        this.onFilterChange('semaine');
+      }
+    } else if (this.viewMode === 'month') {
+      if (this.filters.mois > 1) {
+        this.filters.mois--;
+      } else {
+        this.filters.mois = 12;
+        this.filters.annee--;
+      }
+      this.onFilterChange('mois');
+    } else if (this.viewMode === 'year') {
+      this.filters.annee--;
+      this.onFilterChange('annee');
     }
   }
 
   nextWeeks(): void {
-    const totalWeeksInYear = this.getNumberOfWeeks(this.filters.annee);
-    if (this.filters.semaine + 1 <= totalWeeksInYear) {
-      this.filters.semaine += 1;
-      this.onFilterChange('semaine');
+    if (this.viewMode === 'day') {
+      const d = new Date(this.filters.annee, this.filters.mois - 1, (this.filters.jour ?? 1) + 1);
+      this.filters.annee = d.getFullYear();
+      this.filters.mois = d.getMonth() + 1;
+      this.filters.jour = d.getDate();
+      this.updateJours();
+      this.onFilterChange('jour');
+    } else if (this.viewMode === 'week') {
+      const totalWeeksInYear = this.getNumberOfWeeks(this.filters.annee);
+      if (this.filters.semaine + 1 <= totalWeeksInYear) {
+        this.filters.semaine += 1;
+        this.onFilterChange('semaine');
+      }
+    } else if (this.viewMode === 'month') {
+      if (this.filters.mois < 12) {
+        this.filters.mois++;
+      } else {
+        this.filters.mois = 1;
+        this.filters.annee++;
+      }
+      this.onFilterChange('mois');
+    } else if (this.viewMode === 'year') {
+      this.filters.annee++;
+      this.onFilterChange('annee');
     }
   }
 
+  setViewMode(mode: 'day' | 'week' | 'month' | 'year'): void {
+    this.viewMode = mode;
+    if (mode === 'year') {
+      if (this.yearPlanningCells.length > 0) {
+        // Cache disponible : afficher immédiatement
+        this.refreshYearCalendar();
+      } else {
+        // Pas encore de cache : charger
+        this.loadPlanningData(true);
+      }
+    } else {
+      this.generatePlanningWeeks();
+      this.refreshPlanningCells();
+    }
+  }
+
+  buildYearCalendarEvents(): EventInput[] {
+    const events: EventInput[] = [];
+    // Utiliser le cache annuel si disponible, sinon les cellules courantes
+    const cells = this.yearPlanningCells.length > 0 ? this.yearPlanningCells : this.planningCells;
+    for (const cell of cells) {
+      if (!cell.code_activite || !cell.date) continue;
+      const agent = this.agents.find(a => String(a.id) === String(cell.agent_id));
+      const agentName = agent ? `${agent.nom} ${agent.prenom}` : '';
+      const label = agentName ? `${agentName} — ${cell.code_activite}` : cell.code_activite;
+      events.push({
+        title: label,
+        start: cell.date,
+        allDay: true,
+        backgroundColor: this.getActivityColor(cell.code_activite),
+        borderColor: this.getActivityColor(cell.code_activite),
+        extendedProps: {
+          activityCode: cell.code_activite,
+          agentName
+        }
+      });
+    }
+    return events;
+  }
+
+  refreshYearCalendar(): void {
+    const year = this.filters.annee;
+    // Forcer la recréation du composant FullCalendar via le flag
+    this.yearCalendarReady = false;
+    this.yearCalendarOptions = {
+      plugins: [dayGridPlugin, multiMonthPlugin],
+      initialView: 'multiMonthYear',
+      initialDate: `${year}-01-01`,
+      validRange: { start: `${year}-01-01`, end: `${year}-12-31` },
+      events: this.buildYearCalendarEvents(),
+      headerToolbar: false,
+      views: {
+        multiMonthYear: {
+          type: 'multiMonth',
+          duration: { months: 12 },
+          multiMonthMaxColumns: 3,
+          fixedWeekCount: false
+        }
+      },
+      firstDay: 1,
+      dayMaxEvents: 3,
+      eventContent: (arg: any) => {
+        const code = arg.event.extendedProps.activityCode || '';
+        const name = arg.event.extendedProps.agentName || '';
+        const color = arg.event.backgroundColor || '#065594';
+        const shortName = name.split(' ')[0];
+        return {
+          html: `<span title="${name} — ${code}" style="background:${color};color:#fff;padding:1px 4px;border-radius:3px;font-size:0.68rem;font-weight:600;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${shortName} ${code}</span>`
+        };
+      }
+    };
+    // Remettre le flag à true après un tick pour forcer la recréation du composant
+    setTimeout(() => { this.yearCalendarReady = true; }, 0);
+  }
+
+  getViewPeriodLabel(): string {
+    if (this.viewMode === 'day') {
+      const d = new Date(this.filters.annee, this.filters.mois - 1, (this.filters.jour ?? 1));
+      return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    }
+    if (this.viewMode === 'week' && this.planningWeeks.length > 0) {
+      return `Semaine ${this.planningWeeks[0].semaine} — ${this.filters.annee}`;
+    }
+    if (this.viewMode === 'month') {
+      const monthNames = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+      return `${monthNames[this.filters.mois - 1]} ${this.filters.annee}`;
+    }
+    return `${this.filters.annee}`;
+  }
+
   canGoPrevious(): boolean {
-    return this.filters.semaine > 1;
+    if (this.viewMode === 'day' || this.viewMode === 'week') return this.filters.semaine > 1;
+    return true;
   }
 
   canGoNext(): boolean {
-    const totalWeeksInYear = this.getNumberOfWeeks(this.filters.annee);
-    return this.filters.semaine + 2 <= totalWeeksInYear;
+    if (this.viewMode === 'day' || this.viewMode === 'week') {
+      const totalWeeksInYear = this.getNumberOfWeeks(this.filters.annee);
+      return this.filters.semaine + 1 <= totalWeeksInYear;
+    }
+    return true;
   }
 
   // Tâche 1.3.3 : Valider une proposition
@@ -1144,6 +1367,7 @@ export class PlanificationComponent implements OnInit, OnDestroy {
             this.pendingPlanningRequests = this.pendingPlanningRequests.filter(r => r._id !== planningId);
             if (this.pendingPlanningRequests.length === 0) this.showPendingRequestsPanel = false;
             this.planningCells = [...this.planningCells];
+            this.calendarSyncService.forceRefresh();
             this.messageService.add({ severity: 'success', summary: 'Validé', detail: `Modification de planning validée` });
           },
           error: (err) => {
@@ -1194,6 +1418,7 @@ export class PlanificationComponent implements OnInit, OnDestroy {
             );
             // Puis recharger depuis l'API pour récupérer l'état réel (planning précédent ou vide)
             this.loadPlanningData(true);
+            this.calendarSyncService.forceRefresh();
             this.messageService.add({ severity: 'warn', summary: 'Refusé', detail: 'Modification de planning refusée' });
           },
           error: (err) => {
@@ -1443,24 +1668,65 @@ export class PlanificationComponent implements OnInit, OnDestroy {
     return `${monthName} ${week.annee} sem ${week.semaine}`;
   }
 
+  // Parse une date ISO 'YYYY-MM-DD' en local pour éviter le décalage UTC
+  private parseDateLocal(date: string): Date {
+    const [y, m, d] = date.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+
   getDayName(date: string): string {
-    // 🔥 CORRIGÉ: Retourne le nom du jour correctement
     const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-    const dayIndex = new Date(date).getDay(); // 0 = Dimanche, 1 = Lundi, etc.
-    return dayNames[dayIndex];
+    return dayNames[this.parseDateLocal(date).getDay()];
   }
 
   getDayNumber(date: string): string {
-    return new Date(date).getDate().toString();
+    return this.parseDateLocal(date).getDate().toString();
   }
 
   // 🔥 NOUVEAU: Afficher la date complète avec le mois
   getFullDateLabel(date: string): string {
-    const dateObj = new Date(date);
+    const dateObj = this.parseDateLocal(date);
     const day = dateObj.getDate();
     const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
     const month = monthNames[dateObj.getMonth()];
     return `${day} ${month}`;
+  }
+
+  getCompactDateLabel(date: string): string {
+    const dateObj = this.parseDateLocal(date);
+    if (this.viewMode === 'year') {
+      const monthNames = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
+      return monthNames[dateObj.getMonth()];
+    }
+    return String(dateObj.getDate());
+  }
+
+  // En vue année : code d'activité dominant du mois pour un agent
+  getMonthDominantCode(agentId: string, monthDate: string): string {
+    const dateObj = this.parseDateLocal(monthDate);
+    const year = dateObj.getFullYear();
+    const month = dateObj.getMonth();
+    const cells = this.planningCells.filter(c => {
+      if (c.agent_id !== agentId) return false;
+      const d = this.parseDateLocal(c.date);
+      return d.getFullYear() === year && d.getMonth() === month && c.code_activite;
+    });
+    if (cells.length === 0) return '';
+    const freq: {[k: string]: number} = {};
+    cells.forEach(c => { freq[c.code_activite] = (freq[c.code_activite] || 0) + 1; });
+    return Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0];
+  }
+
+  getMonthWorkedDays(agentId: string, monthDate: string): number {
+    const dateObj = this.parseDateLocal(monthDate);
+    const year = dateObj.getFullYear();
+    const month = dateObj.getMonth();
+    const REST_CODES = new Set(['RH', 'RJF', 'RTT', 'CA', 'H-', '?']);
+    return this.planningCells.filter(c => {
+      if (c.agent_id !== agentId) return false;
+      const d = this.parseDateLocal(c.date);
+      return d.getFullYear() === year && d.getMonth() === month && c.code_activite && !REST_CODES.has(c.code_activite);
+    }).length;
   }
 
   /**
@@ -1539,25 +1805,27 @@ export class PlanificationComponent implements OnInit, OnDestroy {
     
     if (changedFilter === 'annee') {
       this.updateWeeksOfYear();
-      // Réinitialiser au début de l'année
-      if (this.filters.mois !== 1) {
-        this.filters.mois = 1;
-      }
-      if (this.filters.semaine !== 1) {
-        this.filters.semaine = 1;
-      }
+      this.updateJours();
+      if (this.filters.mois !== 1) this.filters.mois = 1;
+      if (this.filters.semaine !== 1) this.filters.semaine = 1;
     } else if (changedFilter === 'mois') {
-      // Mettre à jour la semaine sur la première semaine du mois
+      this.updateJours();
       const firstDayOfMonth = new Date(this.filters.annee, this.filters.mois - 1, 1);
       const firstWeek = this.getWeekNumber(firstDayOfMonth);
-      if (this.filters.semaine !== firstWeek) {
-        this.filters.semaine = firstWeek;
-      }
+      if (this.filters.semaine !== firstWeek) this.filters.semaine = firstWeek;
     } else if (changedFilter === 'semaine') {
-      // Mettre à jour le mois en fonction de la semaine
       const monthForWeek = this.getMonthForWeek(this.filters.annee, this.filters.semaine);
       if (this.filters.mois !== monthForWeek) {
         this.filters.mois = monthForWeek;
+        this.updateJours();
+      }
+    } else if (changedFilter === 'jour') {
+      if (this.filters.jour) {
+        const date = new Date(this.filters.annee, this.filters.mois - 1, this.filters.jour);
+        this.filters.semaine = this.getWeekNumber(date);
+        if (this.viewMode !== 'day') this.viewMode = 'day';
+      } else {
+        if (this.viewMode === 'day') this.viewMode = 'week';
       }
     }
 
@@ -2037,7 +2305,7 @@ export class PlanificationComponent implements OnInit, OnDestroy {
     return 'RH';
   }
 
-  /** Retourne le label de spécialité d'un agent, ou son rôle en fallback */
+  /** Retourne le label de métier d'un agent, ou son rôle en fallback */
   getAgentSpecialityLabel(agent: any): string {
     if (agent.speciality_id) {
       const s = this.specialities.find(sp => sp.value === agent.speciality_id);
@@ -2233,7 +2501,7 @@ export class PlanificationComponent implements OnInit, OnDestroy {
     this.loading = true;
     
     // Recharger le planning depuis le serveur (données persistées)
-    this.planificationService.getPlanningData(this.filters)
+    this.planificationService.getPlanningData(this.filters, this.viewMode)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {

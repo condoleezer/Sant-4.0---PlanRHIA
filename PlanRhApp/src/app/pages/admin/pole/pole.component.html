@@ -15,8 +15,8 @@
         </p-iftalabel>
         <div class="h-5"></div>
         <p-iftalabel>
-          <p-multiSelect id="poleSpecialities" formControlName="specialities" [options]="specialityOptions" optionLabel="label" optionValue="value" placeholder="Sélectionnez les spécialités" [filter]="true" display="chip" class="w-full md:w-56 uniform-input"></p-multiSelect>
-          <label for="poleSpecialities">Spécialités</label>
+          <p-multiSelect id="poleSpecialities" formControlName="specialities" [options]="specialityOptions" optionLabel="label" optionValue="value" placeholder="Sélectionnez les métiers" [filter]="true" display="chip" class="w-full md:w-56 uniform-input"></p-multiSelect>
+          <label for="poleSpecialities">Métiers</label>
         </p-iftalabel>
         <p-button (click)="isEditMode ? updatePole() : onSubmitPole()" severity="contrast" class="mt-5">
           {{ isEditMode ? 'Mettre à jour' : 'Créer un nouveau pôle' }}
@@ -41,7 +41,7 @@
           <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Matricule</th>
           <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Nom</th>
           <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Responsable</th>
-          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Spécialités</th>
+          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Métiers</th>
           <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Actions</th>
         </tr>
       </ng-template>

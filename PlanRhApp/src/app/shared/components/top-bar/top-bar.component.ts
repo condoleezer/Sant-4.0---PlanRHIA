@@ -209,6 +209,28 @@ export class TopBarComponent implements OnInit {
     this.editError = '';
     this.editSuccess = '';
 
+    // Si l'utilisateur n'est pas admin, il ne peut changer que son mot de passe
+    if (this.user.role !== 'admin') {
+      if (this.editForm.new_password) {
+        this.userService.changePassword(this.user._id, { new_password: this.editForm.new_password }).subscribe({
+          next: () => {
+            this.savingProfile = false;
+            this.editSuccess = 'Mot de passe mis à jour avec succès';
+            setTimeout(() => this.cancelEdit(), 1500);
+          },
+          error: (err) => {
+            this.savingProfile = false;
+            this.editError = 'Erreur lors de la mise à jour du mot de passe : ' + (err.error?.detail || err.message);
+          }
+        });
+      } else {
+        this.savingProfile = false;
+        this.editError = 'Vous ne pouvez modifier que votre mot de passe';
+      }
+      return;
+    }
+
+    // Admin peut tout modifier
     const updateData: any = {
       first_name: this.editForm.first_name,
       last_name: this.editForm.last_name,

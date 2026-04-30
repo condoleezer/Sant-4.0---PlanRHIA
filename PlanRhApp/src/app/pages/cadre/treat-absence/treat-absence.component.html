@@ -256,6 +256,21 @@
   </div>
 
   <!-- ================================================================ -->
+  <!-- RÉCIPROCITÉ : dette du remplaçant envers l'absent               -->
+  <!-- ================================================================ -->
+  <div class="reciprocity-alert" *ngIf="replacementReciprocity">
+    <div class="reciprocity-icon"><i class="pi pi-sync"></i></div>
+    <div class="reciprocity-content">
+      <strong>Réciprocité en cours</strong>
+      <p>
+        Cet agent doit déjà <strong>{{ replacementReciprocity.hours_remaining }}h</strong>
+        de remplacement à l'agent absent (échéance : {{ replacementReciprocity.expires_at }}).
+        Ce remplacement peut être utilisé pour rembourser cette dette.
+      </p>
+    </div>
+  </div>
+
+  <!-- ================================================================ -->
   <!-- Suggestions IA générales (quand aucun agent spécifique sélectionné) -->
   <!-- ================================================================ -->
   <div class="ai-suggestions-section" *ngIf="hasAISuggestions && !loadingSuggestions && !selectedUserEvaluation && !selectedUserBlocked">

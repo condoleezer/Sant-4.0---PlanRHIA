@@ -4,6 +4,74 @@
   color: #333;
 }
 
+/* ===== SUPPRESSION TOTALE DES ICÔNES DE TRI ===== */
+
+/* Masquer uniquement les icônes SVG — pas le texte */
+:host ::ng-deep .fc-col-header-cell .fc-icon,
+:host ::ng-deep .fc-col-header-cell svg,
+:host ::ng-deep .fc-col-header-cell path,
+:host ::ng-deep .fc-col-header-cell-cushion .fc-icon,
+:host ::ng-deep .fc-col-header-cell-cushion svg,
+:host ::ng-deep .fc-col-header-cell-cushion path {
+  display: none !important;
+}
+
+/* Masquer le spinner/flèches sur les numéros de semaine */
+:host ::ng-deep .fc-daygrid-day-number input[type="number"],
+:host ::ng-deep .fc-daygrid-week-number input[type="number"],
+:host ::ng-deep a.fc-daygrid-day-number input,
+:host ::ng-deep .fc-week-number input {
+  display: none !important;
+}
+
+/* Masquer le conteneur du numéro de semaine si présent */
+:host ::ng-deep .fc-daygrid-week-number {
+  display: none !important;
+}
+
+/* Nettoyer les boutons +N more — supprimer l'icône noire */
+:host ::ng-deep .fc-daygrid-more-link {
+  background: rgba(6, 85, 148, 0.15) !important;
+  color: #065594 !important;
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  border: none !important;
+  display: inline-block !important;
+}
+
+:host ::ng-deep .fc-daygrid-more-link .fc-icon,
+:host ::ng-deep .fc-daygrid-more-link svg,
+:host ::ng-deep .fc-daygrid-more-link img,
+:host ::ng-deep .fc-daygrid-more-link::before,
+:host ::ng-deep .fc-daygrid-more-link::after {
+  display: none !important;
+}
+
+/* Supprimer l'icône noire sur les en-têtes de colonnes */
+:host ::ng-deep .fc-col-header-cell-cushion .fc-icon,
+:host ::ng-deep .fc-col-header-cell-cushion svg {
+  display: none !important;
+}
+
+/* Cibler spécifiquement le bouton multimonth more */
+:host ::ng-deep .fc-multimonth-daygrid .fc-daygrid-more-link,
+:host ::ng-deep .fc-multimonth .fc-daygrid-more-link {
+  background: #065594 !important;
+  color: white !important;
+  border-radius: 3px !important;
+  font-size: 0.7rem !important;
+  padding: 1px 4px !important;
+}
+
+:host ::ng-deep .fc-multimonth-daygrid .fc-daygrid-more-link .fc-icon,
+:host ::ng-deep .fc-multimonth .fc-daygrid-more-link .fc-icon,
+:host ::ng-deep .fc-multimonth-daygrid .fc-daygrid-more-link svg,
+:host ::ng-deep .fc-multimonth .fc-daygrid-more-link svg {
+  display: none !important;
+}
+
 /* Calendar Header - Month/Year Navigation */
 :host ::ng-deep .fc-header-toolbar {
   margin-bottom: 1.5em;
@@ -68,7 +136,6 @@
   padding: 0.75em 0.5em !important;
   text-align: center;
   font-size: 0.9rem;
-  text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
@@ -342,3 +409,7 @@
     min-width: auto !important;
   }
 }
+
+
+
+

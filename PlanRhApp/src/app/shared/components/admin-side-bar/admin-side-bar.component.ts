@@ -25,7 +25,7 @@ export class AdminSideBarComponent {
         { title: 'Service', link: '/admin/service' },
         { title: 'Pôle', link: '/admin/pole' },
         { title: 'Code-absence', link: '/admin/code-absences' },
-        { title: 'Compétence', link: '/admin/specialité' }
+        { title: 'Métier', link: '/admin/specialité' }
       ]
     },
   ];

@@ -16,6 +16,7 @@ import { forkJoin, interval, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { CalendarSyncService } from '../../../services/calendar-sync/calendar-sync.service';
 
 @Component({
   selector: 'app-calendar',
@@ -34,15 +35,23 @@ export class CalendarComponent implements OnInit, OnDestroy {
     initialView: 'dayGridMonth',
     events: [],
     eventContent: this.customEventContent.bind(this),
+    navLinks: false,
+    dayMaxEvents: 3,
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
-      right: 'dayGridMonth,dayGridWeek,multiMonthYear'
+      right: 'dayGridWeek,dayGridMonth,multiMonthYear'
     },
     buttonText: {
+      today: 'today',
       month: 'month',
       week: 'week',
       multiMonthYear: 'year'
+    },
+    firstDay: 1,
+    dayHeaderContent: (args) => {
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      return days[args.date.getUTCDay()];
     },
     eventTimeFormat: {
       hour: '2-digit',
@@ -84,13 +93,21 @@ export class CalendarComponent implements OnInit, OnDestroy {
     private planningService: PlanningService,
     private serviceService: ServiceService,
     private authService: AuthService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private calendarSyncService: CalendarSyncService
   ) {}
 
   ngOnInit() {
     this.loadUserAndData();
-    // Démarrer le rafraîchissement automatique
     this.startAutoRefresh();
+    // S'abonner aux changements de planning pour mise à jour en temps réel
+    this.calendarSyncService.planningChanges$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        if (this.loggedInUser?.service_id) {
+          this.loadPlanningsForUsers();
+        }
+      });
   }
 
   ngOnDestroy(): void {
@@ -184,7 +201,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
 
     if (filteredUsers.length === 0) {
       this.showInfo('Aucun utilisateur trouvé pour votre service');
-      this.calendarOptions.events = [];
+      this.calendarOptions = { ...this.calendarOptions, events: [] };
       return;
     }
 
@@ -377,7 +394,10 @@ export class CalendarComponent implements OnInit, OnDestroy {
     console.log('Total événements (plannings + contrats):', events.length);
     console.log('Événements:', events);
 
-    this.calendarOptions.events = events;
+    this.calendarOptions = {
+      ...this.calendarOptions,
+      events: events
+    };
   }
 
   getActivityColor(activityCode: string): string {
@@ -429,7 +449,6 @@ export class CalendarComponent implements OnInit, OnDestroy {
 
   customEventContent(arg: any) {
     const user = arg.event.extendedProps.user;
-    const hours = arg.event.extendedProps.hours;
     const activityCode = arg.event.extendedProps.activityCode;
     const isPlanning = arg.event.extendedProps.isPlanning;
 
@@ -441,10 +460,10 @@ export class CalendarComponent implements OnInit, OnDestroy {
       cleanCode = cleanCode.split(' ')[0].trim();
     }
 
-    // Si c'est un planning publié, afficher le code d'activité avec le nom de l'utilisateur (sans les horaires)
+    // Afficher uniquement le code d'activité et le nom de l'utilisateur (sans les horaires)
     const displayText = isPlanning && cleanCode 
       ? `${cleanCode} - ${user}`
-      : `${hours} ${user}`;
+      : user;
 
     // Texte complet pour le tooltip
     const fullText = displayText;

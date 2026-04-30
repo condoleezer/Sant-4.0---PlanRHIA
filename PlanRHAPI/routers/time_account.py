@@ -12,7 +12,7 @@ from schemas.time_account import (
     TimeAccountCreate, TimeAccountResponse, TimeAccountUpdate,
     LeaveRightsSummaryCreate, LeaveRightsSummaryResponse, LeaveRightsSummaryUpdate
 )
-from services.time_calculator import calculate_time_accounts, calculate_leave_rights
+from services.time_calculator import calculate_time_accounts, calculate_leave_rights, calculate_hourly_balance
 
 # Configuration de la base de données
 MONGO_URI = os.getenv('MONGO_URI', os.getenv('MONGODB_URI', os.getenv('MONGODB_URL', 'mongodb://localhost:27017/')))
@@ -48,12 +48,11 @@ async def get_time_accounts(
         
         year = datetime.strptime(reference_date, '%Y-%m-%d').year
         
-        # Chercher les comptes existants
-        account = time_accounts.find_one({
-            "user_id": user_id,
-            "reference_date": reference_date,
-            "year": year
-        })
+        # Chercher le compte le plus récent pour cette année (pas par date exacte)
+        account = time_accounts.find_one(
+            {"user_id": user_id, "year": year},
+            sort=[("updated_at", -1)]
+        )
         
         if account:
             # Récupérer les infos utilisateur
@@ -68,6 +67,7 @@ async def get_time_accounts(
                     reference_date=account["reference_date"],
                     year=account["year"],
                     chs_days=account["chs_days"],
+                    chs_exchange_hours=account.get("chs_exchange_hours", 0.0),
                     cfr_days=account["cfr_days"],
                     ca_days=account["ca_days"],
                     rtt_days=account["rtt_days"],
@@ -113,17 +113,26 @@ async def calculate_time_accounts_endpoint(
         # Calculer les comptes
         time_account = calculate_time_accounts(user_id, reference_date, year)
         
-        # Vérifier si un compte existe déjà
-        existing = time_accounts.find_one({
-            "user_id": user_id,
-            "reference_date": reference_date,
-            "year": year
-        })
+        # Vérifier si un compte existe déjà pour cette année
+        existing = time_accounts.find_one(
+            {"user_id": user_id, "year": year},
+            sort=[("updated_at", -1)]
+        )
         
         if existing:
-            # Mettre à jour
+            # Préserver les heures sup d'échanges déjà créditées
+            existing_chs = existing.get("chs_days", 0.0)
+            existing_chs_exchange = existing.get("chs_exchange_hours", 0.0)
+
             account_dict = time_account.dict()
             account_dict["updated_at"] = datetime.now()
+
+            # Le calcul donne les heures sup depuis les plannings
+            # On y ajoute les heures d'échanges créditées manuellement
+            calculated_chs = account_dict.get("chs_days", 0.0)
+            account_dict["chs_days"] = calculated_chs + existing_chs_exchange
+            account_dict["chs_exchange_hours"] = existing_chs_exchange
+
             time_accounts.update_one(
                 {"_id": existing["_id"]},
                 {"$set": account_dict}
@@ -303,3 +312,23 @@ async def calculate_leave_rights_endpoint(
             detail=f"Erreur lors du calcul de la synthèse des droits: {str(e)}"
         )
 
+
+
+@router.get("/time-accounts/balance/{user_id}")
+async def get_hourly_balance(
+    user_id: str,
+    year: Optional[int] = Query(None),
+    reference_date: Optional[str] = Query(None, description="Date de référence YYYY-MM-DD (défaut: aujourd'hui)")
+):
+    try:
+        from datetime import datetime as dt
+        if reference_date:
+            ref_dt = dt.strptime(reference_date, '%Y-%m-%d')
+            target_year = year or ref_dt.year
+        else:
+            target_year = year or dt.now().year
+
+        balance = calculate_hourly_balance(user_id, target_year, reference_date)
+        return {"message": "Balance horaire calculée", "data": balance}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")

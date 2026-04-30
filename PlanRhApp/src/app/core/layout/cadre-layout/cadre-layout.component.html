@@ -1,13 +1,13 @@
-<div class="flex h-screen">
+<div class="flex min-h-screen">
   <!-- Sidebar for cadre -->
   <app-cadre-side-bar *ngIf="isCadre"></app-cadre-side-bar>
 
-  <div class="flex-1 flex flex-col ml-[18%] bg-white">
-    <!-- Top bar below sidebar -->
+  <div class="flex-1 flex flex-col ml-[18%] bg-white min-w-0">
+    <!-- Top bar fixed -->
     <app-top-bar *ngIf="isCadre" class="fixed top-0 left-[18%] right-0 z-10"></app-top-bar>
 
-    <!-- Main content -->
-    <div class="flex-1 p-4 h-fit bg-[#fcfbfb] mt-8">
+    <!-- Main content — padding-top = hauteur top-bar (h-14 = 56px) + marge -->
+    <div class="flex-1 p-4 bg-[#fcfbfb]" style="padding-top: 72px; min-height: calc(100vh - 56px);">
       <router-outlet></router-outlet>
     </div>
   </div>

@@ -1,4 +1,4 @@
-/* planification.component.css */
+﻿/* planification.component.css */
 .planification-container {
   padding: 20px;
   background: white;
@@ -262,39 +262,53 @@
   background: #f8fafc;
   color: #374151 !important;
   font-weight: bold;
-  padding: 15px;
+  padding: 10px 8px;
   text-align: left;
   border: 1px solid #e2e8f0;
-  width: 15%;
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
 }
 
 .contract-header {
   background: #f8fafc;
   color: #374151 !important;
   font-weight: bold;
-  padding: 15px;
+  padding: 10px 6px;
   text-align: center;
   border: 1px solid #e2e8f0;
-  width: 12%;
+  width: 70px;
+  min-width: 70px;
+  max-width: 70px;
 }
 
 .agent-cell {
   background: #f8fafc;
-  padding: 12px 15px;
+  padding: 8px;
   border: 1px solid #e2e8f0;
   font-weight: 500;
   white-space: nowrap;
   color: #374151 !important;
+  font-size: 0.82rem;
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .contract-cell {
   background: #f8fafc;
-  padding: 12px 15px;
+  padding: 8px 6px;
   border: 1px solid #e2e8f0;
   text-align: center;
   font-weight: 500;
   font-family: 'Courier New', monospace;
   color: #374151 !important;
+  font-size: 0.8rem;
+  width: 70px;
+  min-width: 70px;
+  max-width: 70px;
 }
 
 .planning-cell {
@@ -1614,4 +1628,186 @@
 .btn-help.p-button {
   padding: 0.5rem 0.6rem !important;
   min-width: unset !important;
+}
+
+/* ── Barre vue + navigation ─────────────────────────────────────────────── */
+.planning-table-container { overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; } .agent-header, .agent-cell { position: sticky; left: 0; z-index: 3; background: #f8fafc !important; } .contract-header, .contract-cell { position: sticky; left: 140px; z-index: 3; background: #f8fafc !important; box-shadow: 2px 0 4px rgba(0,0,0,0.06); }
+
+/* ── Tableau scrollable + colonnes sticky ───────────────────────────────── */
+.planning-table-container {
+  overflow-x: auto !important;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.agent-header,
+.agent-cell {
+  position: sticky !important;
+  left: 0 !important;
+  z-index: 3 !important;
+  background: #f8fafc !important;
+}
+
+.contract-header,
+.contract-cell {
+  position: sticky !important;
+  left: 140px !important;
+  z-index: 3 !important;
+  background: #f8fafc !important;
+  box-shadow: 2px 0 4px rgba(0,0,0,0.06);
+}
+
+/* ── Barre vue+nav : flex-shrink pour éviter le débordement ─────────────── */
+.view-mode-buttons { flex-shrink: 0; }
+.period-navigation { flex-shrink: 0; }
+.period-navigation .current-period { min-width: 120px; }
+
+/* ── Override : view-nav-bar toujours en ligne, jamais en colonne ────────── */
+.view-nav-bar {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  justify-content: space-between !important;
+  margin-bottom: 12px;
+  width: 100%;
+}
+
+.view-mode-buttons {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-shrink: 0;
+}
+
+.period-navigation {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-shrink: 0;
+}
+
+/* Les nav-button de la période ne prennent pas 100% de largeur */
+.period-navigation .nav-button {
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  flex-shrink: 0;
+}
+
+.period-navigation .current-period {
+  order: 0 !important;
+  margin-bottom: 0 !important;
+  min-width: 100px;
+  text-align: center;
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* ════════════════════════════════════════════════════════════
+   BARRE VUE + NAVIGATION — styles définitifs (écrase tout)
+   ════════════════════════════════════════════════════════════ */
+.view-nav-bar {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: nowrap !important;
+  gap: 12px !important;
+  padding: 8px 0 !important;
+  margin-bottom: 8px !important;
+  border-bottom: 1px solid #e2e8f0;
+  background: white;
+  position: sticky;
+  top: 56px;   /* hauteur top-bar */
+  z-index: 10;
+}
+
+.view-mode-buttons {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 2px !important;
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 3px;
+  flex-shrink: 0 !important;
+}
+
+.view-btn {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px !important;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  width: auto !important;
+}
+
+.view-btn:hover { background: #e2e8f0; color: #1e293b; }
+.view-btn.active { background: #1e293b !important; color: #fff !important; }
+
+.period-navigation {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex-shrink: 0 !important;
+}
+
+.period-nav-btn {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #374151;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0 !important;
+  transition: all 0.15s;
+}
+.period-nav-btn:hover:not(:disabled) { background: #1e293b; color: #fff; border-color: #1e293b; }
+.period-nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.period-label {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  min-width: 100px;
+  text-align: center;
+}
+
+/* ── Vue Année FullCalendar ─────────────────────────────────────────────── */
+.year-fullcalendar-container {
+  width: 100%;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+}
+
+.year-fullcalendar-container .fc {
+  font-size: 0.78rem;
+}
+
+.year-fullcalendar-container .fc-multimonth-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e293b;
 }

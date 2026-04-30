@@ -20,6 +20,11 @@ import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { SelectModule } from 'primeng/select';
 import { CodeService } from '../../../services/code/code.service';
 import { Code } from '../../../models/services';
+import { PlanningExchangeService } from '../../../services/planning-exchange/planning-exchange.service';
+import { CalendarSyncService } from '../../../services/calendar-sync/calendar-sync.service';
+import { ButtonModule } from 'primeng/button';
+import { CalendarModule } from 'primeng/calendar';
+import { DialogModule } from 'primeng/dialog';
 
 @Component({
   selector: 'app-asks',
@@ -33,7 +38,10 @@ import { Code } from '../../../models/services';
     DropdownModule,
     InputTextModule,
     PaginatorModule,
-    SelectModule
+    SelectModule,
+    ButtonModule,
+    CalendarModule,
+    DialogModule
   ],
   providers: [MessageService, AuthService],
   standalone: true,
@@ -109,17 +117,146 @@ export class AsksComponent implements OnInit {
   rows3: number = 10;
   totalRecords3: number = 0;
 
+  // Échanges de planning
+  pendingExchanges: any[] = [];   // reçus en attente (B doit répondre)
+  sentExchanges: any[] = [];      // envoyés par l'agent
+  historyExchanges: any[] = [];   // tous les échanges traités (historique)
+  loadingExchanges = false;
+
+  // Modal récupération pour les échanges reçus
+  showRecoveryModal = false;
+  pendingExchangeId = '';
+  requesterPlannings: any[] = [];
+  selectedRecoveryDate: string | null = null;
+  selectedRecoveryPlanningId: string | null = null;   // planning de repos de A (peut être null si non programmé)
+  selectedRecoveryBPlanningId: string | null = null;  // planning de travail de B sur la date de récupération
+  loadingRequesterPlannings = false;
+  today: Date = new Date();
+  proposedByRequester = false;  // true si A a proposé des dates spécifiques
+  overtimeQuotaReached = false; // true si B a atteint son quota heures sup
+
   constructor(
     private absenceService: AbsenceService,
     private userService: UserService,
     private serviceService: ServiceService,
     private codeService: CodeService,
     private authService: AuthService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private planningExchangeService: PlanningExchangeService,
+    private calendarSyncService: CalendarSyncService
   ) {}
 
   ngOnInit(): void {
     this.loadUserAndAbsences();
+  }
+
+  loadExchanges(): void {
+    if (!this.loggedInUserId) return;
+    this.loadingExchanges = true;
+    this.planningExchangeService.getExchanges(this.loggedInUserId).subscribe({
+      next: (res: any) => {
+        const all = res.data || [];
+        // Reçus en attente : target = moi, statut en_attente
+        this.pendingExchanges = all.filter((e: any) =>
+          e.target_id === this.loggedInUserId && e.status === 'en_attente'
+        );
+        // Envoyés : requester = moi, statut en_attente
+        this.sentExchanges = all.filter((e: any) =>
+          e.requester_id === this.loggedInUserId && e.status === 'en_attente'
+        );
+        // Historique : tous les échanges traités (pas en_attente)
+        this.historyExchanges = all.filter((e: any) =>
+          e.status !== 'en_attente'
+        );
+        this.loadingExchanges = false;
+      },
+      error: () => { this.loadingExchanges = false; }
+    });
+  }
+
+  openRecoveryModal(exchange: any): void {
+    this.pendingExchangeId = exchange._id;
+    this.selectedRecoveryDate = null;
+    this.selectedRecoveryPlanningId = null;
+    this.selectedRecoveryBPlanningId = null;
+    this.proposedByRequester = false;
+    this.overtimeQuotaReached = false;
+    this.loadingRequesterPlannings = true;
+    this.showRecoveryModal = true;
+
+    this.planningExchangeService.getRequesterPlannings(exchange._id).subscribe({
+      next: (res: any) => {
+        this.requesterPlannings = res.data || [];
+        this.proposedByRequester = res.proposed_by_requester === true;
+        this.loadingRequesterPlannings = false;
+      },
+      error: () => { this.requesterPlannings = []; this.loadingRequesterPlannings = false; }
+    });
+
+    // Vérifier le quota heures sup de B
+    if (this.loggedInUserId) {
+      this.planningExchangeService.checkOvertimeQuota(this.loggedInUserId).subscribe({
+        next: (res: any) => { this.overtimeQuotaReached = res.quota_reached === true; },
+        error: () => { this.overtimeQuotaReached = false; }
+      });
+    }
+  }
+
+  selectRecoveryDate(day: any): void {
+    if (this.selectedRecoveryDate === day.date) {
+      this.selectedRecoveryDate = null;
+      this.selectedRecoveryPlanningId = null;
+      this.selectedRecoveryBPlanningId = null;
+    } else {
+      this.selectedRecoveryDate = day.date;
+      this.selectedRecoveryPlanningId = day.planning_id;
+      this.selectedRecoveryBPlanningId = day.b_planning_id || null;
+    }
+  }
+
+  getRecoveryCode(): string {
+    return this.requesterPlannings.find((p: any) => p.date === this.selectedRecoveryDate)?.activity_code || '';
+  }
+
+  confirmExchangeResponse(withRecovery: boolean): void {
+    const recoveryDate = withRecovery ? this.selectedRecoveryDate || undefined : undefined;
+    const targetPlanningId = withRecovery ? this.selectedRecoveryPlanningId || undefined : undefined;
+    const bPlanningId = withRecovery ? this.selectedRecoveryBPlanningId || undefined : undefined;
+    this.showRecoveryModal = false;
+    this.planningExchangeService.respondToExchange(this.pendingExchangeId, 'accepté', undefined, recoveryDate, targetPlanningId, bPlanningId)
+      .subscribe({
+        next: (res: any) => {
+          let detail = 'Échange accepté et appliqué.';
+          if (!withRecovery && res.hours_sup_credited > 0) detail += ` ${res.hours_sup_credited}h créditées en heures sup.`;
+          if (withRecovery) detail += ' Récupération enregistrée.';
+          this.messageService.add({ severity: 'success', summary: 'Échange effectué ✅', detail, life: 8000 });
+          this.calendarSyncService.forceRefresh();
+          this.loadExchanges();
+        },
+        error: (err: any) => {
+          const d = err.error?.detail;
+          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: typeof d === 'string' ? d : 'Erreur lors de la réponse' });
+        }
+      });
+  }
+
+  refuseExchange(exchangeId: string): void {
+    this.planningExchangeService.respondToExchange(exchangeId, 'refusé').subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'info', summary: 'Refusé', detail: 'Échange refusé.' });
+        this.loadExchanges();
+      },
+      error: () => this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de refuser' })
+    });
+  }
+
+  getExchangeStatusSeverity(status: string): 'success' | 'info' | 'danger' | 'secondary' | 'warn' {
+    switch (status) {
+      case 'validé_auto': return 'success';
+      case 'en_attente': return 'warn';
+      case 'refusé': case 'refusé_charte': return 'danger';
+      default: return 'secondary';
+    }
   }
 
   loadUserAndAbsences(): void {
@@ -128,6 +265,7 @@ export class AsksComponent implements OnInit {
         if (user?._id) {
           this.loggedInUserId = user._id;
           this.loadAllData();
+          this.loadExchanges();
         } else {
           this.loggedInUserId = null;
           this.showError('Impossible de charger les informations utilisateur');
@@ -221,9 +359,6 @@ export class AsksComponent implements OnInit {
 
     this.filteredRequests = [...this.requests];
     this.applyFilter();
-    if (this.requests.length === 0) {
-      this.showInfo('Aucune demande reçue');
-    }
   }
 
   loadSentRequests(): void {
@@ -255,9 +390,6 @@ export class AsksComponent implements OnInit {
 
     this.filteredRequests2 = [...this.requests2];
     this.applyFilter();
-    if (this.requests2.length === 0) {
-      this.showInfo('Aucune demande envoyée');
-    }
   }
 
   loadSentRequests2(): void {
@@ -290,9 +422,6 @@ export class AsksComponent implements OnInit {
 
     this.filteredRequests3 = [...this.requests3];
     this.applyFilter();
-    if (this.requests3.length === 0) {
-      this.showInfo('Aucune demande envoyée');
-    }
   }
 
   applyFilter(): void {

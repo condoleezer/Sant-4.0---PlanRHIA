@@ -58,15 +58,22 @@ export class SecCalendarComponent implements OnInit, OnDestroy {
     initialView: 'dayGridMonth',
     events: [],
     eventContent: this.customEventContent.bind(this),
+    navLinks: false,
+    dayMaxEvents: 3,
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
-      right: 'dayGridMonth,dayGridWeek,multiMonthYear'
+      right: 'dayGridWeek,dayGridMonth,multiMonthYear'
     },
     buttonText: {
+      today: 'today',
       month: 'month',
       week: 'week',
       multiMonthYear: 'year'
+    },
+    dayHeaderContent: (args) => {
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      return days[args.date.getUTCDay()];
     },
     eventTimeFormat: {
       hour: '2-digit',
@@ -156,9 +163,7 @@ export class SecCalendarComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadUserAndData();
-    // S'abonner aux changements de planning
     this.subscribeToPlanningChanges();
-    // Démarrer le rafraîchissement automatique via CalendarSyncService
     this.startAutoRefresh();
   }
 
@@ -485,7 +490,7 @@ export class SecCalendarComponent implements OnInit, OnDestroy {
       events.push(event);
     });
 
-    this.calendarOptions.events = events;
+    this.calendarOptions = { ...this.calendarOptions, events: events };
   }
 
   // Nouvelle méthode pour déterminer le code de service basé sur les horaires

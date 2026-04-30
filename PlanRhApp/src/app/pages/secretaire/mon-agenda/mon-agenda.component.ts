@@ -9,6 +9,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { DropdownModule } from 'primeng/dropdown';
+import { CalendarModule } from 'primeng/calendar';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
@@ -39,6 +40,9 @@ import { AuthService } from '../../../services/auth/auth.service';
 import { CalendarSyncService, PlanningChange } from '../../../services/calendar-sync/calendar-sync.service';
 import { PlanningPriorityService } from '../../../services/planning-priority/planning-priority.service';
 import { ContratService, Contrat, WorkDay } from '../../../services/contrat/contrat.service';
+import { PlanningExchangeService, CompatibleAgent, PlanningExchange } from '../../../services/planning-exchange/planning-exchange.service';
+import { ExchangeReciprocityService, UserReciprocities, ReciprocityEntry } from '../../../services/exchange-reciprocity/exchange-reciprocity.service';
+import { AlertsRttService } from '../../../services/alerts-rtt/alerts-rtt.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environment/environment';
 
@@ -60,6 +64,7 @@ import { Planning } from '../../../models/planning';
     ButtonModule,
     InputTextModule,
     DropdownModule,
+    CalendarModule,
     TextareaModule,
     ToastModule,
     CardModule,
@@ -87,6 +92,8 @@ export class MonAgendaComponent implements OnInit, OnDestroy, AfterViewInit {
   showAvailabilityModal = false;
   showPlanningModal = false;
   showEditPlanningModal = false;
+  showExchangeModal = false;
+  showExchangeRequestsModal = false;
   selectedDay: any = null;
 
   // Form data
@@ -108,6 +115,8 @@ export class MonAgendaComponent implements OnInit, OnDestroy, AfterViewInit {
     commentaire: ''
   };
   editPlanningExistingId: string | null = null; // ID du planning existant si mise à jour
+  caConflictWarning: string | null = null;  // avertissement collègues en congé
+  checkingCaConflict = false;
 
   // Options - Codes d'activité unifiés avec codes de service
   activityCodes = [
@@ -175,6 +184,44 @@ export class MonAgendaComponent implements OnInit, OnDestroy, AfterViewInit {
   // Fenêtre de dépôt active (définie par le cadre)
   activeLeaveWindow: any = null;
 
+  // Échange de planning
+  compatibleAgents: CompatibleAgent[] = [];
+  loadingCompatibleAgents = false;
+  selectedTargetPlanning: any = null;
+  exchangeMessage = '';
+  pendingExchangeRequests: PlanningExchange[] = [];
+  loadingExchangeRequests = false;
+  pendingExchangeRequestsCount = 0;
+
+  // Dates de récupération proposées par A lors de la création de la demande
+  myRestDays: { planning_id: string; date: string; activity_code: string; plage_horaire: string }[] = [];
+  loadingMyRestDays = false;
+  proposedRecoveryDates: { planning_id: string; date: string; activity_code: string; plage_horaire: string }[] = [];
+
+  // Réciprocité
+  userReciprocities: UserReciprocities | null = null;
+  showReciprocityPanel = false;
+
+  // Modal récupération depuis réciprocité
+  showRecipRecoveryModal = false;
+  currentReciprocityId = '';
+  recipDebtorRestDays: { date: string; activity_code: string; planning_id: string }[] = [];
+  recipSelectedDate: string | null = null;
+  recipSelectedPlanningId: string | null = null;
+  loadingRecipDays = false;
+  recipExpiresAt = '';
+  recipMaxDate: Date = new Date();
+
+  // Modal récupération (avant acceptation d'un échange)
+  showRecoveryModal = false;
+  pendingAcceptExchangeId = '';
+  requesterPlannings: { planning_id: string; date: string; activity_code: string; plage_horaire: string }[] = [];
+  selectedRecoveryDate: string | null = null;
+  selectedRecoveryPlanningId: string | null = null;
+  loadingRequesterPlannings = false;
+
+  today: Date = new Date();
+
   // ViewChild pour accéder au calendrier
   // @ViewChild('calendar') calendarRef!: ElementRef; // Plus nécessaire avec le calendrier personnalisé
 
@@ -190,15 +237,17 @@ export class MonAgendaComponent implements OnInit, OnDestroy, AfterViewInit {
     private calendarSyncService: CalendarSyncService,
     private planningPriorityService: PlanningPriorityService,
     private contratService: ContratService,
+    private planningExchangeService: PlanningExchangeService,
+    private reciprocityService: ExchangeReciprocityService,
+    private alertsRttService: AlertsRttService,
     private http: HttpClient
   ) {}
 
   ngOnInit(): void {
     this.loadUserAndData();
-    // S'abonner aux changements de planning
     this.subscribeToPlanningChanges();
-    // Démarrer le rafraîchissement automatique via CalendarSyncService
     this.startAutoRefresh();
+    this.loadExchangeRequestsCount();
   }
 
   ngAfterViewInit(): void {
@@ -290,11 +339,83 @@ export class MonAgendaComponent implements OnInit, OnDestroy, AfterViewInit {
           this.currentUser = user;
           this.loadCalendarData();
           this.loadActiveLeaveWindow();
+          this.loadReciprocities();
           console.log('Utilisateur chargé:', user.first_name, user.last_name, 'Service:', user.service_id);
         },
         error: (error: any) => {
           console.error('Erreur lors du chargement de l\'utilisateur:', error);
         }
+      });
+  }
+
+  loadReciprocities(): void {
+    if (!this.currentUser?._id) return;
+    this.reciprocityService.getUserReciprocities(this.currentUser._id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => { this.userReciprocities = res.data; },
+        error: () => {}
+      });
+  }
+
+  openRecipRecovery(credit: ReciprocityEntry): void {
+    this.showReciprocityPanel = false;
+    this.currentReciprocityId = credit.id;
+    this.recipSelectedDate = null;
+    this.recipSelectedPlanningId = null;
+    this.loadingRecipDays = true;
+    this.recipDebtorRestDays = [];
+    // Délai pour laisser le modal réciprocités se fermer avant d'ouvrir le nouveau
+    setTimeout(() => {
+      this.showRecipRecoveryModal = true;
+      this.reciprocityService.getDebtorRestDays(credit.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (res) => {
+          this.recipDebtorRestDays = res.data || [];
+          this.recipExpiresAt = res.expires_at || '';
+          if (res.expires_at) {
+            const [y, m, d] = res.expires_at.split('-').map(Number);
+            this.recipMaxDate = new Date(y, m - 1, d);
+          }
+          this.loadingRecipDays = false;
+        },
+          error: () => { this.recipDebtorRestDays = []; this.loadingRecipDays = false; }
+        });
+    }, 150);
+  }
+
+  getDisabledDatesForRecip(): Date[] {
+    const available = new Set(this.recipDebtorRestDays.map(p => p.date));
+    const disabled: Date[] = [];
+    const start = new Date(); start.setHours(0,0,0,0);
+    for (let i = 0; i < 365; i++) {
+      const d = new Date(start); d.setDate(start.getDate() + i);
+      const str = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      if (!available.has(str)) disabled.push(new Date(d));
+    }
+    return disabled;
+  }
+
+  onRecipDateSelect(date: Date): void {
+    const str = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+    const p = this.recipDebtorRestDays.find(x => x.date === str);
+    if (p) { this.recipSelectedDate = str; this.recipSelectedPlanningId = p.planning_id; }
+  }
+
+  confirmRecipRecovery(): void {
+    if (!this.recipSelectedDate || !this.currentReciprocityId) return;
+    const rec = this.userReciprocities?.credits.find(c => c.id === this.currentReciprocityId);
+    const hours = rec?.hours_remaining || 0;
+    this.reciprocityService.repayReciprocity(this.currentReciprocityId, this.recipSelectedPlanningId || '', hours)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: 'Récupération enregistrée ✅', detail: `Jour de récupération sélectionné : ${this.recipSelectedDate}` });
+          this.showRecipRecoveryModal = false;
+          this.loadReciprocities();
+        },
+        error: () => this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible d\'enregistrer la récupération' })
       });
   }
 
@@ -314,6 +435,11 @@ export class MonAgendaComponent implements OnInit, OnDestroy, AfterViewInit {
   isCodeAllowed(code: string): boolean {
     if (!this.activeLeaveWindow) return false;
     return this.activeLeaveWindow.allowed_codes?.includes(code) ?? false;
+  }
+
+  get filteredActivityCodes() {
+    if (!this.activeLeaveWindow?.allowed_codes?.length) return this.activityCodes;
+    return this.activityCodes.filter(c => this.activeLeaveWindow.allowed_codes.includes(c.value));
   }
 
   isLeaveRelatedCode(code: string): boolean {
@@ -673,7 +799,31 @@ export class MonAgendaComponent implements OnInit, OnDestroy, AfterViewInit {
       activity_code: existing?.activity_code || '',
       commentaire: existing?.commentaire || ''
     };
+    this.caConflictWarning = null;
     this.showEditPlanningModal = true;
+  }
+
+  /** Déclenche la vérification de sous-effectif quand l'agent sélectionne CA */
+  onActivityCodeChange(code: string): void {
+    this.caConflictWarning = null;
+    if (code !== 'CA' || !this.currentUser?._id || !this.currentUser?.service_id || !this.selectedDay) return;
+
+    const date = this.selectedDay instanceof Date ? this.selectedDay : new Date(this.selectedDay);
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+    this.checkingCaConflict = true;
+    this.alertsRttService.checkCaConflict(
+      this.currentUser._id,
+      this.currentUser.service_id,
+      dateStr,
+      dateStr
+    ).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res) => {
+        this.caConflictWarning = res.warning;
+        this.checkingCaConflict = false;
+      },
+      error: () => { this.checkingCaConflict = false; }
+    });
   }
 
   onMonthChange(newDate: Date): void {
@@ -735,7 +885,14 @@ export class MonAgendaComponent implements OnInit, OnDestroy, AfterViewInit {
     this.showAvailabilityModal = false;
     this.showPlanningModal = false;
     this.showEditPlanningModal = false;
+    this.showExchangeModal = false;
+    this.showExchangeRequestsModal = false;
     this.selectedDay = null;
+    this.selectedTargetPlanning = null;
+    this.exchangeMessage = '';
+    this.proposedRecoveryDates = [];
+    this.myRestDays = [];
+    this.caConflictWarning = null;
   }
 
   /**
@@ -773,9 +930,9 @@ export class MonAgendaComponent implements OnInit, OnDestroy, AfterViewInit {
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: any) => {
         this.messageService.add({
-          severity: 'info',
-          summary: 'Demande envoyée',
-          detail: 'Votre modification est en attente de validation par votre cadre'
+          severity: 'success',
+          summary: 'Planning mis à jour',
+          detail: 'Votre modification a été appliquée directement'
         });
         this.closeModals();
 
@@ -783,33 +940,33 @@ export class MonAgendaComponent implements OnInit, OnDestroy, AfterViewInit {
         const eventDate = new Date(date);
         eventDate.setHours(0, 0, 0, 0);
         const pendingEvent: CalendarEvent = {
-          id: response?.planning_id || `pending_${dateStr}`,
+          id: response?.planning_id || `planning_${dateStr}`,
           title: code,
           date: eventDate,
           type: 'planning',
-          status: 'en_attente',
+          status: 'validé',
           timeRange: plage,
           color: this.getActivityColor(code)
         };
 
-        // Ajouter dans allPlannings pour que la logique de priorité fonctionne
+        // Ajouter dans allPlannings
         const existingIndex = this.allPlannings.findIndex((p: any) => {
           const d = typeof p.date === 'string' ? p.date : new Date(p.date).toISOString().split('T')[0];
-          return d === dateStr && p.status === 'en_attente';
+          return d === dateStr;
         });
-        const pendingPlanning = {
-          _id: response?.planning_id || `pending_${dateStr}`,
+        const newPlanning = {
+          _id: response?.planning_id || `planning_${dateStr}`,
           user_id: this.currentUser._id,
           date: dateStr,
           activity_code: code,
           plage_horaire: plage,
-          status: 'en_attente',
+          status: 'validé',
           commentaire: this.editPlanningForm.commentaire
         };
         if (existingIndex >= 0) {
-          this.allPlannings[existingIndex] = pendingPlanning;
+          this.allPlannings[existingIndex] = newPlanning;
         } else {
-          this.allPlannings.push(pendingPlanning);
+          this.allPlannings.push(newPlanning);
         }
 
         // Remplacer l'événement dans la liste des événements affichés
@@ -824,6 +981,16 @@ export class MonAgendaComponent implements OnInit, OnDestroy, AfterViewInit {
           this.events.push(pendingEvent);
         }
         this.events = [...this.events];
+
+        // Notifier tous les composants abonnés (cadre, sec-calendar, etc.)
+        this.calendarSyncService.notifyPlanningPublished(
+          this.currentUser._id,
+          this.currentUser.service_id || '',
+          { date: dateStr, activity_code: code, is_validated: true }
+        );
+        setTimeout(() => this.calendarSyncService.forceRefresh(), 200);
+        // Vérifier les heures sup après modification de planning
+        this.alertsRttService.checkAndNotifyOvertime(this.currentUser._id).subscribe();
       },
       error: () => this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la soumission' })
     });
@@ -1014,6 +1181,447 @@ export class MonAgendaComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     
     return '';
+  }
+
+  // =============================================================================
+  // MÉTHODES POUR L'ÉCHANGE DE PLANNING
+  // =============================================================================
+
+  /**
+   * Ouvre le modal d'échange de planning et charge les jours de repos de A
+   */
+  openExchangeModal(): void {
+    if (!this.selectedDay || !this.editPlanningExistingId) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Attention',
+        detail: 'Vous devez avoir un planning validé pour proposer un échange'
+      });
+      return;
+    }
+
+    const date = this.selectedDay instanceof Date ? this.selectedDay : new Date(this.selectedDay);
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+    this.showEditPlanningModal = false;
+    this.showExchangeModal = true;
+    this.proposedRecoveryDates = [];
+    this.loadCompatibleAgents(dateStr);
+    this.loadMyRestDays();
+  }
+
+  /** Charge les jours de repos de A pour qu'il propose des dates de récupération */
+  loadMyRestDays(): void {
+    if (!this.currentUser?._id) return;
+    this.loadingMyRestDays = true;
+    this.planningExchangeService.getMyRestDays(this.currentUser._id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res: any) => { this.myRestDays = res.data || []; this.loadingMyRestDays = false; },
+        error: () => { this.myRestDays = []; this.loadingMyRestDays = false; }
+      });
+  }
+
+  /** A coche/décoche une date de récupération à proposer */
+  toggleProposedRecoveryDate(day: { planning_id: string; date: string; activity_code: string; plage_horaire: string }): void {
+    const idx = this.proposedRecoveryDates.findIndex(d => d.planning_id === day.planning_id);
+    if (idx >= 0) {
+      this.proposedRecoveryDates.splice(idx, 1);
+    } else {
+      this.proposedRecoveryDates.push(day);
+    }
+  }
+
+  isProposedRecoveryDate(planningId: string): boolean {
+    return this.proposedRecoveryDates.some(d => d.planning_id === planningId);
+  }
+
+  /**
+   * Charge les agents compatibles pour un échange
+   */
+  loadCompatibleAgents(date: string): void {
+    if (!this.currentUser?._id) return;
+
+    this.loadingCompatibleAgents = true;
+    this.compatibleAgents = [];
+    this.selectedTargetPlanning = null;
+
+    this.planningExchangeService.getCompatibleAgents(this.currentUser._id, date)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: any) => {
+          this.compatibleAgents = response.data || [];
+          this.loadingCompatibleAgents = false;
+          
+          if (this.compatibleAgents.length === 0) {
+            this.messageService.add({
+              severity: 'info',
+              summary: 'Information',
+              detail: 'Aucun agent compatible trouvé pour un échange'
+            });
+          }
+        },
+        error: (error: any) => {
+          console.error('Erreur lors du chargement des agents compatibles:', error);
+          this.loadingCompatibleAgents = false;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Erreur lors du chargement des agents compatibles'
+          });
+        }
+      });
+  }
+
+  /**
+   * Agent A sélectionne un agent B pour lui envoyer la demande
+   */
+  selectAgent(agent: CompatibleAgent): void {
+    this.selectedTargetPlanning = {
+      agent_id: agent._id,
+      agent_name: `${agent.first_name} ${agent.last_name}`,
+      planning_id: '',
+      date: '',
+      activity_code: '',
+      plage_horaire: ''
+    };
+  }
+
+  /**
+   * Sélectionne un planning cible pour l'échange
+   */
+  selectTargetPlanning(agent: CompatibleAgent, planning: any): void {
+    this.selectedTargetPlanning = {
+      agent_id: agent._id,
+      agent_name: `${agent.first_name} ${agent.last_name}`,
+      planning_id: planning.planning_id,
+      date: planning.date,
+      activity_code: planning.activity_code,
+      plage_horaire: planning.plage_horaire
+    };
+  }
+
+  /**
+   * Retourne les dates DÉSACTIVÉES pour un agent (toutes sauf ses dates disponibles)
+   * PrimeNG Calendar désactive les dates non présentes dans available_dates
+   */
+  getDisabledDatesForAgent(agent: CompatibleAgent): Date[] {
+    // On génère les 365 prochains jours et on désactive ceux qui ne sont pas dans available_dates
+    const availableSet = new Set(agent.available_dates.map(p => p.date));
+    const disabled: Date[] = [];
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    for (let i = 0; i < 365; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const str = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      if (!availableSet.has(str)) {
+        disabled.push(new Date(d));
+      }
+    }
+    return disabled;
+  }
+
+  /**
+   * Appelé quand l'agent clique sur une date dans le calendrier
+   */
+  onCalendarDateSelect(agent: CompatibleAgent, date: Date): void {
+    const str = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const planning = agent.available_dates.find(p => p.date === str);
+    if (planning) {
+      this.selectTargetPlanning(agent, planning);
+    }
+  }
+
+  /** Dates désactivées pour le calendrier de récupération de B */
+  getDisabledDatesForRecovery(): Date[] {
+    const availableSet = new Set(this.requesterPlannings.map(p => p.date));
+    const disabled: Date[] = [];
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    for (let i = 0; i < 365; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const str = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      if (!availableSet.has(str)) disabled.push(new Date(d));
+    }
+    return disabled;
+  }
+
+  /** Quand B clique sur une date dans le calendrier de récupération */
+  onRecoveryDateSelect(date: Date): void {
+    const str = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const planning = this.requesterPlannings.find(p => p.date === str);
+    if (planning) {
+      this.selectedRecoveryDate = str;
+      this.selectedRecoveryPlanningId = planning.planning_id;
+    }
+  }
+
+  getRecoveryPlanningCode(): string {
+    return this.requesterPlannings.find(p => p.date === this.selectedRecoveryDate)?.activity_code || '';
+  }
+
+  getRecoveryPlanningHours(): string {
+    return this.requesterPlannings.find(p => p.date === this.selectedRecoveryDate)?.plage_horaire || '';
+  }
+
+  /**
+   * Soumet une demande d'échange
+   */
+  submitExchangeRequest(): void {
+    if (!this.currentUser?._id || !this.selectedDay || !this.editPlanningExistingId || !this.selectedTargetPlanning) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Données manquantes pour la demande d\'échange'
+      });
+      return;
+    }
+
+    const date = this.selectedDay instanceof Date ? this.selectedDay : new Date(this.selectedDay);
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+    const exchangeData = {
+      requester_id: this.currentUser._id,
+      target_id: this.selectedTargetPlanning.agent_id,
+      requester_date: dateStr,
+      target_date: '',
+      requester_planning_id: this.editPlanningExistingId,
+      target_planning_id: '',
+      message: this.exchangeMessage,
+      proposed_recovery_dates: this.proposedRecoveryDates  // dates proposées par A
+    };
+
+    this.planningExchangeService.createExchangeRequest(exchangeData)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: any) => {
+          const isAutoApproved = response.data?.auto_approved;
+          
+          if (isAutoApproved) {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Succès',
+              detail: `Demande d'échange envoyée à ${this.selectedTargetPlanning.agent_name}. L'échange sera appliqué automatiquement après acceptation (règle des 2 mois).`
+            });
+          } else {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Succès',
+              detail: `Demande d'échange envoyée à ${this.selectedTargetPlanning.agent_name}`
+            });
+          }
+          
+          this.closeModals();
+          this.exchangeMessage = '';
+          this.selectedTargetPlanning = null;
+        },
+        error: (error: any) => {
+          console.error('Erreur lors de la création de la demande:', error);
+          
+          // Vérifier si c'est une erreur de règle des 2 mois
+          if (error.status === 422 && error.error?.detail?.error_code === 'EXCHANGE_TOO_SOON') {
+            const errorDetail = error.error.detail;
+            
+            this.messageService.add({
+              severity: 'warn',
+              summary: 'Échange impossible',
+              detail: errorDetail.message,
+              life: 8000
+            });
+            
+            // Afficher un dialog de confirmation pour rediriger vers demande d'absence
+            setTimeout(() => {
+              if (confirm('Souhaitez-vous faire une demande d\'absence à votre encadrement pour cette date ?')) {
+                // Rediriger vers la page de demande d'absence
+                // TODO: Implémenter la navigation vers le formulaire de demande d'absence
+                this.messageService.add({
+                  severity: 'info',
+                  summary: 'Redirection',
+                  detail: 'Veuillez contacter votre encadrement pour faire une demande d\'absence'
+                });
+              }
+            }, 500);
+            
+            this.closeModals();
+          } else {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erreur',
+              detail: error.error?.detail || 'Erreur lors de la création de la demande d\'échange'
+            });
+          }
+        }
+      });
+  }
+
+  /**
+   * Ouvre le modal des demandes d'échange reçues
+   */
+  openExchangeRequestsModal(): void {
+    this.showExchangeRequestsModal = true;
+    this.loadPendingExchangeRequests();
+  }
+
+  /**
+   * Charge les demandes d'échange en attente
+   */
+  loadPendingExchangeRequests(): void {
+    if (!this.currentUser?._id) return;
+
+    this.loadingExchangeRequests = true;
+
+    this.planningExchangeService.getExchanges(this.currentUser._id, 'en_attente')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: any) => {
+          // Filtrer pour ne garder que les demandes où l'utilisateur est la cible
+          this.pendingExchangeRequests = (response.data || []).filter(
+            (req: PlanningExchange) => req.target_id === this.currentUser._id
+          );
+          this.pendingExchangeRequestsCount = this.pendingExchangeRequests.length;
+          this.loadingExchangeRequests = false;
+        },
+        error: (error: any) => {
+          console.error('Erreur lors du chargement des demandes:', error);
+          this.loadingExchangeRequests = false;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Erreur lors du chargement des demandes d\'échange'
+          });
+        }
+      });
+  }
+
+  /**
+   * Répond à une demande d'échange.
+   * Si "accepté" → ouvre d'abord le modal de récupération.
+   * Si "refusé" → refuse directement.
+   */
+  respondToExchangeRequest(exchangeId: string, response: 'accepté' | 'refusé'): void {
+    if (response === 'refusé') {
+      this.doRespondToExchange(exchangeId, 'refusé', undefined);
+      return;
+    }
+    // Acceptation → proposer la récupération d'abord
+    this.pendingAcceptExchangeId = exchangeId;
+    this.selectedRecoveryDate = null;
+    this.loadingRequesterPlannings = true;
+    this.showRecoveryModal = true;
+
+    this.planningExchangeService.getRequesterPlannings(exchangeId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res: any) => {
+          this.requesterPlannings = res.data || [];
+          this.loadingRequesterPlannings = false;
+        },
+        error: () => {
+          this.requesterPlannings = [];
+          this.loadingRequesterPlannings = false;
+        }
+      });
+  }
+
+  /** Confirme l'acceptation avec ou sans date de récupération */
+  confirmAcceptExchange(withRecovery: boolean): void {
+    const recoveryDate = withRecovery && this.selectedRecoveryDate ? this.selectedRecoveryDate : undefined;
+    const targetPlanningId = withRecovery && this.selectedRecoveryPlanningId ? this.selectedRecoveryPlanningId : undefined;
+    this.showRecoveryModal = false;
+    this.doRespondToExchange(this.pendingAcceptExchangeId, 'accepté', recoveryDate, targetPlanningId);
+  }
+
+  doRespondToExchange(exchangeId: string, response: 'accepté' | 'refusé', recoveryDate?: string, targetPlanningId?: string): void {
+    this.planningExchangeService.respondToExchange(exchangeId, response, undefined, recoveryDate, targetPlanningId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res: any) => {
+          if (res.status === 'validé_auto') {
+            const warnings = res.compliance?.warnings || [];
+            let detail = 'L\'échange a été validé et appliqué automatiquement.';
+            if (!res.recovery_applied && res.hours_sup_credited > 0) {
+              detail += ` ✅ ${res.hours_sup_credited}h créditées en heures supplémentaires dans vos comptes de temps.`;
+            } else if (res.recovery_applied) {
+              detail += ` ✅ Récupération enregistrée — échange équitable.`;
+            }
+            if (warnings.length > 0) {
+              detail += ' ⚠️ ' + warnings.map((w: any) => w.message).join(' | ');
+            }
+            this.messageService.add({ severity: 'success', summary: 'Échange effectué ✅', detail, life: 8000 });
+            this.loadCalendarData();
+            this.loadReciprocities();
+          } else if (res.status === 'refusé_charte') {
+            const violations = res.compliance?.violations || [];
+            const detail = violations.length > 0
+              ? violations.map((v: any) => v.message).join(' | ')
+              : res.message;
+            this.messageService.add({ severity: 'error', summary: '❌ Échange bloqué — Non conforme à la Charte', detail, life: 12000 });
+          } else {
+            this.messageService.add({
+              severity: 'info',
+              summary: response === 'accepté' ? 'Accepté' : 'Refusé',
+              detail: res.message || (response === 'accepté' ? 'Échange accepté.' : 'Échange refusé.')
+            });
+          }
+          this.loadPendingExchangeRequests();
+        },
+        error: (error: any) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: error.error?.detail || 'Erreur lors de la réponse à la demande'
+          });
+        }
+      });
+  }
+
+  /**
+   * Retourne la plage horaire pour un code d'activité
+   */
+  getTimeRangeForCode(code: string): string {
+    return this.serviceCodes[code]?.hours || '08:00-17:00';
+  }
+
+  /**
+   * Vérifie si une date est éligible à un échange direct (règle des 2 mois)
+   */
+  isDateEligibleForExchange(date: any): boolean {
+    if (!date) return false;
+    
+    const targetDate = date instanceof Date ? date : new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    targetDate.setHours(0, 0, 0, 0);
+    
+    // Calculer la différence en jours
+    const diffTime = targetDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Éligible si >= 60 jours (2 mois)
+    return diffDays >= 60;
+  }
+
+  /**
+   * Charge le nombre de demandes d'échange en attente (pour le badge)
+   */
+  loadExchangeRequestsCount(): void {
+    if (!this.currentUser?._id) return;
+
+    this.planningExchangeService.getExchanges(this.currentUser._id, 'en_attente')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: any) => {
+          const requests = (response.data || []).filter(
+            (req: PlanningExchange) => req.target_id === this.currentUser._id
+          );
+          this.pendingExchangeRequestsCount = requests.length;
+        },
+        error: (error: any) => {
+          console.error('Erreur lors du chargement du compteur:', error);
+        }
+      });
   }
 
   // Les méthodes de navigation sont maintenant gérées par le composant custom-calendar

@@ -7,6 +7,7 @@ from pymongo import MongoClient
 from schemas.planning import PlanningCreate, PlanningUpdate
 from pydantic import BaseModel
 from database.database import user_contrat, users
+from services.time_calculator import calculate_time_accounts, calculate_leave_rights
 
 # Configuration de la base de données
 MONGO_URI = os.getenv('MONGO_URI', os.getenv('MONGODB_URI', os.getenv('MONGODB_URL', 'mongodb://localhost:27017/')))
@@ -19,6 +20,23 @@ db = client[DATABASE_NAME]
 plannings = db['plannings']
 
 router = APIRouter()
+
+def _recalculate_time_accounts(user_id: str):
+    """Recalcule et sauvegarde les comptes de temps d'un agent après modification de planning."""
+    try:
+        reference_date = datetime.now().strftime('%Y-%m-%d')
+        year = datetime.now().year
+        account = calculate_time_accounts(user_id, reference_date, year)
+        account_dict = account.dict()
+        account_dict["updated_at"] = datetime.now()
+        existing = db['time_accounts'].find_one({"user_id": user_id, "year": year})
+        if existing:
+            db['time_accounts'].update_one({"_id": existing["_id"]}, {"$set": account_dict})
+        else:
+            db['time_accounts'].insert_one(account_dict)
+        print(f"[TIME-CALC] Recalcul automatique pour {user_id}")
+    except Exception as e:
+        print(f"[TIME-CALC] Erreur recalcul {user_id}: {e}")
 
 # =============================================================================
 # ENDPOINTS CRUD POUR LES PLANNINGS VALIDÉS - TÂCHE 1.2.3
@@ -230,12 +248,12 @@ class PlanningValidateRequest(BaseModel):
 async def agent_planning_request(planning_data: PlanningCreate):
     """
     POST /plannings/agent-request
-    L'agent soumet une modification de son planning → status "en_attente"
-    Crée une notification pour le cadre du service
+    L'agent soumet une modification de son planning → appliqué directement (status "validé")
+    Pas de validation cadre requise.
     """
     try:
         planning_dict = planning_data.dict()
-        planning_dict["status"] = "en_attente"
+        planning_dict["status"] = "validé"
         planning_dict["created_at"] = datetime.now()
         planning_dict["updated_at"] = datetime.now()
         if not planning_dict.get("plage_horaire"):
@@ -243,64 +261,28 @@ async def agent_planning_request(planning_data: PlanningCreate):
 
         print(f"[AGENT-REQUEST] user_id={planning_dict['user_id']}, date={planning_dict['date']}, activity_code={planning_dict['activity_code']}")
 
+        # Chercher un planning existant pour ce jour (validé ou en_attente)
         existing = plannings.find_one({
             "user_id": planning_dict["user_id"],
             "date": planning_dict["date"],
-            "status": "en_attente"
         })
         if existing:
             plannings.update_one({"_id": existing["_id"]}, {"$set": {
                 "activity_code": planning_dict["activity_code"],
                 "plage_horaire": planning_dict["plage_horaire"],
                 "commentaire": planning_dict.get("commentaire", ""),
+                "status": "validé",
                 "updated_at": datetime.now()
             }})
             planning_id = str(existing["_id"])
         else:
-            # Chercher le planning validé existant pour ce jour (à restaurer en cas de refus)
-            previous = plannings.find_one({
-                "user_id": planning_dict["user_id"],
-                "date": planning_dict["date"],
-                "status": "validé"
-            })
-            if previous:
-                planning_dict["previous_planning_id"] = str(previous["_id"])
-                planning_dict["previous_activity_code"] = previous.get("activity_code", "")
-                planning_dict["previous_plage_horaire"] = previous.get("plage_horaire", "08:00-17:00")
             result = plannings.insert_one(planning_dict)
             planning_id = str(result.inserted_id)
 
-        agent = db['users'].find_one({"_id": ObjectId(planning_dict["user_id"])}) if ObjectId.is_valid(planning_dict["user_id"]) else None
-        agent_name = f"{agent.get('first_name', '')} {agent.get('last_name', '')}" if agent else "Un agent"
-        service_id = agent.get("service_id") if agent else None
-
-        cadre = None
-        if service_id:
-            cadre = db['users'].find_one({"service_id": service_id, "role": "cadre"})
-            if not cadre and ObjectId.is_valid(str(service_id)):
-                cadre = db['users'].find_one({"service_id": ObjectId(str(service_id)), "role": "cadre"})
-
-        if cadre:
-            db['notifications'].insert_one({
-                "title": "Demande de modification de planning",
-                "message": f"{agent_name} demande à modifier son planning du {planning_dict['date']} → {planning_dict['activity_code']}",
-                "type": "warning",
-                "priority": "high",
-                "category": "event",
-                "user_id": str(cadre["_id"]),
-                "read": False,
-                "created_at": datetime.now().isoformat(),
-                "action_url": "/cadre/planification",
-                "action_label": "Voir la planification",
-                "planning_id": planning_id,
-                "planning_date": planning_dict["date"],
-                "planning_user_id": planning_dict["user_id"]
-            })
-
         return {
-            "message": "Demande de modification soumise, en attente de validation du cadre",
+            "message": "Planning mis à jour",
             "planning_id": planning_id,
-            "status": "en_attente"
+            "status": "validé"
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
@@ -481,10 +463,11 @@ async def validate_planning_request(planning_id: str, body: PlanningValidateRequ
                     "action_url": "/sec/mon-agenda",
                     "action_label": "Voir mon agenda"
                 })
+            # Recalcul automatique des comptes de temps
+            _recalculate_time_accounts(agent_id)
             return {"message": "Demande validée avec succès", "status": "validé"}
 
-        elif body.status == "refusé":
-            # Récupérer le planning précédent sauvegardé (avant la demande de l'agent)
+        elif body.status == "refusé":            # Récupérer le planning précédent sauvegardé (avant la demande de l'agent)
             previous_planning_id = planning.get("previous_planning_id")
             previous_activity_code = planning.get("previous_activity_code")
             previous_plage_horaire = planning.get("previous_plage_horaire", "08:00-17:00")
@@ -524,6 +507,8 @@ async def validate_planning_request(planning_id: str, body: PlanningValidateRequ
                     "action_url": "/sec/mon-agenda",
                     "action_label": "Voir mon agenda"
                 })
+            # Recalcul automatique (le planning est restauré à l'état précédent)
+            _recalculate_time_accounts(agent_id)
             return {"message": "Demande refusée et planning restauré", "status": "refusé"}
 
         else:
@@ -912,3 +897,88 @@ async def publish_plannings(request: PublishPlanningsRequest):
 
 
 
+
+
+@router.get("/plannings/last-update")
+async def get_last_planning_update():
+    """
+    GET /plannings/last-update
+    Retourne le timestamp de la dernière modification de planning.
+    """
+    try:
+        # Chercher le planning le plus récemment modifié
+        latest = None
+        for p in plannings.find({"updated_at": {"$exists": True}}).sort("updated_at", -1).limit(1):
+            latest = p
+            break
+
+        if latest and latest.get("updated_at"):
+            ts = latest["updated_at"]
+            ts_str = ts.isoformat() if hasattr(ts, "isoformat") else str(ts)
+            return {"last_update": ts_str}
+
+        # Fallback : timestamp courant si aucun planning avec updated_at
+        return {"last_update": datetime.now().isoformat()}
+    except Exception as e:
+        # Ne jamais retourner 500 pour ce endpoint de polling
+        return {"last_update": datetime.now().isoformat()}
+
+
+# Seul le code CA est affiché dans "À venir"
+UPCOMING_LEAVE_CODES = {"CA"}
+
+@router.get("/plannings/upcoming-leaves/{user_id}")
+async def get_upcoming_leaves(
+    user_id: str,
+    limit: int = Query(2, description="Nombre max d'événements à retourner")
+):
+    """
+    GET /plannings/upcoming-leaves/{user_id}
+    Retourne les 2 prochains congés annuels (CA) de l'agent depuis son planning réel.
+    """
+    try:
+        if not ObjectId.is_valid(user_id):
+            raise HTTPException(status_code=400, detail="ID invalide")
+
+        today = datetime.now().strftime('%Y-%m-%d')
+
+        upcoming = list(plannings.find({
+            "user_id": user_id,
+            "status": {"$nin": ["refusé", "refusé_charte", "refusé_cadre", "annulé"]},
+            "date": {"$gte": today},
+            "$or": [
+                {"activity_code": {"$in": list(UPCOMING_LEAVE_CODES)}},
+                {"code": {"$in": list(UPCOMING_LEAVE_CODES)}}
+            ]
+        }).sort("date", 1).limit(limit * 2))
+
+        seen = set()
+        result = []
+        for p in upcoming:
+            raw_date = p.get("date")
+            date_str = raw_date[:10] if isinstance(raw_date, str) else (
+                raw_date.strftime('%Y-%m-%d') if hasattr(raw_date, 'strftime') else str(raw_date)[:10]
+            )
+            code = p.get("activity_code") or p.get("code") or ""
+            key = f"{date_str}_{code}"
+            if key in seen:
+                continue
+            seen.add(key)
+
+            result.append({
+                "date":        date_str,
+                "code":        code,
+                "label":       "Congé annuel",
+                "plage":       p.get("plage_horaire", ""),
+                "status":      p.get("status", "validé"),
+                "commentaire": p.get("commentaire", ""),
+            })
+
+            if len(result) >= limit:
+                break
+
+        return {"user_id": user_id, "upcoming_leaves": result, "count": len(result)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"upcoming-leaves error: {str(e)}")

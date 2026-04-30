@@ -91,6 +91,7 @@ export class UsersComponent {
       role: ['', Validators.required],
       service: [''],
       speciality: [''],
+      matricule: [''],
       password: ['', [Validators.minLength(8)]]
     });
   }
@@ -260,6 +261,7 @@ export class UsersComponent {
       role: user.role,
       service: user.service_id || '',
       speciality: user.speciality_id || '',
+      matricule: user.matricule || '',
       password: ''
     });
     this.userForm.get('password')?.clearValidators();
@@ -288,7 +290,8 @@ export class UsersComponent {
         email: values.email,
         role: values.role,
         service_id: values.service || null,
-        speciality_id: values.speciality || null
+        speciality_id: values.speciality || null,
+        matricule: values.matricule || undefined
       };
       console.log('Updating user with:', updatedUser);
       this.userService.updateUser(userId!, updatedUser).subscribe({
@@ -321,7 +324,8 @@ export class UsersComponent {
         password: values.password,
         role: values.role,
         service_id: values.service || null,
-        speciality_id: values.speciality || null
+        speciality_id: values.speciality || null,
+        matricule: values.matricule || undefined
       };
       
       console.log('Creating user with:', createUserRequest);

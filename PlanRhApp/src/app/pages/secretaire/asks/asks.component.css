@@ -7,3 +7,178 @@
     font-weight: 500;
     transition: background-color 0.2s;
 }
+
+/* Calendrier dans le modal de réponse */
+:host ::ng-deep .p-datepicker {
+  width: 100% !important;
+  min-width: 100% !important;
+}
+:host ::ng-deep .p-datepicker table {
+  width: 100% !important;
+}
+:host ::ng-deep .p-datepicker .p-datepicker-calendar td {
+  padding: 0.4rem !important;
+}
+:host ::ng-deep .p-dialog .p-dialog-content {
+  overflow-y: auto !important;
+}
+:host ::ng-deep .p-datepicker-inline {
+  width: 100% !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  background: #fff !important;
+  color: #1e293b !important;
+}
+
+/* Modal custom récupération */
+.recovery-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.recovery-modal {
+  background: #ffffff;
+  border-radius: 12px;
+  width: 520px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.recovery-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #1e293b;
+  background: #f8fafc;
+}
+.recovery-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: #64748b;
+  padding: 4px 8px;
+  border-radius: 4px;
+  line-height: 1;
+}
+.recovery-close-btn:hover { background: #f1f5f9; color: #1e293b; }
+.recovery-modal-body {
+  padding: 20px;
+  color: #1e293b;
+}
+.recovery-info {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 0.875rem;
+  color: #1e40af;
+  margin-bottom: 16px;
+}
+.recovery-calendar-wrapper {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+.recovery-selected {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: #dcfce7;
+  border: 1px solid #16a34a;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #15803d;
+}
+.recovery-clear {
+  margin-left: auto;
+  cursor: pointer;
+  color: #dc2626;
+  font-weight: 600;
+}
+.recovery-modal-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 14px 20px;
+  border-top: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+/* Calendrier inline dans le modal */
+:host ::ng-deep .recovery-calendar-wrapper .p-datepicker {
+  width: 100% !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  color: #1e293b !important;
+}
+:host ::ng-deep .recovery-calendar-wrapper .p-datepicker table {
+  width: 100% !important;
+}
+:host ::ng-deep .recovery-calendar-wrapper .p-datepicker td span {
+  color: #1e293b !important;
+}
+:host ::ng-deep .recovery-calendar-wrapper .p-datepicker td.p-datepicker-today span {
+  background: #065594 !important;
+  color: #fff !important;
+  border-radius: 50%;
+}
+:host ::ng-deep .recovery-calendar-wrapper .p-datepicker td:not(.p-disabled) span:hover {
+  background: #dbeafe !important;
+  border-radius: 50%;
+}
+:host ::ng-deep .recovery-calendar-wrapper .p-datepicker td.p-disabled span {
+  color: #cbd5e1 !important;
+  opacity: 0.4;
+}
+:host ::ng-deep .recovery-calendar-wrapper .p-datepicker td:not(.p-disabled) span {
+  font-weight: 600;
+  color: #065594 !important;
+  cursor: pointer;
+}
+
+/* ── Chips dates de récupération ── */
+.recovery-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.recovery-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  background: white;
+  color: #1e293b;
+  transition: all 0.15s;
+  user-select: none;
+}
+.recovery-chip:hover { border-color: #3b82f6; background: #eff6ff; color: #1e40af; }
+.recovery-chip.selected { border-color: #10b981; background: #d1fae5; color: #065f46; font-weight: 600; }
+.recovery-chip .chip-code {
+  font-size: 0.75rem;
+  background: #e5e7eb;
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: #374151;
+}
+.recovery-chip.selected .chip-code { background: #a7f3d0; color: #065f46; }

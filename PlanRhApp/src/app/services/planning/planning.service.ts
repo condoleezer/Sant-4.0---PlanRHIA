@@ -12,6 +12,14 @@ export class PlanningService {
   constructor(private http: HttpClient) {}
 
   /**
+   * Récupère les prochains congés/repos de l'agent depuis son planning réel
+   */
+  getUpcomingLeaves(userId: string, limit: number = 5): Observable<any> {
+    const params = new HttpParams().set('limit', limit.toString());
+    return this.http.get(`${this.apiUrl}/plannings/upcoming-leaves/${userId}`, { params });
+  }
+
+  /**
    * Récupère les plannings d'un utilisateur
    */
   getPlanningsByUser(userId: string): Observable<any> {

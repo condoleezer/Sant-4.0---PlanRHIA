@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: planrh-mongodb
+    restart: always
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - planrh-net
+    # MongoDB accessible uniquement en interne (pas exposé sur internet)
+
+  backend:
+    build: ./PlanRHAPI
+    container_name: planrh-api
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017
+      - DATABASE_NAME=planRhIA
+    depends_on:
+      - mongodb
+    networks:
+      - planrh-net
+
+  frontend:
+    build: ./PlanRhApp
+    container_name: planrh-app
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    networks:
+      - planrh-net
+
+volumes:
+  mongo_data:
+
+networks:
+  planrh-net:
+    driver: bridge

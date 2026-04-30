@@ -75,8 +75,8 @@
       <div class="h-2"></div>
 
       <p-iftalabel>
-        <p-select [options]="speciality" [filter]="true" id="speciality" optionLabel="name" optionValue="id" placeholder="Sélectionner une compétence" class="w-full md:w-56" formControlName="speciality" class="uniform-input"/>
-        <label for="service">Compétence</label>
+        <p-select [options]="speciality" [filter]="true" id="speciality" optionLabel="name" optionValue="id" placeholder="Sélectionner un métier" class="w-full md:w-56" formControlName="speciality" class="uniform-input"/>
+        <label for="service">Métier</label>
       </p-iftalabel>
       <div class="h-2"></div>
 
@@ -88,6 +88,12 @@
         </small>
       </p-iftalabel>
       <div class="h-2" *ngIf="!isEditMode"></div>
+
+      <p-iftalabel *ngIf="isEditMode">
+        <input pInputText id="matricule" formControlName="matricule" autocomplete="off" class="uniform-input"/>
+        <label for="matricule">Matricule</label>
+      </p-iftalabel>
+      <div class="h-2" *ngIf="isEditMode"></div>
 
       <p-button [label]="isEditMode ? 'Mettre à jour' : 'Ajouter un utilisateur'" severity="contrast" (click)="onSubmit()" [disabled]="loading() || userForm.invalid" />
     </div>
@@ -104,7 +110,7 @@
           <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Matricule</th>
           <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Rôle</th>
           <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Service</th>
-          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Compétence</th>
+          <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Métier</th>
           <th style="background-color: #e5e7eb; padding: 1rem; font-weight: 600; color: #374151">Actions</th>
         </tr>
       </ng-template>

@@ -84,9 +84,17 @@ export class TimeAccountService {
 
     return this.http.post<any>(`${this.apiUrl}/leave-rights/calculate/${userId}`, {}, { params })
       .pipe(
-        map(response => response.data || response), // Gérer le format {message, data}
+        map(response => response.data || response),
         catchError(this.handleError)
       );
+  }
+
+  getHourlyBalance(userId: string, year?: number, referenceDate?: string): Observable<any> {
+    let params = new HttpParams();
+    if (year) params = params.set('year', year.toString());
+    if (referenceDate) params = params.set('reference_date', referenceDate);
+    return this.http.get<any>(`${this.apiUrl}/time-accounts/balance/${userId}`, { params })
+      .pipe(map(r => r.data || r), catchError(this.handleError));
   }
 
   private handleError(error: any): Observable<never> {
