@@ -68,22 +68,47 @@ def _get_month_hours(user_id: str, year: int, month: int) -> dict:
     Retourne le détail : heures travaillées, CA posés, RTT posés.
     """
     month_str = f"{year}-{str(month).zfill(2)}"
+    # Bornes datetime pour les dates stockées en format datetime MongoDB
+    month_start = datetime(year, month, 1)
+    last_day = calendar.monthrange(year, month)[1]
+    month_end = datetime(year, month, last_day, 23, 59, 59)
 
     # Tous les plannings du mois sauf les refusés
     month_plannings = list(plannings_col.find({
         "user_id": user_id,
         "status": {"$nin": list(STATUTS_EXCLUS)},
         "$or": [
+            # Format string YYYY-MM-DD
             {"date": {"$regex": f"^{month_str}"}},
-            {"date": {"$gte": f"{month_str}-01", "$lte": f"{month_str}-31"}}
+            # Format datetime MongoDB
+            {"date": {"$gte": month_start, "$lte": month_end}}
         ]
     }))
 
     work_hours = 0.0
     ca_count = 0
     rtt_count = 0
+    seen_dates = set()  # éviter les doublons si date existe en string ET datetime
 
     for p in month_plannings:
+        raw_date = p.get("date")
+        # Normaliser la date
+        if isinstance(raw_date, str):
+            date_str = raw_date[:10]
+        elif hasattr(raw_date, 'strftime'):
+            date_str = raw_date.strftime('%Y-%m-%d')
+        else:
+            continue
+
+        # Vérifier que la date appartient bien au mois demandé
+        if not date_str.startswith(month_str):
+            continue
+
+        # Éviter les doublons
+        if date_str in seen_dates:
+            continue
+        seen_dates.add(date_str)
+
         code = p.get("activity_code") or p.get("code") or ""
         h = CODE_HOURS.get(code, 0.0)
         work_hours += h
