@@ -9,7 +9,6 @@ services:
       - mongo_data:/data/db
     networks:
       - planrh-net
-    # MongoDB accessible uniquement en interne (pas exposé sur internet)
 
   backend:
     build: ./PlanRHAPI
@@ -32,6 +31,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - backend
     networks:
