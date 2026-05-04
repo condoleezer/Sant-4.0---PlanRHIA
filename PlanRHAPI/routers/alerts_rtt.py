@@ -63,36 +63,47 @@ STATUTS_EXCLUS = {"refusé", "refusé_charte", "refusé_cadre", "annulé"}
 
 def _get_month_hours(user_id: str, year: int, month: int) -> dict:
     """
-    Calcule les heures travaillées d'un agent pour un mois donné.
-    Prend en compte tous les plannings non refusés.
-    Retourne le détail : heures travaillées, CA posés, RTT posés.
+    Calcule les heures travaillées d'un agent pour un mois donné,
+    jusqu'au jour courant inclus (pas les jours futurs).
     """
     month_str = f"{year}-{str(month).zfill(2)}"
-    # Bornes datetime pour les dates stockées en format datetime MongoDB
+    now = datetime.now()
+    today_str = now.strftime('%Y-%m-%d')
+
+    # Bornes du mois
     month_start = datetime(year, month, 1)
     last_day = calendar.monthrange(year, month)[1]
     month_end = datetime(year, month, last_day, 23, 59, 59)
 
-    # Tous les plannings du mois sauf les refusés
+    # Limiter au jour courant si on est dans le mois en cours
+    if year == now.year and month == now.month:
+        cutoff_str = today_str
+        cutoff_dt = datetime(now.year, now.month, now.day, 23, 59, 59)
+    else:
+        # Mois passé → tout le mois ; mois futur → rien
+        if (year, month) < (now.year, now.month):
+            cutoff_str = f"{year}-{str(month).zfill(2)}-{str(last_day).zfill(2)}"
+            cutoff_dt = month_end
+        else:
+            # Mois futur → 0h
+            return {"work_hours": 0.0, "ca_taken": 0, "rtt_taken": 0}
+
     month_plannings = list(plannings_col.find({
         "user_id": user_id,
         "status": {"$nin": list(STATUTS_EXCLUS)},
         "$or": [
-            # Format string YYYY-MM-DD
-            {"date": {"$regex": f"^{month_str}"}},
-            # Format datetime MongoDB
-            {"date": {"$gte": month_start, "$lte": month_end}}
+            {"date": {"$regex": f"^{month_str}", "$lte": cutoff_str}},
+            {"date": {"$gte": month_start, "$lte": cutoff_dt}}
         ]
     }))
 
     work_hours = 0.0
     ca_count = 0
     rtt_count = 0
-    seen_dates = set()  # éviter les doublons si date existe en string ET datetime
+    seen_dates = set()
 
     for p in month_plannings:
         raw_date = p.get("date")
-        # Normaliser la date
         if isinstance(raw_date, str):
             date_str = raw_date[:10]
         elif hasattr(raw_date, 'strftime'):
@@ -100,11 +111,11 @@ def _get_month_hours(user_id: str, year: int, month: int) -> dict:
         else:
             continue
 
-        # Vérifier que la date appartient bien au mois demandé
+        # Vérifier que la date est dans le mois et <= aujourd'hui
         if not date_str.startswith(month_str):
             continue
-
-        # Éviter les doublons
+        if date_str > cutoff_str:
+            continue
         if date_str in seen_dates:
             continue
         seen_dates.add(date_str)
