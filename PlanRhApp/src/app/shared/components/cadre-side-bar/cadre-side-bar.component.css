@@ -45,6 +45,32 @@
   margin-top: 1rem;
 }
 
+/* Forcer la couleur bleue pour tous les items */
+:host ::ng-deep app-side-bar-item a {
+  color: #3b82f6 !important;
+}
+
+:host ::ng-deep app-side-bar-item a:hover {
+  color: #1d4ed8 !important;
+}
+
+:host ::ng-deep .border-t a {
+  color: #3b82f6 !important;
+}
+
+:host ::ng-deep .border-t a:hover {
+  color: #1d4ed8 !important;
+}
+
+/* Forcer la couleur bleue pour les items de la section others */
+:host ::ng-deep .border-t a {
+  color: #3b82f6 !important;
+}
+
+:host ::ng-deep .border-t a:hover {
+  color: #1d4ed8 !important;
+}
+
 /* Améliorer le texte pour éviter les chevauchements */
 :host ::ng-deep p {
   word-wrap: break-word;

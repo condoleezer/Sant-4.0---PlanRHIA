@@ -39,10 +39,28 @@
   padding: 0.5rem 0;
 }
 
+/* Forcer la couleur bleue pour tous les items */
+:host ::ng-deep app-side-bar-item a {
+  color: #3b82f6 !important;
+}
+
+:host ::ng-deep app-side-bar-item a:hover {
+  color: #1d4ed8 !important;
+}
+
 /* Section "Others" */
 :host ::ng-deep .border-t {
   padding-top: 1rem;
   margin-top: 1rem;
+}
+
+/* Forcer la couleur bleue pour les items de la section others */
+:host ::ng-deep .border-t a {
+  color: #3b82f6 !important;
+}
+
+:host ::ng-deep .border-t a:hover {
+  color: #1d4ed8 !important;
 }
 
 /* Améliorer le texte pour éviter les chevauchements */
