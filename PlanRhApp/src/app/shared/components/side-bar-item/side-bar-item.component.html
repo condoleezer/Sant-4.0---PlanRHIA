@@ -8,7 +8,7 @@
     [routerLink]="item.link" 
     routerLinkActive="text-blue-700"
     [routerLinkActiveOptions]="{exact: item.link === '/cadre' || item.link === '/sec' ? false : true}"
-    class="font-semibold cursor-pointer flex gap-3 text-sm items-start justify-start min-h-12 w-full transition-colors duration-200 py-2 text-blue-500 hover:text-blue-700">
+    class="font-semibold cursor-pointer flex gap-3 text-sm items-start justify-start min-h-12 w-full transition-colors duration-200 py-2 text-gray-900 hover:text-blue-700">
     <span [class]="item.icon" style="flex-shrink: 0; margin-top: 0.125rem;"></span>
     <p class="flex-1 break-words leading-tight">{{ item.title }}</p>
   </a>
