@@ -28,7 +28,7 @@ leave_rights_summary = db['leave_rights_summary']
 # CODES DE PLANNING — SOURCE DE VÉRITÉ UNIQUE
 # ============================================================================
 # Codes de TRAVAIL effectif → conflit réel si planifié pendant la période
-WORK_CODES = {"J02", "J1", "JB", "M06", "M13", "M15", "S07", "Nsr", "Nsr3", "Nld", "HS-1"}
+WORK_CODES = {"J02", "J1", "JB", "JS", "M06", "M13", "M15", "S07", "Nsr", "Nsr3", "Nld", "HS-1", "HS"}
 
 # Repos BLOQUANTS (CA et SYN uniquement) → validation DRH obligatoire
 HARD_REST_CODES = {"CA", "SYN"}
@@ -432,36 +432,31 @@ class ReplacementAIService:
         """
         Vérifie les conflits avec les plannings existants (utilise WORK_CODES)
         Retourne (score, nombre de jours en conflit)
-        
-        Utilise WORK_CODES pour identifier les vrais conflits de travail.
-        Les repos (RH, RTT, CA, etc.) ne sont PAS des conflits bloquants ici.
         """
-        # Convertir les dates en datetime pour la requête MongoDB
         start_datetime = datetime.combine(start_date, datetime.min.time())
         end_datetime = datetime.combine(end_date, datetime.min.time())
-        
-        # Chercher les plannings existants pendant la période
+
         existing_plannings = list(plannings.find({
             "user_id": user_id,
             "date": {"$gte": start_datetime, "$lte": end_datetime}
         }))
-        
+
         print(f"[DEBUG] check_planning_conflicts pour user_id={user_id}: {len(existing_plannings)} plannings trouvés entre {start_date} et {end_date}")
-        
-        # Filtrer pour ne garder que les plannings de TRAVAIL (codes WORK_CODES)
-        work_plannings = [p for p in existing_plannings if p.get("code") in WORK_CODES]
-        
+
+        work_plannings = [
+            (p["date"].strftime("%Y-%m-%d"), p.get("activity_code") or "")
+            for p in existing_plannings
+            if (p.get("activity_code") or "") in WORK_CODES
+        ]
+
         if work_plannings:
-            codes = [p.get("code", "?") for p in work_plannings]
-            dates = [p.get("date").strftime('%Y-%m-%d') if p.get("date") else "?" for p in work_plannings]
-            print(f"[DEBUG] Plannings de travail trouvés: {list(zip(dates, codes))}")
-        
+            print(f"[DEBUG] Plannings de travail trouvés: {work_plannings}")
+
         conflict_days = len(work_plannings)
-        
+
         if conflict_days > 0:
-            # Conflit avec planning de travail existant
             return -100, conflict_days
-        
+
         return 0, 0
     
     def has_absence_conflict(self, user_id: str, start_date: date, end_date: date) -> bool:
@@ -473,8 +468,8 @@ class ReplacementAIService:
             "staff_id": user_id,
             "start_date": {"$lte": end_str},
             "end_date": {"$gte": start_str},
-            "status": {"$in": ["En attente", "Validé par le cadre"]},
-            "_id": {"$ne": ObjectId(self.absence_id)}  # Exclure l'absence actuelle
+            "status": {"$in": ["En attente", "Validé par le cadre", "En cours", "Accepté par le remplaçant"]},
+            "_id": {"$ne": ObjectId(self.absence_id)}
         }))
         
         return len(conflicting_absences) > 0
@@ -609,13 +604,12 @@ class ReplacementAIService:
         Vérifie la charge de travail de l'agent sur le mois
         Retourne (score, détails)
         """
-        # Vérifier le nombre d'heures planifiées sur le mois
-        month_start = start_date.replace(day=1).strftime("%Y-%m-%d")
-        month_end = (start_date.replace(day=1) + timedelta(days=32)).replace(day=1).strftime("%Y-%m-%d")
-        
+        month_start_dt = datetime.combine(start_date.replace(day=1), datetime.min.time())
+        month_end_dt = datetime.combine((start_date.replace(day=1) + timedelta(days=32)).replace(day=1), datetime.min.time())
+
         monthly_plannings = list(plannings.find({
             "user_id": user_id,
-            "date": {"$gte": month_start, "$lt": month_end}
+            "date": {"$gte": month_start_dt, "$lt": month_end_dt}
         }))
         
         total_hours = sum([p.get("duration", 0) for p in monthly_plannings])
@@ -635,78 +629,58 @@ class ReplacementAIService:
     def check_daily_rest_compliance(self, user_id: str, start_date: date, end_date: date) -> Tuple[bool, str]:
         """
         RÈGLE LÉGALE (Charte p.20): Repos quotidien de 12h minimum
-        Vérifie qu'il y a au moins 12h entre la fin du dernier service et le début du remplacement
-        Et entre la fin du remplacement et le début du prochain service
         """
-        # Vérifier le service précédent (jour avant le début)
-        day_before = datetime.combine(start_date - timedelta(days=1), datetime.min.time())
-        previous_shifts = list(plannings.find({
-            "user_id": user_id,
-            "date": day_before
-        }))
-        
+        evening_codes = ["S07", "Nsr", "Nsr3", "Nld"]
+        morning_codes = ["J02", "J1", "JB", "M06", "M13", "M15"]
+
+        day_before_dt = datetime.combine(start_date - timedelta(days=1), datetime.min.time())
+        previous_shifts = list(plannings.find({"user_id": user_id, "date": day_before_dt}))
+
         if previous_shifts:
-            # Vérifier les codes qui nécessitent un repos de 12h
-            work_codes = ["J02", "J1", "JB", "M06", "M13", "M15", "S07", "Nsr", "Nsr3", "Nld"]
-            evening_codes = ["S07", "Nsr", "Nsr3", "Nld"]  # Services de soir/nuit
-            morning_codes = ["J02", "J1", "JB", "M06", "M13", "M15"]  # Services de jour/matin
-            
             for shift in previous_shifts:
-                prev_code = shift.get("code", "")
-                # Si service de soir/nuit la veille et remplacement le matin = problème
+                prev_code = shift.get("activity_code") or ""
                 if prev_code in evening_codes:
                     return False, f"Repos quotidien insuffisant: {prev_code} la veille, remplacement le matin"
-        
-        # Vérifier le service suivant (jour après la fin)
-        day_after = datetime.combine(end_date + timedelta(days=1), datetime.min.time())
-        next_shifts = list(plannings.find({
-            "user_id": user_id,
-            "date": day_after
-        }))
-        
+
+        day_after_dt = datetime.combine(end_date + timedelta(days=1), datetime.min.time())
+        next_shifts = list(plannings.find({"user_id": user_id, "date": day_after_dt}))
+
         if next_shifts:
-            morning_codes = ["J02", "J1", "JB", "M06", "M13", "M15"]
             for shift in next_shifts:
-                next_code = shift.get("code", "")
-                # Si remplacement de soir et service matin le lendemain = problème
+                next_code = shift.get("activity_code") or ""
                 if next_code in morning_codes:
                     return False, f"Repos quotidien insuffisant: remplacement soir, {next_code} le lendemain"
-        
+
         return True, "Repos quotidien respecté (12h minimum)"
     
     def check_weekly_hours_compliance(self, user_id: str, start_date: date, end_date: date) -> Tuple[bool, str, float]:
         """
         RÈGLE LÉGALE (Charte p.19): Durée maximale de 48h sur 7 jours consécutifs
         """
-        # Calculer les heures sur les 7 derniers jours
-        week_start = datetime.combine(start_date - timedelta(days=7), datetime.min.time())
-        week_end = datetime.combine(start_date, datetime.min.time())
-        
+        week_start_dt = datetime.combine(start_date - timedelta(days=7), datetime.min.time())
+        week_end_dt = datetime.combine(start_date, datetime.min.time())
+
         weekly_plannings = list(plannings.find({
             "user_id": user_id,
-            "date": {"$gte": week_start, "$lt": week_end}
+            "date": {"$gte": week_start_dt, "$lt": week_end_dt}
         }))
-        
-        # Calculer les heures basées sur les codes réels importés
+
         total_hours = 0
         for planning in weekly_plannings:
-            code = planning.get("code", "")
-            # Utiliser les heures du planning ou estimer selon le code
+            code = planning.get("activity_code") or ""
             if planning.get("hours"):
                 total_hours += planning.get("hours", 0)
             else:
-                # Estimation basée sur les codes importés
-                if code in ["J02", "J1", "JB"]:  # Jour
+                if code in ["J02", "J1", "JB", "JS"]:
                     total_hours += 7.5
-                elif code in ["M06", "M13", "M15"]:  # Matin
+                elif code in ["M06", "M13", "M15"]:
                     total_hours += 6
-                elif code in ["S07", "Nsr", "Nsr3", "Nld"]:  # Soir/Nuit
+                elif code in ["S07", "Nsr", "Nsr3", "Nld"]:
                     total_hours += 10
-                elif code in ["HS-1"]:  # Heures sup
+                elif code in ["HS-1", "HS"]:
                     total_hours += 1
-                elif code in ["FCJ", "TP"]:  # Formation/Temps partiel
+                elif code in ["FCJ", "TP"]:
                     total_hours += 4
-                # Les codes RH, RJF, CA, RTT, H- ne comptent pas d'heures
         
         # Estimer la durée du remplacement (7.5h par jour par défaut)
         replacement_days = (end_date - start_date).days + 1
@@ -728,43 +702,41 @@ class ReplacementAIService:
         - Maximum 20h par mois (si cycle ≤ 1 mois)
         """
         current_year = datetime.now().year
-        current_month_start = datetime.now().replace(day=1)
+        current_month_start = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         next_month = (current_month_start + timedelta(days=32)).replace(day=1)
-        
-        # Compter les heures sup de l'année via les plannings avec code HS-1
-        year_start = datetime(current_year, 1, 1)
+        year_start_dt = datetime(current_year, 1, 1)
+
         year_plannings = list(plannings.find({
             "user_id": user_id,
-            "date": {"$gte": year_start},
-            "code": {"$regex": "HS"}  # Codes d'heures supplémentaires
+            "date": {"$gte": year_start_dt}
         }))
-        
+
         year_overtime = 0
         for p in year_plannings:
-            code = p.get("code", "")
+            code = p.get("activity_code") or ""
+            if "HS" not in code:
+                continue
             if code == "HS-1":
-                year_overtime += 1  # 1 heure sup
-            elif "HS" in code:
-                # Extraire le nombre d'heures du code si possible
+                year_overtime += 1
+            else:
                 try:
-                    hours = float(code.replace("HS-", "").replace("HS", ""))
-                    year_overtime += hours
-                except:
-                    year_overtime += 1  # Par défaut 1h
-        
-        # Compter les heures sup du mois
+                    year_overtime += float(code.replace("HS-", "").replace("HS", ""))
+                except Exception:
+                    year_overtime += 1
+
         month_plannings = list(plannings.find({
             "user_id": user_id,
-            "date": {"$gte": current_month_start, "$lt": next_month},
-            "code": {"$regex": "HS"}
+            "date": {"$gte": current_month_start, "$lt": next_month}
         }))
-        
+
         month_overtime = 0
         for p in month_plannings:
-            code = p.get("code", "")
+            code = p.get("activity_code") or ""
+            if "HS" not in code:
+                continue
             if code == "HS-1":
                 month_overtime += 1
-            elif "HS" in code:
+            else:
                 try:
                     hours = float(code.replace("HS-", "").replace("HS", ""))
                     month_overtime += hours
@@ -804,14 +776,18 @@ class ReplacementAIService:
         """
         start_datetime = datetime.combine(start_date, datetime.min.time())
         end_datetime = datetime.combine(end_date, datetime.min.time())
-        
-        # Vérifier s'il y a des repos/congés planifiés
+
         all_rest_codes = list(HARD_REST_CODES) + list(SOFT_REST_CODES)
-        planned_items = list(plannings.find({
+        planned_items_raw = list(plannings.find({
             "user_id": user_id,
-            "date": {"$gte": start_datetime, "$lte": end_datetime},
-            "code": {"$in": all_rest_codes}
+            "date": {"$gte": start_datetime, "$lte": end_datetime}
         }))
+
+        planned_items = [
+            {"date": p["date"].strftime("%Y-%m-%d"), "code": p.get("activity_code") or ""}
+            for p in planned_items_raw
+            if (p.get("activity_code") or "") in all_rest_codes
+        ]
         
         if not planned_items:
             return 20, "Aucun repos planifié — Disponible"

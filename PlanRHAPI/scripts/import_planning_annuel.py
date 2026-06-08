@@ -238,15 +238,15 @@ def import_planning(user_id: str, user_name: str, planning_data: dict):
             skipped += 1
             continue
 
-        # Normaliser les codes inconnus
         normalized = code.strip()
-
         plage = PLAGE.get(normalized)
         status = "validé"
 
+        date_dt = datetime.strptime(date_str, "%Y-%m-%d")
+
         doc = {
             "user_id": user_id,
-            "date": date_str,
+            "date": date_dt,
             "activity_code": normalized,
             "status": status,
             "plage_horaire": plage or "",
@@ -254,7 +254,7 @@ def import_planning(user_id: str, user_name: str, planning_data: dict):
             "source": "import_annuel_2026",
         }
 
-        existing = plannings_col.find_one({"user_id": user_id, "date": date_str})
+        existing = plannings_col.find_one({"user_id": user_id, "date": date_dt})
         if existing:
             plannings_col.update_one({"_id": existing["_id"]}, {"$set": doc})
             updated += 1
