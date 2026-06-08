@@ -51,8 +51,16 @@ export class AbsenceService {
   findAbsencesByReplacementId(replacementId: string): Observable<Response<Absence[]>> {
     return this.http.get<Response<Absence[]>>(`${this.apiUrl}/replacement/${replacementId}`);
   }
-  
+
   findAbsencesByStaffId(staffId: string): Observable<Response<Absence[]>> {
     return this.http.get<Response<Absence[]>>(`${this.apiUrl}/staff/${staffId}`);
+  }
+
+  assignReplacement(absenceId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${absenceId}/assign-replacement`, {});
+  }
+
+  cancelReplacement(absenceId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${absenceId}/refuse-replacement`, {});
   }
 }

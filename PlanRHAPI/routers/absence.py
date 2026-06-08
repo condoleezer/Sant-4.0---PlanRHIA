@@ -2,11 +2,11 @@ from bson import ObjectId
 from fastapi import HTTPException, APIRouter, Body
 from starlette import status
 from crud.absence import create_absence, delete_absence, assign_replacer_to_absence, update_absence_status
-from database.database import absences
+from database.database import absences, plannings
 from schemas.absence import AbsenceCreate, AbsenceUpdate
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 
 router = APIRouter()
 
@@ -298,4 +298,100 @@ async def set_replacement(absence_id: str, replacement_id: str):
         return result
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error updating replacement: {str(e)}")
+
+
+@router.post("/absences/{absence_id}/assign-replacement")
+async def assign_replacement(absence_id: str):
+    """
+    Le cadre valide le remplacement :
+    - Met à jour le statut de l'absence → 'Validé par le cadre'
+    - Crée des entrées planning pour le remplaçant (codes hérités de l'agent absent)
+    """
+    try:
+        absence = absences.find_one({"_id": ObjectId(absence_id)})
+        if not absence:
+            raise HTTPException(status_code=404, detail="Absence non trouvée")
+
+        replacement_id = absence.get("replacement_id")
+        if not replacement_id:
+            raise HTTPException(status_code=400, detail="Aucun remplaçant assigné à cette absence")
+
+        staff_id = absence.get("staff_id")
+        start = datetime.strptime(absence["start_date"], "%Y-%m-%d")
+        end = datetime.strptime(absence["end_date"], "%Y-%m-%d")
+
+        # Récupérer les plannings de l'agent absent sur la période
+        absent_plannings = {
+            p["date"].strftime("%Y-%m-%d"): p.get("activity_code", "J02")
+            for p in plannings.find({
+                "user_id": staff_id,
+                "date": {"$gte": start, "$lte": end}
+            })
+            if isinstance(p.get("date"), datetime)
+        }
+
+        # Créer une entrée planning par jour en reprenant le code de l'agent absent
+        current = start
+        created = 0
+        while current <= end:
+            date_str = current.strftime("%Y-%m-%d")
+            activity_code = absent_plannings.get(date_str, "J02")
+            existing = plannings.find_one({"user_id": replacement_id, "date": current})
+            if not existing:
+                plannings.insert_one({
+                    "user_id": replacement_id,
+                    "date": current,
+                    "activity_code": activity_code,
+                    "status": "validé",
+                    "source": "remplacement",
+                    "absence_id": absence_id,
+                    "created_at": datetime.now()
+                })
+                created += 1
+            current += timedelta(days=1)
+
+        absences.update_one(
+            {"_id": ObjectId(absence_id)},
+            {"$set": {"status": "Validé par le cadre", "updated_at": datetime.now()}}
+        )
+
+        return {"message": "Remplacement validé", "plannings_created": created}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur interne: {str(e)}")
+
+
+@router.post("/absences/{absence_id}/refuse-replacement")
+async def refuse_replacement(absence_id: str):
+    """
+    Le remplaçant refuse la demande :
+    - Met à jour le statut → 'Refusé par le remplaçant'
+    - Supprime les éventuelles entrées planning REMP déjà créées
+    """
+    try:
+        absence = absences.find_one({"_id": ObjectId(absence_id)})
+        if not absence:
+            raise HTTPException(status_code=404, detail="Absence non trouvée")
+
+        replacement_id = absence.get("replacement_id")
+        if replacement_id:
+            plannings.delete_many({
+                "user_id": replacement_id,
+                "source": "remplacement",
+                "absence_id": absence_id
+            })
+
+        absences.update_one(
+            {"_id": ObjectId(absence_id)},
+            {"$set": {"status": "Refusé par le remplaçant", "updated_at": datetime.now()}}
+        )
+
+        return {"message": "Remplacement refusé"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur interne: {str(e)}")
 

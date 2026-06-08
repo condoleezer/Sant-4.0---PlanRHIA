@@ -549,40 +549,16 @@ export class AsksComponent implements OnInit {
   }
 
   acceptRequest(absenceId: string, replacementId: string | null): void {
-    // Pour les demandes reçues, l'absence a déjà le bon replacement_id (le soignant qui accepte)
-    // On ne passe pas de replacementId car il ne doit pas être modifié
-    this.absenceService.updateAbsence(
-      absenceId,
-      'Accepté par le remplaçant',
-      null  // Ne pas modifier le replacement_id existant
-    ).subscribe({
-      next: () => {
-        this.loadAllData();
-        this.showSuccess('Demande de remplacement acceptée');
-      },
-      error: (err) => {
-        console.error('Error accepting request:', err);
-        this.showError(err.error?.detail || 'Échec de l\'acceptation');
-      }
+    this.absenceService.updateAbsence(absenceId, 'Accepté par le remplaçant', null).subscribe({
+      next: () => { this.loadAllData(); this.showSuccess('Demande acceptée'); },
+      error: (err) => { this.showError(err.error?.detail || 'Échec'); }
     });
   }
-  
+
   refuseRequest(absenceId: string, replacementId: string | null): void {
-    // Pour les demandes reçues, l'absence a déjà le bon replacement_id (le soignant qui refuse)
-    // On ne passe pas de replacementId car il ne doit pas être modifié
-    this.absenceService.updateAbsence(
-      absenceId,
-      'Refusé par le remplaçant',
-      null  // Ne pas modifier le replacement_id existant
-    ).subscribe({
-      next: () => {
-        this.loadAllData();
-        this.showSuccess('Demande remplacement refusée');
-      },
-      error: (err) => {
-        console.error('Error refusing request:', err);
-        this.showError(err.error?.detail || 'Échec du refus');
-      }
+    this.absenceService.updateAbsence(absenceId, 'Refusé par le remplaçant', null).subscribe({
+      next: () => { this.loadAllData(); this.showSuccess('Demande refusée'); },
+      error: (err) => { this.showError(err.error?.detail || 'Échec'); }
     });
   }
 

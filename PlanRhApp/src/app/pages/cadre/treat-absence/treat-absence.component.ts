@@ -265,7 +265,18 @@ export class TreatAbsenceComponent implements OnInit {
 
     this.absenceService.updateAbsence(absenceId, status, replacementId).subscribe({
       next: () => {
-        this.showSuccess('Absence approuvée');
+        // Créer les plannings du remplaçant avec les codes de l'agent absent
+        if (replacementId) {
+          this.absenceService.assignReplacement(absenceId).subscribe({
+            next: (res: any) => {
+              const n = res?.plannings_created ?? 0;
+              this.showSuccess(`Absence approuvée${n > 0 ? ` — ${n} jour(s) ajoutés au planning du remplaçant` : ''}`);
+            },
+            error: () => this.showSuccess('Absence approuvée')
+          });
+        } else {
+          this.showSuccess('Absence approuvée');
+        }
         this.calendarSyncService.forceRefresh();
         this.loadAbsenceDetails(absenceId);
       },
