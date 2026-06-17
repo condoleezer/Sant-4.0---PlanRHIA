@@ -267,7 +267,7 @@ export class TreatAbsenceComponent implements OnInit {
       next: () => {
         // Créer les plannings du remplaçant avec les codes de l'agent absent
         if (replacementId) {
-          this.absenceService.assignReplacement(absenceId).subscribe({
+          this.absenceService.createReplacementPlannings(absenceId).subscribe({
             next: (res: any) => {
               const n = res?.plannings_created ?? 0;
               this.showSuccess(`Absence approuvée${n > 0 ? ` — ${n} jour(s) ajoutés au planning du remplaçant` : ''}`);

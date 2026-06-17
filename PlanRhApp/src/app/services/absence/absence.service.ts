@@ -56,11 +56,11 @@ export class AbsenceService {
     return this.http.get<Response<Absence[]>>(`${this.apiUrl}/staff/${staffId}`);
   }
 
-  assignReplacement(absenceId: string): Observable<any> {
+  createReplacementPlannings(absenceId: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/${absenceId}/assign-replacement`, {});
   }
 
-  cancelReplacement(absenceId: string): Observable<any> {
+  cancelReplacementPlannings(absenceId: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/${absenceId}/refuse-replacement`, {});
   }
 }

@@ -49,12 +49,13 @@ async def get_compatible_agents(
             raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
         
         # Vérifier que l'utilisateur a un planning validé à cette date
+        date_dt = datetime.strptime(date, "%Y-%m-%d")
         requester_planning = plannings.find_one({
             "user_id": user_id,
-            "date": date,
+            "date": date_dt,
             "status": "validé"
         })
-        
+
         if not requester_planning:
             raise HTTPException(
                 status_code=400,
@@ -79,7 +80,7 @@ async def get_compatible_agents(
             # Vérifier que B a un jour de repos à la date demandée
             b_planning_on_date = plannings.find_one({
                 "user_id": user_id_str,
-                "date": date,
+                "date": date_dt,
                 "status": "validé"
             })
 
@@ -370,38 +371,37 @@ async def get_my_rest_days(
 
         REST_CODES = {"RH", "RJF", "RTT", "H-", "?"}
         WORK_CODES = {"J02", "J1", "JB", "M06", "M13", "M15", "S07", "Nsr", "Nsr3", "Nld", "FCJ"}
-        today_str = datetime.now().strftime('%Y-%m-%d')
-
-        # Horizon : 90 jours dans le futur
-        horizon_date = (datetime.now() + timedelta(days=90)).strftime('%Y-%m-%d')
+        today_dt = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        horizon_dt = today_dt + timedelta(days=90)
 
         if not target_id or not ObjectId.is_valid(target_id):
             # Sans target_id : retourner les repos explicites de A
             a_rest = list(plannings.find({
                 "user_id": user_id, "status": "validé",
-                "date": {"$gte": today_str, "$lte": horizon_date},
+                "date": {"$gte": today_dt, "$lte": horizon_dt},
                 "activity_code": {"$in": list(REST_CODES)}
             }).sort("date", 1).limit(90))
-            result = [{"planning_id": str(p["_id"]), "date": p.get("date"), "activity_code": p.get("activity_code", ""), "plage_horaire": p.get("plage_horaire", "")} for p in a_rest]
+            result = [{"planning_id": str(p["_id"]), "date": p["date"].strftime("%Y-%m-%d") if isinstance(p.get("date"), datetime) else p.get("date"), "activity_code": p.get("activity_code", ""), "plage_horaire": p.get("plage_horaire", "")} for p in a_rest]
             return {"message": "Jours de repos de A", "data": result}
 
         # Récupérer les jours de travail de B dans l'horizon
         b_work = list(plannings.find({
             "user_id": target_id, "status": "validé",
-            "date": {"$gte": today_str, "$lte": horizon_date},
+            "date": {"$gte": today_dt, "$lte": horizon_dt},
             "activity_code": {"$in": list(WORK_CODES)}
         }).sort("date", 1))
-        b_work_by_date = {p.get("date"): p for p in b_work}
+        b_work_by_date = {p["date"].strftime("%Y-%m-%d") if isinstance(p.get("date"), datetime) else p.get("date"): p for p in b_work}
 
         if not b_work_by_date:
             return {"message": "Aucune date disponible", "data": []}
 
         # Récupérer tous les plannings de A sur ces dates
+        b_dates_dt = [p["date"] for p in b_work if isinstance(p.get("date"), datetime)]
         a_plannings_on_b_work_dates = list(plannings.find({
             "user_id": user_id, "status": "validé",
-            "date": {"$in": list(b_work_by_date.keys())}
+            "date": {"$in": b_dates_dt}
         }))
-        a_by_date = {p.get("date"): p for p in a_plannings_on_b_work_dates}
+        a_by_date = {p["date"].strftime("%Y-%m-%d") if isinstance(p.get("date"), datetime) else p.get("date"): p for p in a_plannings_on_b_work_dates}
 
         result = []
         for date_str, b_planning in sorted(b_work_by_date.items()):
@@ -460,15 +460,15 @@ async def get_requester_available_plannings(exchange_id: str):
         # Fallback : tous les jours de repos de A dans le futur
         requester_id = exchange["requester_id"]
         REST_CODES = ["RH", "RJF", "RTT", "H-", "?"]
-        today_str = datetime.now().strftime('%Y-%m-%d')
+        today_dt = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         available = list(plannings.find({
             "user_id": requester_id,
             "status": "validé",
-            "date": {"$gte": today_str},
+            "date": {"$gte": today_dt},
             "activity_code": {"$in": REST_CODES}
         }).sort("date", 1).limit(60))
 
-        result = [{"planning_id": str(p["_id"]), "date": p.get("date"), "activity_code": p.get("activity_code", ""), "plage_horaire": p.get("plage_horaire", "")} for p in available]
+        result = [{"planning_id": str(p["_id"]), "date": p["date"].strftime("%Y-%m-%d") if isinstance(p.get("date"), datetime) else p.get("date"), "activity_code": p.get("activity_code", ""), "plage_horaire": p.get("plage_horaire", "")} for p in available]
         return {"message": "Plannings disponibles", "data": result, "proposed_by_requester": False}
     except HTTPException:
         raise
